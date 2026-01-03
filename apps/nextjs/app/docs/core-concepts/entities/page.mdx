@@ -1,31 +1,14 @@
 # Entities & Aggregates
 
-Objects with unique identity and consistency boundaries.
+Objects with unique identity.
 
-## Entities
+## Entity vs Value Object
 
-An Entity is an object defined by its **identity**, not by its attributes. Two Entities with the same ID are the same entity, even if their attributes differ.
+**Value Object:** Identity by attributes, equality by value, examples: Email, Money
 
-### Characteristics
+**Entity:** Identity by ID (UUID), equality by ID, examples: User, Order
 
-**Unique identity** - Each Entity has an ID (UUID)
-- `_id` is auto-generated if not provided
-- Comparison via `equals()` based on ID
-- Identity persists throughout lifecycle
-
-**Encapsulation** - Props are protected
-- `_props` contains the attributes
-- `get()` method provided by parent class to access props
-- Business methods to modify (return new instance)
-
-**Business logic** - Business rules live in the Entity
-- Validation in the `create()` factory
-- Methods that implement business operations
-- No direct setters
-
-## Creating an Entity
-
-### Basic Structure
+## Entity Structure
 
 ```typescript
 import { Entity, Result, UUID } from '@packages/ddd-kit'
@@ -35,539 +18,146 @@ interface UserProps {
   email: Email
   name: string
   isActive: boolean
-  createdAt: Date
-  updatedAt: Date
 }
 
 export class User extends Entity<UserProps> {
-  // PRIVATE constructor
   private constructor(props: UserProps, id?: UUID) {
     super(props, id)
   }
 
-  // ✅ NO NEED for getters - use get() provided by Entity
-  // The Entity class already provides get<Key>(key: Key): T[Key]
-
-  // Factory method with validation
-  static create(props: {
-    email: Email
-    name: string
-  }, id?: UUID): Result<User> {
-    // Business rules
-    if (props.name.trim().length === 0) {
-      return Result.fail('Name cannot be empty')
-    }
-
-    if (props.name.length > 100) {
-      return Result.fail('Name too long')
-    }
-
-    const now = new Date()
-
+  static create(props: { email: Email; name: string }, id?: UUID): Result<User> {
+    if (!props.name.trim()) return Result.fail('Name required')
     return Result.ok(new User({
       email: props.email,
       name: props.name.trim(),
-      isActive: true,  // Default value
-      createdAt: now,
-      updatedAt: now
-    }, id))
+      isActive: true
+    }, id ?? UUID.create()))
   }
 
-  // Business logic - returns new instance
+  // Business methods - return NEW instance
   deactivate(): Result<User> {
-    const isActive = this.get('isActive')
-
-    if (!isActive) {
-      return Result.fail('User is already inactive')
-    }
-
-    return Result.ok(this.clone({
-      isActive: false,
-      updatedAt: new Date()
-    }))
+    if (!this.get('isActive')) return Result.fail('Already inactive')
+    return Result.ok(this.clone({ isActive: false }))
   }
 
-  updateName(newName: string): Result<User> {
-    if (newName.trim().length === 0) {
-      return Result.fail('Name cannot be empty')
-    }
-
-    return Result.ok(this.clone({
-      name: newName.trim(),
-      updatedAt: new Date()
-    }))
-  }
-
-  // Business query
+  // Business queries
   canPlaceOrder(): boolean {
     return this.get('isActive')
   }
 }
 ```
 
-### Usage
+## Usage
 
 ```typescript
-// Creation
-const emailOrError = Email.create({ value: 'user@example.com' })
-if (emailOrError.isFailure) return
+// Create
+const user = User.create({ email, name: 'Alice' })
 
-const userOrError = User.create({
-  email: emailOrError.getValue(),
-  name: 'Alice'
-})
+// Access props via get()
+console.log(user.get('name'))       // "Alice"
+console.log(user.get('isActive'))   // true
 
-if (userOrError.isFailure) {
-  console.error(userOrError.getError())
-  return
-}
+// Modify (returns NEW instance)
+const deactivated = user.deactivate().value
+console.log(user.get('isActive'))        // true (original unchanged)
+console.log(deactivated.get('isActive')) // false
 
-const user = userOrError.getValue()
-
-// ✅ Access props via get() (provided by Entity)
-console.log(user.get('email').value.value)  // "user@example.com"
-console.log(user.get('name'))               // "Alice"
-console.log(user.get('isActive'))           // true
-
-// Business logic
-if (user.canPlaceOrder()) {
-  // Create order...
-}
-
-// Modification (returns NEW instance)
-const updatedOrError = user.updateName('Bob')
-if (updatedOrError.isSuccess) {
-  const updatedUser = updatedOrError.getValue()
-  console.log(updatedUser.get('name'))  // "Bob"
-  console.log(user.get('name'))         // "Alice" - original is unchanged!
-}
-
-// Comparison by ID
-const user1 = User.create({ email, name: 'Alice' }).getValue()
-const user2 = User.create({ email, name: 'Bob' }, user1._id).getValue()
-
-console.log(user1.equals(user2))  // true - same ID
+// Compare by ID
+user1.equals(user2) // true if same _id
 ```
 
-## Useful Entity Methods
-
-### get() - Access Props
-
-The `Entity` class provides a type-safe `get()` method:
+## Entity Methods
 
 ```typescript
-const email = user.get('email')  // Type-safe Email
-const name = user.get('name')    // Type-safe string
-
-// Throws DomainException if prop doesn't exist
-try {
-  user.get('nonExistent')
-} catch (error) {
-  // DomainException
-}
-```
-
-### getProps() - Shallow Copy
-
-```typescript
-const props = user.getProps()
-console.log(props.name)  // "Alice"
-
-// Modification doesn't change original
-props.name = 'Bob'
-console.log(user.get('name'))  // "Alice" - unchanged
-```
-
-### toObject() - Convert to Plain Object
-
-```typescript
-const obj = user.toObject()
-console.log(obj)
-// {
-//   id: "uuid-string",
-//   email: "user@example.com",  // Value Object unwrapped
-//   name: "Alice",
-//   isActive: true,
-//   createdAt: Date,
-//   updatedAt: Date
-// }
-```
-
-### clone() - Copy with Overrides
-
-```typescript
-const cloned = user.clone({
-  name: 'Bob',
-  updatedAt: new Date()
-})
-
-// Same ID, modified props
-console.log(cloned._id.equals(user._id))  // true
-console.log(cloned.get('name'))  // "Bob"
-```
-
-### equals() - Comparison
-
-```typescript
-const user1 = User.create({ email, name: 'Alice' }).getValue()
-const user2 = User.create({ email, name: 'Alice' }).getValue()
-const user3 = User.create({ email, name: 'Bob' }, user1._id).getValue()
-
-console.log(user1.equals(user2))  // false - different IDs
-console.log(user1.equals(user3))  // true - same ID
+user.get('name')           // Type-safe property access
+user.getProps()            // Shallow copy of all props
+user.toObject()            // Plain object (VOs unwrapped)
+user.clone({ name: 'Bob' }) // Copy with overrides
+user.equals(other)         // Compare by ID
 ```
 
 ## Aggregates
 
-An Aggregate is a root Entity that coordinates a group of related Entities and Value Objects. It ensures consistency within its boundaries.
-
-### Difference Entity vs Aggregate
-
-**Entity** - Simple object with identity
-- No event management
-- No coordination of other objects
-
-**Aggregate** - Root Entity + coordination
-- Manages Domain Events
-- Coordinates child Entities
-- Transactional consistency boundary
-
-### Aggregate Structure
+Aggregates = Entity + Domain Events + Child entities.
 
 ```typescript
 import { Aggregate, Result, UUID } from '@packages/ddd-kit'
-import type { Email } from './Email'
-import { UserCreatedEvent } from './events/UserCreatedEvent'
-import { UserEmailChangedEvent } from './events/UserEmailChangedEvent'
-
-interface UserProps {
-  email: Email
-  name: string
-  isActive: boolean
-}
 
 export class User extends Aggregate<UserProps> {
-  private constructor(props: UserProps, id?: UUID) {
-    super(props, id)
-  }
-
-  static create(props: {
-    email: Email
-    name: string
-  }): Result<User> {
-    const user = new User({
-      email: props.email,
-      name: props.name,
-      isActive: true
-    }, UUID.create())
+  static create(props: CreateUserProps): Result<User> {
+    const user = new User(props, UUID.create())
 
     // Raise domain event
-    user.addEvent(new UserCreatedEvent(
-      user._id.value.toString(),
-      user.get('email').value.value,
-      user.get('name')
-    ))
+    user.addEvent(new UserCreatedEvent(user._id.value, user.get('email').value))
 
     return Result.ok(user)
   }
-
-  updateEmail(newEmail: Email): Result<User> {
-    const currentEmail = this.get('email')
-
-    // Business rule
-    if (newEmail.equals(currentEmail)) {
-      return Result.fail('Email is the same')
-    }
-
-    const updated = this.clone({
-      email: newEmail
-    })
-
-    // Raise domain event
-    updated.addEvent(new UserEmailChangedEvent(
-      this._id.value.toString(),
-      currentEmail.value.value,
-      newEmail.value.value
-    ))
-
-    return Result.ok(updated)
-  }
-}
-```
-
-### Domain Events
-
-```typescript
-// events/UserCreatedEvent.ts
-import type { DomainEvent } from '@packages/ddd-kit'
-
-export class UserCreatedEvent implements DomainEvent {
-  public readonly type = 'UserCreated'
-  public readonly dateTimeOccurred: Date
-
-  constructor(
-    public readonly aggregateId: string,
-    public readonly email: string,
-    public readonly name: string
-  ) {
-    this.dateTimeOccurred = new Date()
-  }
 }
 
-// events/UserEmailChangedEvent.ts
-export class UserEmailChangedEvent implements DomainEvent {
-  public readonly type = 'UserEmailChanged'
-  public readonly dateTimeOccurred: Date
-
-  constructor(
-    public readonly aggregateId: string,
-    public readonly oldEmail: string,
-    public readonly newEmail: string
-  ) {
-    this.dateTimeOccurred = new Date()
-  }
-}
-```
-
-### Using Events
-
-```typescript
-// Application layer - Use Case
-import { DomainEvents } from '@packages/ddd-kit'
-
-// 1. Subscribe to events (at app startup)
-DomainEvents.subscribe('UserCreated', async (event: UserCreatedEvent) => {
-  console.log('User created:', event.email)
-  // Send welcome email
-  // Create user profile
-  // Log analytics
-})
-
-DomainEvents.subscribe('UserEmailChanged', async (event: UserEmailChangedEvent) => {
-  console.log('Email changed:', event.oldEmail, '→', event.newEmail)
-  // Send confirmation email
-  // Invalidate sessions
-})
-
-// 2. Create aggregate (in use case)
-const userOrError = User.create({
-  email: emailOrError.getValue(),
-  name: 'Alice'
-})
-
-if (userOrError.isFailure) return Result.fail(userOrError.getError())
-const user = userOrError.getValue()
-
-// 3. Persist
-const savedOrError = await userRepo.create(user)
-if (savedOrError.isFailure) return Result.fail(savedOrError.getError())
-
-// 4. Dispatch events AFTER persistence
+// After persistence
+await repo.create(user)
 user.markEventsForDispatch()
-await DomainEvents.dispatch(user._id.value.toString())
-
-// Handlers execute asynchronously
+await DomainEvents.dispatch(user._id.value)
 ```
 
-### Aggregate Methods
+## Domain Events
 
-**addEvent()** - Add an event
 ```typescript
-protected addEvent(event: DomainEvent): void
+// Define event
+export class UserCreatedEvent implements DomainEvent {
+  type = 'UserCreated'
+  constructor(
+    public aggregateId: string,
+    public email: string,
+    public occurredAt = new Date()
+  ) {}
+}
+
+// Subscribe (at app startup)
+DomainEvents.subscribe('UserCreated', async (event) => {
+  await sendWelcomeEmail(event.email)
+})
+
+// Dispatch (after persistence)
+user.markEventsForDispatch()
+await DomainEvents.dispatch(user._id.value)
 ```
 
-**markEventsForDispatch()** - Prepare events
+## Rules
+
+### ✅ Do
 ```typescript
-public markEventsForDispatch(): void
+// Factory method
+static create(...): Result<User>
+
+// Use get() for props
+this.get('isActive')
+
+// Return new instance
+return Result.ok(this.clone({ name: newName }))
+
+// Events after persistence
+await repo.create(user)
+user.markEventsForDispatch()
 ```
 
-**clearEvents()** - Remove all events
+### ❌ Don't
 ```typescript
-public clearEvents(): void
-```
+// Public constructor
+constructor(public email: string) {}
 
-**hasEvents()** - Check for events
-```typescript
-if (user.hasEvents()) {
-  user.markEventsForDispatch()
-  await DomainEvents.dispatch(user._id.value.toString())
-}
-```
+// Manual getters (unnecessary)
+get isActive() { return this._props.isActive }
 
-**getEventCount()** - Number of events
-```typescript
-console.log(user.getEventCount())  // 2
-```
+// Mutation
+this._props.name = newName
 
-## Aggregate with Child Entities
-
-```typescript
-interface OrderProps {
-  customerId: UUID
-  items: OrderItem[]  // Child entities
-  total: Money
-  status: OrderStatus
-}
-
-export class Order extends Aggregate<OrderProps> {
-  private constructor(props: OrderProps, id?: UUID) {
-    super(props, id)
-  }
-
-  // ✅ Use get() to access props
-  getItems(): OrderItem[] {
-    return [...this.get('items')]  // Defensive copy
-  }
-
-  static create(props: {
-    customerId: UUID
-    items: OrderItem[]
-  }): Result<Order> {
-    // Business rule: at least 1 item
-    if (props.items.length === 0) {
-      return Result.fail('Order must have at least one item')
-    }
-
-    // Calculate total
-    const total = props.items.reduce(
-      (sum, item) => sum.add(item.get('price').multiply(item.get('quantity')).getValue()).getValue(),
-      Money.create({ amount: 0, currency: 'EUR' }).getValue()
-    )
-
-    const order = new Order({
-      customerId: props.customerId,
-      items: props.items,
-      total,
-      status: 'PENDING'
-    }, UUID.create())
-
-    order.addEvent(new OrderCreatedEvent(
-      order._id.value.toString(),
-      props.customerId.value.toString(),
-      total.value.amount
-    ))
-
-    return Result.ok(order)
-  }
-
-  addItem(item: OrderItem): Result<Order> {
-    const currentItems = this.get('items')
-
-    // Business rule: max 10 items
-    if (currentItems.length >= 10) {
-      return Result.fail('Cannot add more than 10 items')
-    }
-
-    const newItems = [...currentItems, item]
-    const currentTotal = this.get('total')
-    const newTotal = currentTotal.add(
-      item.get('price').multiply(item.get('quantity')).getValue()
-    ).getValue()
-
-    const updated = this.clone({
-      items: newItems,
-      total: newTotal
-    })
-
-    updated.addEvent(new OrderItemAddedEvent(
-      this._id.value.toString(),
-      item._id.value.toString()
-    ))
-
-    return Result.ok(updated)
-  }
-
-  confirm(): Result<Order> {
-    const status = this.get('status')
-
-    if (status !== 'PENDING') {
-      return Result.fail('Order is not pending')
-    }
-
-    const confirmed = this.clone({ status: 'CONFIRMED' })
-
-    confirmed.addEvent(new OrderConfirmedEvent(
-      this._id.value.toString()
-    ))
-
-    return Result.ok(confirmed)
-  }
-}
-```
-
-## Best Practices
-
-**✅ Factory methods**
-```typescript
-// ✅ Static factory with validation
-static create(props: CreateUserProps): Result<User> {
-  // Validation + business rules
-  if (props.name.length === 0) {
-    return Result.fail('Name required')
-  }
-  return Result.ok(new User(props))
-}
-
-// ❌ Public constructor
-constructor(public email: string) {}  // FORBIDDEN
-```
-
-**✅ Immutability**
-```typescript
-// ✅ Return new instance
-updateEmail(email: Email): Result<User> {
-  return Result.ok(this.clone({ email }))
-}
-
-// ❌ Mutation
-setEmail(email: Email) {
-  this._props.email = email  // FORBIDDEN
-}
-```
-
-**✅ Use get() instead of manual getters**
-```typescript
-// ✅ Use get() provided by Entity
-canPlaceOrder(): boolean {
-  return this.get('isActive') && !this.get('isBanned')
-}
-
-// ❌ Create manual getters (unnecessary)
-get isActive(): boolean {
-  return this._props.isActive  // Unnecessary, get() already exists
-}
-```
-
-**✅ Business logic in Entity**
-```typescript
-// ✅ Business logic in Entity
-class User extends Entity<UserProps> {
-  canPlaceOrder(): boolean {
-    return this.get('isActive') && !this.get('isBanned')
-  }
-}
-
-// ❌ Business logic in controller
-if (user.get('isActive') && !user.get('isBanned')) {  // BAD
-  // ...
-}
-```
-
-**✅ Events AFTER persistence**
-```typescript
-// ✅ Dispatch after save
-const saved = await repo.create(user)
-if (saved.isSuccess) {
-  user.markEventsForDispatch()
-  await DomainEvents.dispatch(user._id.value.toString())
-}
-
-// ❌ Dispatch before save
-await DomainEvents.dispatch(user._id.value.toString())
+// Events before persistence
+await DomainEvents.dispatch(user._id)
 await repo.create(user)  // Can fail!
 ```
 
 ## Next Steps
 
-- [Value Objects →](/docs/core-concepts/value-objects) - Entity attributes
-- [Your First Use Case →](/docs/guides/first-use-case) - Use Entities and Aggregates
+- [Value Objects](/docs/core-concepts/value-objects)
+- [First Use Case](/docs/guides/first-use-case)

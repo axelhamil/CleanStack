@@ -1,385 +1,134 @@
 # Clean Architecture
 
-Understanding layer separation and the dependency rule.
+## The Dependency Rule
 
-## Fundamental Principle
-
-**All dependencies point inward.** The Domain is at the center and has ZERO external dependencies.
+**All dependencies point INWARD.** Domain has ZERO external dependencies.
 
 ```
-Adapters  ─────>  Application  ─────>  Domain
-    |                 |                   |
- Database          Use Cases         Business Logic
- External APIs     Ports             (Zero dependencies)
+Adapters → Application → Domain
+   |           |            |
+Database    Use Cases    Business Logic
+Next.js     Ports        (zero deps)
 ```
 
 ## The 3 Layers
 
 ### 1. Domain (Core)
 
-**This is the core of your application.** Contains pure business logic.
+**Location:** `src/domain/`
 
-**Location:** `apps/nextjs/src/domain/`
+Contains Entities, Value Objects, Aggregates, Domain Events.
 
-**Contains:**
-- **Entities** - Objects with unique identity (`User`, `Order`)
-- **Value Objects** - Concepts without identity (`Email`, `Money`)
-- **Aggregates** - Consistency boundaries (`UserAggregate`)
-- **Domain Events** - Business events (`UserCreatedEvent`)
-
-**Absolute rules:**
-- ❌ ZERO imports from Application or Adapters
-- ❌ ZERO imports from frameworks (Next.js, Drizzle, React)
-- ✅ ONLY `@packages/ddd-kit`
-- ✅ Business logic only
-
-**Example:**
 ```typescript
-// ✅ CORRECT - Pure Domain
+// ✅ ONLY import from ddd-kit
 import { Entity, Result, UUID } from '@packages/ddd-kit'
 
 export class User extends Entity<UserProps> {
-  get email(): Email {
-    return this.props.email
-  }
-
-  // Business logic
   canPlaceOrder(): boolean {
-    return this.props.isActive && !this.props.isBanned
+    return this.get('isActive') && !this.get('isBanned')
   }
 }
 ```
 
-```typescript
-// ❌ FORBIDDEN - External dependency
-import { db } from '@packages/drizzle'  // ❌
-import { NextRequest } from 'next/server'  // ❌
-```
+**Rules:**
+- ❌ No imports from Application or Adapters
+- ❌ No frameworks (Next.js, Drizzle, Zod)
+- ✅ Only `@packages/ddd-kit`
 
 ### 2. Application (Orchestration)
 
-**Coordinates business logic.** Implements use cases.
+**Location:** `src/application/`
 
-**Location:** `apps/nextjs/src/application/`
+Contains Use Cases and Ports (interfaces).
 
-**Contains:**
-- **Use Cases** - Business scenarios (`CreateUserUseCase`)
-- **DTOs** - Transfer objects (`CreateUserInput`)
-- **Ports (interfaces)** - Contracts for adapters
-  - `IUserRepository` (interface)
-  - `IEmailService` (interface)
-  - `IPaymentGateway` (interface)
-
-**Rules:**
-- ✅ Can import from Domain
-- ✅ Defines INTERFACES (ports), not implementations
-- ❌ Does NOT import from Adapters
-- ❌ Knows NOTHING about Drizzle, Next.js, PostgreSQL
-
-**Example:**
 ```typescript
-// ✅ CORRECT - Use Case
-import { Result, UseCase } from '@packages/ddd-kit'
+// ✅ Import from Domain + define interfaces
 import { User } from '@/domain/user/User'
 import type { IUserRepository } from '@/application/ports/IUserRepository'
 
-export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
-  constructor(
-    private readonly userRepo: IUserRepository  // ✅ Interface, not implementation
-  ) {}
+export class CreateUserUseCase implements UseCase<Input, User> {
+  constructor(private readonly userRepo: IUserRepository) {} // Interface!
 
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    // Logic orchestration
-    const emailOrError = Email.create(input.email)
-    if (emailOrError.isFailure) {
-      return Result.fail(emailOrError.error)
-    }
-
-    const userOrError = User.create({ email: emailOrError.value })
-    if (userOrError.isFailure) {
-      return Result.fail(userOrError.error)
-    }
-
-    return await this.userRepo.create(userOrError.value)
+  async execute(input: Input): Promise<Result<User>> {
+    // Orchestration logic
   }
 }
 ```
-
-### 3. Adapters (Implementations)
-
-**Connects to the outside world.** Implements ports defined by Application.
-
-**Location:** `apps/nextjs/src/adapters/`
-
-**Structure:**
-```
-adapters/
-├── in/           # Input adapters
-│   └── api/     # Next.js routes, Controllers
-└── out/          # Output adapters
-    ├── persistence/   # Repositories (Drizzle)
-    ├── email/         # Email services
-    └── payment/       # Payment services
-```
-
-**Contains:**
-- **In Adapters** - Controllers, Route Handlers, Zod Validators
-- **Out Adapters** - Repository implementations, API clients
-- **Mappers** - Domain ↔ Database/API conversion
-- **Database** - Drizzle ORM, PostgreSQL
-- **External APIs** - Stripe, SendGrid, etc.
 
 **Rules:**
-- ✅ Implements interfaces (ports) from Application
-- ✅ Can import from Application and Domain
-- ✅ Contains ALL external dependencies
-- ✅ Drizzle, PostgreSQL, Next.js live here
+- ✅ Can import Domain
+- ✅ Defines interfaces (ports)
+- ❌ No imports from Adapters
 
-**Example:**
-```typescript
-// adapters/out/persistence/DrizzleUserRepository.ts
-import type { IUserRepository } from '@/application/ports/IUserRepository'
-import { db } from '@packages/drizzle'  // ✅ OK here
-import { users } from '@packages/drizzle/schema'
+### 3. Adapters (External)
 
-export class DrizzleUserRepository implements IUserRepository {
-  async create(user: User): Promise<Result<User>> {
-    try {
-      const data = UserMapper.toPersistence(user)
-      await db.insert(users).values(data)
-      return Result.ok(user)
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Failed to create'))
-    }
-  }
-}
+**Location:** `src/adapters/`
+
+```
+adapters/
+├── in/api/        # Route handlers, controllers
+└── out/           # Repository implementations
+    └── persistence/
 ```
 
 ```typescript
-// adapters/in/api/users/route.ts
-import { getInjection } from '@/common/di/container'
-import { z } from 'zod'
-
-const schema = z.object({
-  email: z.string().email(),
-  name: z.string()
-})
-
-export async function POST(request: Request) {
-  // 1. Validation (adapter layer)
-  const body = await request.json()
-  const validation = schema.safeParse(body)
-
-  if (!validation.success) {
-    return Response.json({ error: validation.error }, { status: 400 })
-  }
-
-  // 2. Use Case (application layer)
-  const useCase = getInjection('CreateUserUseCase')
-  const result = await useCase.execute(validation.data)
-
-  // 3. Transform Result → HTTP Response
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
-  return Response.json(result.value, { status: 201 })
-}
-```
-
-## Request Flow
-
-```
-[1] HTTP POST /api/users
-    { "email": "user@example.com", "name": "Alice" }
-
-            |
-            v
-
-[2] Route Handler (adapters/in/api/)
-    • Validate input with Zod
-    • Parse JSON
-
-            |
-            v
-
-[3] Use Case (application/use-cases/)
-    • Create Value Objects (Email, UserName)
-    • Create Entity (User)
-    • Call IUserRepository.create()
-
-            |
-            v
-
-[4] Domain Logic (domain/)
-    • Email.create() validates format
-    • User.create() applies business rules
-    • Raise UserCreatedEvent
-
-            |
-            v
-
-[5] Repository Implementation (adapters/out/)
-    • DrizzleUserRepository.create()
-    • Map User → Database row
-    • INSERT into PostgreSQL
-
-            |
-            v
-
-[6] Return: Result<User>
-    • Success → JSON 201
-    • Failure → JSON 400
-```
-
-## The Dependency Rule
-
-### ✅ Allowed dependencies
-
-```
-Adapters  ────>  Application  ────>  Domain
-    |                 |                 |
-  DB/API          Use Cases        Entities
-                                   Value Objects
-```
-
-- Adapters can import Application and Domain
-- Application can import Domain
-- Domain imports NOTHING (except ddd-kit)
-
-### ❌ Forbidden dependencies
-
-```typescript
-// ❌ Domain → Application
-// apps/nextjs/src/domain/user/User.ts
-import { CreateUserUseCase } from '@/application/...'  // FORBIDDEN!
-
-// ❌ Domain → Adapters
-import { DrizzleUserRepository } from '@/adapters/...'  // FORBIDDEN!
-
-// ❌ Domain → Framework
-import { NextRequest } from 'next/server'  // FORBIDDEN!
-
-// ❌ Application → Adapters
-// apps/nextjs/src/application/use-cases/CreateUserUseCase.ts
-import { DrizzleUserRepository } from '@/adapters/...'  // FORBIDDEN!
-```
-
-## Dependency Inversion
-
-Application defines the **interfaces** (ports). Adapters **implement** them.
-
-```typescript
-// ✅ Application defines the interface
-// application/ports/IUserRepository.ts
-import type { BaseRepository } from '@packages/ddd-kit'
-import type { User } from '@/domain/user/User'
-
-export interface IUserRepository extends BaseRepository<User> {
-  findByEmail(email: string): Promise<Result<Option<User>>>
-}
-```
-
-```typescript
-// ✅ Adapters implements the interface
-// adapters/out/persistence/DrizzleUserRepository.ts
+// ✅ Implements interfaces
 import type { IUserRepository } from '@/application/ports/IUserRepository'
 import { db } from '@packages/drizzle'
 
 export class DrizzleUserRepository implements IUserRepository {
-  async findByEmail(email: string): Promise<Result<Option<User>>> {
-    // Implementation with Drizzle
+  async create(user: User): Promise<Result<User>> {
+    await db.insert(users).values(UserMapper.toPersistence(user))
+    return Result.ok(user)
   }
 }
 ```
 
-```typescript
-// ✅ Use Case depends on the INTERFACE
-// application/use-cases/CreateUserUseCase.ts
-import type { IUserRepository } from '@/application/ports/IUserRepository'
+**Rules:**
+- ✅ Implements Application ports
+- ✅ All external deps live here (Drizzle, Next.js, APIs)
 
-export class CreateUserUseCase {
-  constructor(
-    private readonly userRepo: IUserRepository  // Interface!
-  ) {}
-}
+## Request Flow
+
+```
+HTTP POST /api/users
+    ↓
+Route Handler (Zod validation)
+    ↓
+Use Case (orchestration)
+    ↓
+Domain (business rules)
+    ↓
+Repository (Drizzle)
+    ↓
+Result<User> → JSON Response
 ```
 
-The DI container injects the implementation at runtime:
+## Dependency Inversion
+
+Application defines interfaces, Adapters implement them:
 
 ```typescript
-// common/di/modules/user.module.ts
+// Application (interface)
+export interface IUserRepository extends BaseRepository<User> {
+  findByEmail(email: string): Promise<Result<Option<User>>>
+}
+
+// Adapters (implementation)
+export class DrizzleUserRepository implements IUserRepository { }
+
+// DI Container
 container.bind('IUserRepository').toClass(DrizzleUserRepository)
-container.bind('CreateUserUseCase').toClass(CreateUserUseCase)
 ```
 
-## Why This Architecture?
+## Benefits
 
-### 1. Testability
-
-Domain and Application are testable without a database:
-
-```typescript
-describe('CreateUserUseCase', () => {
-  it('should create user', async () => {
-    const mockRepo = {
-      create: vi.fn().mockResolvedValue(Result.ok(user))
-    }
-
-    const useCase = new CreateUserUseCase(mockRepo)
-    const result = await useCase.execute(input)
-
-    expect(result.isSuccess).toBe(true)
-  })
-})
-```
-
-### 2. Easy Framework Changes
-
-Replace Drizzle with Prisma? Don't touch Domain/Application:
-
-```typescript
-// Just create a new adapter
-export class PrismaUserRepository implements IUserRepository {
-  // Same interface, different implementation
-}
-
-// Just change the DI binding
-container.bind('IUserRepository').toClass(PrismaUserRepository)
-```
-
-### 3. Reusable Business Logic
-
-The Domain works everywhere (CLI, Lambda, API, GraphQL) because it has no dependencies.
-
-### 4. AI-Friendly
-
-The explicit architecture helps AI understand and generate code:
-- **Clear separation** - AI knows where to put each file
-- **Repeatable patterns** - Result, Option, UseCase are consistent
-- **Inline documentation** - TypeScript types document the code
-- **Strict rules** - AI cannot violate dependencies
-
-[Learn more about AI development →](/docs/claude-code)
-
-## Architecture Checklist
-
-Before committing, verify:
-
-- [ ] Domain imports nothing (except ddd-kit)
-- [ ] Application defines interfaces, not implementations
-- [ ] Adapters implements Application ports
-- [ ] Use Cases return `Result<T>`
-- [ ] Repositories return `Result<Option<T>>`
-- [ ] Value Objects are immutable (`Object.freeze`)
-- [ ] Dependencies via DI container
+- **Testable** - Domain/Application without DB
+- **Swappable** - Change Drizzle→Prisma: only Adapters
+- **AI-Friendly** - Clear rules = consistent code generation
 
 ## Next Steps
 
-**Deep dive:**
-- [Dependency Rule →](/docs/architecture/dependency-rule) - Rule in detail
-- [Layers →](/docs/architecture/layers) - Each layer explained
-
-**Practice:**
-- [Your First Use Case →](/docs/guides/first-use-case) - Complete tutorial
-- [Testing →](/docs/guides/testing) - Test each layer
+- [Layers Detail](/docs/architecture/layers)
+- [Dependency Rule](/docs/architecture/dependency-rule)
+- [First Use Case](/docs/guides/first-use-case)

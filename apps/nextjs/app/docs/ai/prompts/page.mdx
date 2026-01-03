@@ -1,514 +1,138 @@
-# Prompts IA
+# AI Prompts
 
-Collection de prompts testés et efficaces pour CleanStack.
+Ready-to-use prompts for CleanStack.
 
 ## Value Objects
 
-### Créer un nouveau Value Object
-
 ```
-Crée un Value Object [Name] dans domain/[context]/[Name].ts :
+Create Value Object [Name] in domain/[context]/:
 
-Props : { value: [type] }
+Props: { value: [type] }
 
-Validation :
-- [règle 1]
-- [règle 2]
-- [règle 3]
+Validation:
+- [rule 1]
+- [rule 2]
 
-Retourne Result<[Name]>.
-Ajoute les tests dans __TESTS__/[Name].test.ts.
-
-Exemples à tester :
-✅ [cas valide]
-❌ [cas invalide 1]
-❌ [cas invalide 2]
+Return Result<[Name]>.
+Add tests in __TESTS__/.
 ```
 
-**Exemple concret :**
+**Example:**
 ```
-Crée un Value Object ProductName dans domain/product/ProductName.ts :
+Create Value Object ProductName in domain/product/:
 
-Props : { value: string }
+Props: { value: string }
 
-Validation :
-- Pas vide après trim
-- 3-100 caractères
-- Pas de caractères spéciaux sauf espace et tiret
+Validation:
+- Not empty after trim
+- 3-100 characters
+- No special chars except space and dash
 
-Retourne Result<ProductName>.
-Ajoute les tests dans __TESTS__/ProductName.test.ts.
-
-Exemples à tester :
-✅ "iPhone 15"
-✅ "MacBook Pro M3"
-❌ "" (vide)
-❌ "AB" (trop court)
-❌ "Product@123" (caractères invalides)
-```
-
-### Value Object avec business logic
-
-```
-Crée un Value Object Money dans domain/shared/Money.ts :
-
-Props : { amount: number, currency: string }
-
-Validation :
-- amount ≥ 0
-- currency dans ['EUR', 'USD', 'GBP']
-
-Méthodes business :
-- add(other: Money): Result<Money> (vérifie même devise)
-- multiply(factor: number): Result<Money>
-- equals(other: Money): boolean
-
-Tests complets.
+Add tests.
 ```
 
 ## Entities
 
-### Créer une Entity
-
 ```
-Crée une Entity [Name] dans domain/[context]/[Name].ts :
+Create Entity [Name] in domain/[context]/:
 
-Props :
+Props:
 - [prop1]: [ValueObject1]
-- [prop2]: [type2]
-- [prop3]: [type3]
+- [prop2]: [type]
 
-Factory :
-- create(props): Result<[Name]>
-- Validation: [règles]
+Factory create() with validation: [rules]
 
-Méthodes business :
+Methods:
 - [method1](): Result<[Name]>
 - [method2](): boolean
 
-Important :
-- Constructeur privé
-- Utilise get() pour accès props (pas de getters manuels)
-- clone() pour modifications
-- Tests unitaires complets
-```
-
-**Exemple concret :**
-```
-Crée une Entity Product dans domain/product/Product.ts :
-
-Props :
-- name: ProductName
-- description: string
-- price: Price
-- isActive: boolean
-- createdAt: Date
-- updatedAt: Date
-
-Factory :
-- create(props: { name, description, price }): Result<Product>
-- Validation: description 10-1000 caractères
-
-Méthodes business :
-- updatePrice(newPrice: Price): Result<Product>
-- deactivate(): Result<Product>
-- isAvailableForPurchase(): boolean (actif + prix > 0)
-
-Important :
-- Constructeur privé
-- Utilise get() pour accès props
-- clone() pour modifications
-- Tests unitaires complets
-```
-
-### Aggregate avec Events
-
-```
-Crée un Aggregate Order dans domain/order/Order.ts :
-
-Props :
-- customerId: UUID
-- items: OrderItem[]
-- total: Money
-- status: OrderStatus
-
-Events :
-- OrderCreatedEvent
-- OrderItemAddedEvent
-- OrderConfirmedEvent
-
-Méthodes :
-- create(): raise OrderCreatedEvent
-- addItem(): raise OrderItemAddedEvent, recalcule total
-- confirm(): change status, raise OrderConfirmedEvent
-
-Tests + event handlers setup.
+Use get() for props, clone() for updates.
+Add tests.
 ```
 
 ## Use Cases
 
-### Use Case simple (Create)
-
 ```
-Crée un Use Case CreateProductUseCase dans application/use-cases/ :
+Create [Name]UseCase in application/use-cases/:
 
-Input :
-{
-  name: string
-  description: string
-  price: number
-  currency: string
-}
+Input: { [fields] }
 
-Logique :
-1. Valide et crée ProductName
-2. Valide et crée Price
-3. Crée Product entity
-4. Persiste via IProductRepository
-5. Retourne Result<Product>
+Logic:
+1. Validate and create VOs
+2. Create Entity
+3. Persist via I[Entity]Repository
+4. Return Result<[Entity]>
 
-Dépendances :
-- IProductRepository (injection)
-
-Gestion erreurs :
-- Validation fails → Result.fail()
-- Repository fails → Result.fail()
-
-Tests avec mock repository.
-```
-
-### Use Case avec vérifications
-
-```
-Crée CreateOrderUseCase dans application/use-cases/ :
-
-Input :
-{
-  userId: string
-  productIds: string[]
-  quantities: number[]
-}
-
-Logique :
-1. Vérifie user existe (via IUserRepository)
-2. Vérifie chaque product existe et est actif
-3. Vérifie stock disponible
-4. Calcule total
-5. Crée Order
-6. Persiste
-7. Dispatch OrderCreatedEvent
-
-Si une vérification échoue → Result.fail() explicite.
-Retourne Result<Order>.
-
-Tests :
-- Succès complet
-- User not found
-- Product not found
-- Stock insuffisant
-```
-
-### Use Case avec transaction
-
-```
-Crée CompleteOrderUseCase dans application/use-cases/ :
-
-Input : { orderId: string }
-
-Logique (dans Controller avec TransactionService) :
-1. Récupère Order
-2. Vérifie status = PENDING
-3. Crée Payment
-4. Décrémente stock des produits
-5. Change order status = CONFIRMED
-6. Tout dans 1 transaction
-
-Use Case prend trx?: Transaction optionnel.
-Controller gère la transaction.
-
-Tests avec transaction mock.
+Accept trx?: Transaction.
+Add tests with mock repository.
 ```
 
 ## Repositories
 
-### Interface Repository
-
 ```
-Crée interface IProductRepository dans application/ports/ :
+Create I[Entity]Repository in application/ports/:
+- Extends BaseRepository<[Entity]>
+- Custom methods: [list]
 
-Extends BaseRepository<Product>
-
-Méthodes custom :
-- findByName(name: ProductName): Promise<Result<Option<Product>>>
-- findByCategory(category: string): Promise<Result<Product[]>>
-- findActiveProducts(): Promise<Result<Product[]>>
-
-Toutes retournent Result et Option pour single items.
+Create Drizzle[Entity]Repository in adapters/out/:
+- Implements interface
+- Uses [Entity]Mapper
+- All methods accept trx?: Transaction
 ```
 
-### Implémentation Drizzle
+## Routes
 
 ```
-Crée DrizzleProductRepository dans adapters/out/persistence/ :
+Create POST /api/[resources] in adapters/in/api/:
 
-Implémente IProductRepository.
+Zod schema: { [fields] }
 
-Méthodes :
-- create, update, delete, findById, findByName, etc.
-- Utilise ProductMapper pour domain ↔ DB
-- Gestion erreurs: try/catch → Result.fail(DatabaseOperationError)
-- Support transactions via trx?: Transaction
-
-Utilise le pattern de DrizzleUserRepository.
+Execute [Name]UseCase via DI.
+Transform Result → HTTP:
+- Success → 201
+- Validation fail → 400
+- Not found → 404
 ```
 
-### Mapper
+## Complete Feature
 
 ```
-Crée ProductMapper dans adapters/out/persistence/mappers/ :
+Create [Feature] feature with Clean Architecture:
 
-Méthodes statiques :
-- toDomain(row: DbProduct): Result<Product>
-- toPersistence(product: Product): DbProduct
+**Domain** (domain/[feature]/)
+- [VO1].ts (validation rules)
+- [Entity].ts (props, methods)
+- Tests
 
-toDomain :
-1. Reconstruit Value Objects depuis DB
-2. Vérifie validité
-3. Crée Entity avec UUID existant
-4. Gère erreurs → Result.fail()
+**Application** (application/)
+- ports/I[Entity]Repository.ts
+- use-cases/Create[Entity]UseCase.ts
+- Tests with mocks
 
-toPersistence :
-1. Extrait values des VO
-2. Flatten l'Entity
-3. Retourne plain object pour Drizzle
-```
+**Adapters** (adapters/)
+- Schema (packages/drizzle/src/schema/)
+- mappers/[Entity]Mapper.ts
+- persistence/Drizzle[Entity]Repository.ts
+- api/[resources]/route.ts
 
-## Routes API
-
-### Route POST (Create)
-
-```
-Crée route POST /api/products dans adapters/in/api/products/route.ts :
-
-1. Validation Zod :
-{
-  name: z.string().min(3).max(100),
-  description: z.string().min(10).max(1000),
-  price: z.number().positive(),
-  currency: z.enum(['EUR', 'USD', 'GBP'])
-}
-
-2. Execute CreateProductUseCase via DI
-3. Transform Result → HTTP :
-   - Success → 201 + body
-   - Validation fail → 400 + error
-   - Conflict → 409
-   - Other → 500
-
-Pattern exact de POST /api/users.
-```
-
-### Route GET (Read)
-
-```
-Crée route GET /api/products/[id] dans adapters/in/api/products/[id]/route.ts :
-
-1. Récupère id depuis params
-2. Execute GetProductByIdUseCase via DI
-3. Transform Result<Option<Product>> → HTTP :
-   - Some → 200 + product
-   - None → 404
-   - Error → 500
-
-Utilise pattern matching Option avec match().
-```
-
-## Infrastructure
-
-### Schema Drizzle
-
-```
-Crée schema Drizzle pour Product dans packages/drizzle/src/schema/products.ts :
-
-Table products :
-- id: uuid primary key
-- name: varchar(100) not null
-- description: text not null
-- price_amount: decimal(10,2) not null
-- price_currency: varchar(3) not null
-- is_active: boolean default true
-- created_at: timestamp default now()
-- updated_at: timestamp default now()
-
-Index sur name.
-Export table + types.
-```
-
-### DI Module
-
-```
-Crée module DI pour Product dans common/di/modules/product.module.ts :
-
-Bindings :
-- 'IProductRepository' → DrizzleProductRepository
-- 'CreateProductUseCase' → CreateProductUseCase
-- 'GetProductByIdUseCase' → GetProductByIdUseCase
-
-Pattern de user.module.ts.
-
-Enregistre dans container principal (common/di/container.ts).
-```
-
-## Tests
-
-### Value Object tests
-
-```
-Crée tests pour ProductName dans domain/product/__TESTS__/ProductName.test.ts :
-
-Suites :
-- create() success cases
-- create() failure cases (vide, trop court, trop long, caractères invalides)
-- equals() comparison
-
-Coverage : 100%
-Utilise Vitest.
-```
-
-### Entity tests
-
-```
-Crée tests pour Product dans domain/product/__TESTS__/Product.test.ts :
-
-Suites :
-- create() success
-- create() validation failures
-- updatePrice() success
-- updatePrice() failure (prix invalide)
-- deactivate()
-- isAvailableForPurchase()
-- equals() par ID
-
-Coverage : 100%
-Pas de mock DB (domain pur).
-```
-
-### Use Case tests
-
-```
-Crée tests pour CreateProductUseCase dans application/use-cases/__TESTS__/ :
-
-Mock :
-- IProductRepository avec vi.fn()
-
-Cases :
-- Success complet
-- Invalid ProductName
-- Invalid Price
-- Repository failure
-
-Vérifie :
-- Appels au repo
-- Result success/failure
-- Error messages
-
-Coverage : 100%
-```
-
-### Integration tests
-
-```
-Crée tests integration pour DrizzleProductRepository :
-
-Setup :
-- Vraie DB (test database)
-- beforeEach: clean tables
-
-Cases :
-- create() puis findById()
-- update()
-- delete()
-- findByName()
-- Erreurs (duplicate, not found)
-
-afterEach: cleanup
+**Infrastructure**
+- DI module
+- Migration
 ```
 
 ## Refactoring
 
-### Renommer un pattern
-
 ```
-Refactoring : renomme [OldName] en [NewName] partout :
-
-Fichiers à modifier :
-- domain/...
-- application/...
-- adapters/...
+Rename [OldName] to [NewName] everywhere:
+- domain/
+- application/
+- adapters/
 - Tests
 
-Steps :
-1. Renomme fichier
-2. Update tous les imports
-3. Update tous les usages
-4. Run type-check
-5. Run tests
-6. Commit : "refactor([scope]): rename [OldName] to [NewName]"
+Commit: "refactor([scope]): rename [OldName] to [NewName]"
 ```
 
-### Extraire Value Object
+## Next Steps
 
-```
-Dans User entity, le champ address est un plain object.
-Extrait-le en Value Object Address :
-
-1. Crée domain/shared/Address.ts
-2. Value Object avec validation
-3. Update UserProps : address devient Address
-4. Update User.create() pour créer Address
-5. Update UserMapper
-6. Update tests
-7. Migration si nécessaire
-```
-
-## Feature complet
-
-### Feature de A à Z
-
-```
-Crée feature Product complet avec Clean Architecture :
-
-**Domain** (domain/product/)
-- ProductName.ts (VO: 3-100 chars)
-- Price.ts (VO: amount ≥ 0, currency EUR/USD/GBP)
-- Product.ts (Entity avec name, description, price, isActive)
-- ProductCreatedEvent.ts
-- Tests unitaires 100%
-
-**Application** (application/)
-- ports/IProductRepository.ts
-- use-cases/CreateProductUseCase.ts
-- use-cases/GetProductByIdUseCase.ts
-- use-cases/UpdateProductPriceUseCase.ts
-- Tests avec mocks
-
-**Adapters** (adapters/)
-- Schema Drizzle (packages/drizzle/src/schema/products.ts)
-- mappers/ProductMapper.ts (domain ↔ DB)
-- persistence/DrizzleProductRepository.ts
-- api/products/route.ts (POST, GET)
-- api/products/[id]/route.ts (GET, PUT)
-- Tests integration
-
-**Infrastructure**
-- DI: common/di/modules/product.module.ts
-- Migration Drizzle
-
-Time estimate : 15-20 fichiers, 30-40 min avec IA
-```
-
-## Prochaines étapes
-
-- [Claude Code →](/docs/ai/claude-code) - Utiliser ces prompts
-- [Cursor →](/docs/ai/cursor) - Configuration
-- [Votre premier Use Case →](/docs/guides/first-use-case) - Pratique
+- [Claude Code](/docs/ai/claude-code)
+- [Cursor](/docs/ai/cursor)

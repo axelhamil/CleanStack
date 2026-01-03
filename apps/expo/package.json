@@ -11,22 +11,24 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@expo/metro-runtime": "^6.1.2",
     "@tanstack/react-query": "^5.67.3",
     "expo": "~54.0.30",
-    "expo-constants": "~18.0.5",
-    "expo-linking": "~7.1.5",
-    "expo-router": "~5.1.0",
+    "expo-constants": "~18.0.12",
+    "expo-linking": "~8.0.11",
+    "expo-router": "~6.0.21",
     "expo-status-bar": "~3.0.9",
     "nativewind": "^4.1.23",
     "react": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-safe-area-context": "5.4.0",
-    "react-native-screens": "~4.11.1"
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-screens": "~4.16.0"
   },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",
     "@packages/ui": "workspace:*",
-    "@types/react": "~19.1.0",
+    "@types/react": "~19.1.17",
+    "@types/react-dom": "^19.1.11",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.9.2"
   }

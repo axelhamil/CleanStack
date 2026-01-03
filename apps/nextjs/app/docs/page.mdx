@@ -1,167 +1,62 @@
 # Documentation
 
-Welcome to the CleanStack documentation, a modern Next.js starter implementing Clean Architecture and Domain-Driven Design.
-
-## About CleanStack
-
-CleanStack is a Next.js template designed for AI-assisted development. It combines Clean Architecture and Domain-Driven Design with comprehensive documentation that enables AI assistants (Claude Code, Cursor) to generate production-ready code instantly.
-
-### Why CleanStack?
-
-**🤖 100% AI-Friendly - Built for AI Development**
-
-CleanStack is the only Next.js starter optimized for AI-powered development:
-
-- **Repeatable Patterns** - Result, Option, UseCase recognized by AI
-- **Explicit Architecture** - AI knows exactly where to place each file
-- **Strict Types** - TypeScript guides AI toward correct code
-- **Inline Documentation** - CLAUDE.md provides complete context
-- **Clear Rules** - .cursorrules defines do's and don'ts
-
-**Result:** Ask Claude to "create a use case for products" and get a complete implementation (Domain + Application + Adapters + Tests) in seconds.
-
-**Problems Solved:**
-
-- **Growing Complexity** - Clear architecture that scales with your project
-- **Technical Debt** - Battle-tested patterns, no improvisation
-- **Hard to Test** - Isolated business logic, testable without DB
-- **Tight Coupling** - Explicit dependencies via DI
-- **Runtime Bugs** - `Result<T>` and `Option<T>` eliminate crashes
-
-**What You Gain:**
-
-- 10x faster development with AI
-- Production-ready code from first commit
-- Instant onboarding (even for AI)
-- Maintainable architecture for years
-- Simplified unit and integration testing
+Next.js 16 monorepo with Clean Architecture + DDD, optimized for AI-assisted development.
 
 ## Quick Start
 
 ```bash
-# 5-minute installation
-pnpm install
-cp .env.example .env
+pnpm install && cp .env.example .env
 pnpm db && pnpm db:push
 pnpm dev
 ```
 
-Visit [Getting Started](/docs/getting-started) for a detailed guide.
-
 ## Core Concepts
 
-CleanStack is built on 3 pillars:
-
-### 1. Clean Architecture
-
-Separation into 3 layers with strict dependency rules:
+### Clean Architecture
 
 ```
-Adapters → Application → Domain
+Adapters → Application → Domain (zero deps)
 ```
 
-Dependencies always point **inward**. The Domain has zero external dependencies.
+Dependencies point **inward**. Domain has no external imports.
 
-[Learn more about architecture →](/docs/architecture)
+### DDD Patterns
 
-### 2. Domain-Driven Design
+- **Value Objects** - Immutable, validated (`Email`, `Money`)
+- **Entities** - Identity-based (`User`, `Order`)
+- **Result** - No exceptions, explicit errors
+- **Option** - No null, explicit absence
 
-Domain modeling with tactical patterns:
-
-- **Value Objects** - Immutable business concepts (Email, Money)
-- **Entities** - Objects with identity (User, Order)
-- **Aggregates** - Consistency boundaries (UserAggregate)
-- **Domain Events** - Decoupled asynchronous communication
-
-[Discover DDD patterns →](/docs/core-concepts)
-
-### 3. Functional Programming
-
-Patterns for safety and maintainability:
-
-- **`Result<T, E>`** - Explicit error handling without exceptions
-- **`Option<T>`** - Absence of value without `null`
-- **Immutability** - Domain objects frozen with `Object.freeze()`
-- **Composition** - Combining results
-
-[Understand Result and Option →](/docs/core-concepts/result)
-
-## Project Structure
+## Structure
 
 ```
-cleanstack/
-├── apps/nextjs/                 # Main application
-│   ├── src/
-│   │   ├── domain/             # ← Pure business logic
-│   │   ├── application/        # ← Use cases & ports
-│   │   └── adapters/           # ← Controllers & repos
-│   └── common/                 # DI, env, i18n
-│
-├── packages/
-│   ├── ddd-kit/               # DDD primitives
-│   ├── drizzle/               # DB schema & ORM
-│   └── ui/                    # shadcn/ui components
+apps/nextjs/src/
+├── domain/       # Business logic (zero deps)
+├── application/  # Use Cases + Ports (interfaces)
+└── adapters/     # Controllers + Implementations
+packages/
+├── ddd-kit/      # DDD primitives
+├── drizzle/      # Database schema
+└── ui/           # shadcn/ui components
 ```
 
-## Documentation Navigation
+## Navigation
 
-### Getting Started
+**Start Here**
+- [Getting Started](/docs/getting-started) - Installation
+- [Core Concepts](/docs/core-concepts) - DDD patterns
+- [Architecture](/docs/architecture) - Clean Architecture
 
-1. [**Getting Started**](/docs/getting-started) - Installation and setup
-2. [**Core Concepts**](/docs/core-concepts) - Essential DDD patterns
-3. [**Architecture**](/docs/architecture) - Clean Architecture in detail
+**Guides**
+- [First Use Case](/docs/guides/first-use-case) - Create a feature
+- [Transactions](/docs/guides/transactions) - Multi-step ops
+- [Testing](/docs/guides/testing) - Test strategy
 
-### Practical Guides
-
-- [Your First Use Case](/docs/guides/first-use-case)
-- [Managing Transactions](/docs/guides/transactions)
-- [Testing Your Code](/docs/guides/testing)
-
-### AI Development
-
-- [AI-Friendly Development](/docs/ai) - Why CleanStack works perfectly with AI
-- [Claude Code Guide](/docs/ai/claude-code) - Using Claude Code with CleanStack
-- [Cursor Guide](/docs/ai/cursor) - Cursor setup and workflow
-- [Prompt Collection](/docs/ai/prompts) - Tested prompts for common tasks
-
-### Resources
-
-- [GitHub](https://github.com/axelhamil/nextjs-clean-architecture-starter) - Source code
-- [CLAUDE.md](https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/CLAUDE.md) - Complete AI guide
-- [Claude Code](https://claude.ai/code) - AI development assistant
+**AI Development**
+- [AI Overview](/docs/ai) - Why CleanStack + AI
+- [Claude Code](/docs/ai/claude-code) - Recommended tool
+- [Prompts](/docs/ai/prompts) - Ready-to-use prompts
 
 ## Tech Stack
 
-**Framework & Language**
-- Next.js 16 (App Router, RSC, Server Actions)
-- React 19
-- TypeScript 5.9 (strict mode)
-
-**Database**
-- PostgreSQL 17
-- Drizzle ORM (type-safe SQL)
-
-**Build System**
-- Turborepo (monorepo orchestration)
-- PNPM workspaces
-
-**Styling**
-- Tailwind CSS 4
-- shadcn/ui (accessible components)
-
-**Code Quality**
-- Biome (linter + formatter)
-- Vitest (unit tests)
-- Husky (git hooks)
-
-**DDD Toolkit**
-- @packages/ddd-kit (Result, Option, Entity, ValueObject)
-- @evyweb/ioctopus (DI container)
-
-## Need Help?
-
-- **Questions** - [Open an issue](https://github.com/axelhamil/nextjs-clean-architecture-starter/issues)
-- **Bugs** - [Report a bug](https://github.com/axelhamil/nextjs-clean-architecture-starter/issues/new?template=bug_report.md)
-- **Discussions** - [GitHub Discussions](https://github.com/axelhamil/nextjs-clean-architecture-starter/discussions)
-
-Ready to start? Check out the [Getting Started](/docs/getting-started) guide.
+Next.js 16 • TypeScript 5.9 • Drizzle ORM • PostgreSQL • Turborepo • Tailwind CSS 4 • Biome • Vitest

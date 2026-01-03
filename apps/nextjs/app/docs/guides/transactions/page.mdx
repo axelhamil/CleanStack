@@ -1,575 +1,147 @@
 # Transactions
 
-Managing atomicity for multi-step operations.
+Atomicity for multi-step operations.
 
-## Why Transactions?
-
-### The Problem
-
-Imagine creating a user with a welcome email:
+## The Problem
 
 ```typescript
-// ❌ WITHOUT transaction - risk of inconsistency
-export async function POST(request: Request) {
-  const createUserUseCase = getInjection('CreateUserUseCase')
-  const sendEmailUseCase = getInjection('SendWelcomeEmailUseCase')
+// ❌ Without transaction - inconsistent state possible
+const userResult = await createUserUseCase.execute(body)
+if (userResult.isFailure) return // User not created
 
-  const body = await request.json()
-
-  // 1. Create user
-  const userResult = await createUserUseCase.execute(body)
-  if (userResult.isFailure) {
-    return Response.json({ error: userResult.error }, { status: 400 })
-  }
-
-  // 2. Send email
-  const emailResult = await sendEmailUseCase.execute({ userId: userResult.value.id })
-  if (emailResult.isFailure) {
-    // ❌ PROBLEM: User created but email failed!
-    // The user exists in the database but hasn't received an email
-    return Response.json({ error: emailResult.error }, { status: 500 })
-  }
-
-  return Response.json(userResult.value)
-}
+const emailResult = await sendEmailUseCase.execute({ userId: userResult.value.id })
+if (emailResult.isFailure) return // User created but email failed!
 ```
 
-**Problem:** If email sending fails, the user remains in the database in an inconsistent state.
-
-### The Solution: Transactions
-
-A transaction guarantees that **ALL operations succeed or ALL fail**.
+## The Solution
 
 ```typescript
-// ✅ WITH transaction - all or nothing
+// ✅ With transaction - all or nothing
 const result = await txManager.execute(async (trx) => {
-  // 1. Create user
   const userResult = await createUserUseCase.execute(body, trx)
-  if (userResult.isFailure) return Result.fail(userResult.error)
+  if (userResult.isFailure) return Result.fail(userResult.error) // Rollback
 
-  // 2. Send email
   const emailResult = await sendEmailUseCase.execute({ userId: userResult.value.id }, trx)
-  if (emailResult.isFailure) return Result.fail(emailResult.error)
+  if (emailResult.isFailure) return Result.fail(emailResult.error) // Rollback
 
-  return Result.ok(userResult.value)
+  return Result.ok(userResult.value) // Commit
 })
-// If emailResult fails, the user is NOT created (automatic rollback)
 ```
 
-## Transaction Architecture
+## Architecture
 
-### Rule: Controller Manages, UseCase Executes
-
-**The Controller/Route Handler manages the transaction lifecycle.**
+**Controller manages transaction, Use Case executes with `trx`.**
 
 ```
-╔═════════════════════════════════════════╗
-║ Route Handler / Controller              ║
-║                                         ║
-║ • Retrieves TransactionManager          ║
-║ • Starts transaction                    ║
-║ • Composes multiple UseCases            ║
-║ • Auto-commit on success                ║
-║ • Auto-rollback on error                ║
-╚═══════════════════╦═════════════════════╝
-                    ║
-                    ║ execute with trx
-                    ║
-╔═══════════════════╩═════════════════════╗
-║ Use Cases                               ║
-║                                         ║
-║ • Receive trx?: Transaction             ║
-║ • Pass trx to Repositories              ║
-║ • DO NOT manage commit/rollback         ║
-╚═══════════════════╦═════════════════════╝
-                    ║
-                    ║ pass trx
-                    ║
-╔═══════════════════╩═════════════════════╗
-║ Repositories                            ║
-║                                         ║
-║ • Use trx if provided, otherwise db     ║
-║ • const database = trx ?? db            ║
-╚═════════════════════════════════════════╝
-```
+Controller
+├─ Gets TransactionManager from DI
+├─ Starts transaction
+├─ Calls Use Cases with trx
+└─ Auto-commit/rollback
 
-### Why?
+Use Case
+├─ Receives trx?: Transaction
+└─ Passes trx to Repository
 
-**✅ Advantages of this pattern:**
-- Controller composes multiple UseCases in 1 transaction
-- UseCases remain focused on business logic
-- Easy to test UseCases with or without transactions
-- Control of transaction boundaries at the right level
-
-**❌ Anti-pattern: UseCase manages transaction**
-```typescript
-// ❌ BAD - UseCase manages transaction
-class CreateUserUseCase {
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    return await this.txManager.execute(async (trx) => {
-      // Impossible to compose multiple UseCases in 1 transaction!
-    })
-  }
-}
+Repository
+├─ const db = trx ?? defaultDb
+└─ Uses db for queries
 ```
 
 ## Implementation
 
-### 1. TransactionService (Infrastructure)
+### Route Handler
 
 ```typescript
-// adapters/out/persistence/TransactionService.ts
-import type { Transaction } from 'drizzle-orm/node-postgres'
-import { db } from '@packages/drizzle'
-
-export interface ITransactionManagerService {
-  execute<T>(
-    callback: (trx: Transaction) => Promise<Result<T>>,
-    parent?: Transaction
-  ): Promise<Result<T>>
-}
-
-export class TransactionService implements ITransactionManagerService {
-  async execute<T>(
-    callback: (trx: Transaction) => Promise<Result<T>>,
-    parent?: Transaction
-  ): Promise<Result<T>> {
-    // If parent transaction exists, use it (nested transaction)
-    if (parent) {
-      return await callback(parent)
-    }
-
-    // Otherwise, create new transaction
-    try {
-      return await db.transaction(async (trx) => {
-        const result = await callback(trx)
-
-        // If Result is failure, throw to rollback
-        if (result.isFailure) {
-          throw new Error(result.error)
-        }
-
-        return result  // Auto-commit
-      })
-    } catch (error) {
-      // Auto-rollback
-      return Result.fail(
-        error instanceof Error ? error.message : 'Transaction failed'
-      )
-    }
-  }
-}
-```
-
-### 2. DI Registration
-
-```typescript
-// common/di/modules/transaction.module.ts
-import { ApplicationContainer } from '@evyweb/ioctopus'
-import { TransactionService } from '@/adapters/out/persistence/TransactionService'
-
-export const transactionModule = (container: ApplicationContainer) => {
-  container.bind('ITransactionManagerService').toClass(TransactionService)
-}
-
-// common/di/types.ts
-export const DI_SYMBOLS = {
-  ITransactionManagerService: Symbol.for('ITransactionManagerService'),
-  // ...
-}
-
-export type DITokens = {
-  ITransactionManagerService: ITransactionManagerService
-  // ...
-}
-```
-
-### 3. UseCase Accepts Optional Transaction
-
-```typescript
-// application/use-cases/CreateUserUseCase.ts
-import type { Transaction } from 'drizzle-orm/node-postgres'
-import type { IUserRepository } from '@/application/ports/IUserRepository'
-
-export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
-  constructor(private readonly userRepo: IUserRepository) {}
-
-  async execute(
-    input: CreateUserInput,
-    trx?: Transaction  // ✅ Optional parameter
-  ): Promise<Result<User>> {
-    const emailOrError = Email.create(input.email)
-    if (emailOrError.isFailure) return Result.fail(emailOrError.error)
-
-    const userOrError = User.create({
-      email: emailOrError.getValue(),
-      name: input.name,
-    })
-    if (userOrError.isFailure) return Result.fail(userOrError.error)
-
-    // Pass trx to repository
-    return await this.userRepo.create(userOrError.getValue(), trx)
-  }
-}
-```
-
-### 4. Repository Supports Transaction
-
-```typescript
-// adapters/out/persistence/DrizzleUserRepository.ts
-import type { Transaction } from 'drizzle-orm/node-postgres'
-import { db } from '@packages/drizzle'
-
-export class DrizzleUserRepository implements IUserRepository {
-  async create(user: User, trx?: Transaction): Promise<Result<User>> {
-    const database = trx ?? db  // ✅ Use trx if provided, otherwise db
-
-    try {
-      const data = UserMapper.toPersistence(user)
-      await database.insert(users).values(data)
-      return Result.ok(user)
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Failed to create user'))
-    }
-  }
-
-  async findById(id: UUID, trx?: Transaction): Promise<Result<Option<User>>> {
-    const database = trx ?? db
-
-    try {
-      const row = await database.query.users.findFirst({
-        where: eq(users.id, id.value)
-      })
-
-      if (!row) return Result.ok(None.of())
-
-      const userOrError = UserMapper.toDomain(row)
-      if (userOrError.isFailure) return Result.fail(userOrError.error)
-
-      return Result.ok(Some.of(userOrError.getValue()))
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Query failed'))
-    }
-  }
-
-  // All BaseRepository methods accept trx?: Transaction
-}
-```
-
-### 5. Controller Uses Transaction
-
-```typescript
-// adapters/in/api/users/route.ts
-import { getInjection } from '@/common/di/container'
-import type { Transaction } from 'drizzle-orm/node-postgres'
-
 export async function POST(request: Request) {
   const txManager = getInjection('ITransactionManagerService')
   const createUserUseCase = getInjection('CreateUserUseCase')
-  const sendWelcomeEmailUseCase = getInjection('SendWelcomeEmailUseCase')
+  const createProfileUseCase = getInjection('CreateProfileUseCase')
 
   const body = await request.json()
 
-  // Controller manages the transaction
   const result = await txManager.execute(async (trx) => {
-    // Compose multiple UseCases in 1 transaction
     const userResult = await createUserUseCase.execute(body, trx)
     if (userResult.isFailure) return Result.fail(userResult.error)
 
-    const emailResult = await sendWelcomeEmailUseCase.execute(
-      { userId: userResult.value.id },
-      trx
-    )
-    if (emailResult.isFailure) return Result.fail(emailResult.error)
-
-    return Result.ok(userResult.value)
-  })
-  // Transaction auto-commits on success, auto-rollbacks on failure
-
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
-  return Response.json(result.value, { status: 201 })
-}
-```
-
-## Usage Examples
-
-### Example 1: User + Profile Creation
-
-```typescript
-// Route handler
-export async function POST(request: Request) {
-  const txManager = getInjection('ITransactionManagerService')
-  const createUserUseCase = getInjection('CreateUserUseCase')
-  const createProfileUseCase = getInjection('CreateUserProfileUseCase')
-
-  const body = await request.json()
-
-  const result = await txManager.execute(async (trx) => {
-    // 1. Create user
-    const userResult = await createUserUseCase.execute(
-      { email: body.email, name: body.name },
-      trx
-    )
-    if (userResult.isFailure) return Result.fail(userResult.error)
-
-    // 2. Create profile
     const profileResult = await createProfileUseCase.execute(
-      { userId: userResult.value.id, bio: body.bio },
+      { userId: userResult.value.id },
       trx
     )
     if (profileResult.isFailure) return Result.fail(profileResult.error)
 
-    return Result.ok({ user: userResult.value, profile: profileResult.value })
+    return Result.ok(userResult.value)
   })
 
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
+  if (result.isFailure) return Response.json({ error: result.error }, { status: 400 })
   return Response.json(result.value, { status: 201 })
 }
 ```
 
-**Behavior:**
-- ✅ If profile fails → user rollback too
-- ✅ All or nothing
-
-### Example 2: Money Transfer
+### Use Case
 
 ```typescript
-export async function POST(request: Request) {
-  const txManager = getInjection('ITransactionManagerService')
-  const debitAccountUseCase = getInjection('DebitAccountUseCase')
-  const creditAccountUseCase = getInjection('CreditAccountUseCase')
+export class CreateUserUseCase implements UseCase<Input, User> {
+  constructor(private readonly userRepo: IUserRepository) {}
 
-  const { fromAccountId, toAccountId, amount } = await request.json()
+  async execute(input: Input, trx?: Transaction): Promise<Result<User>> {
+    const userOrError = User.create(input)
+    if (userOrError.isFailure) return Result.fail(userOrError.error)
 
-  const result = await txManager.execute(async (trx) => {
-    // 1. Debit source account
-    const debitResult = await debitAccountUseCase.execute(
-      { accountId: fromAccountId, amount },
-      trx
-    )
-    if (debitResult.isFailure) return Result.fail(debitResult.error)
-
-    // 2. Credit destination account
-    const creditResult = await creditAccountUseCase.execute(
-      { accountId: toAccountId, amount },
-      trx
-    )
-    if (creditResult.isFailure) return Result.fail(creditResult.error)
-
-    return Result.ok({ debit: debitResult.value, credit: creditResult.value })
-  })
-
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
-  return Response.json(result.value)
-}
-```
-
-**Behavior:**
-- ✅ If credit fails, debit is cancelled (rollback)
-- ✅ No money lost/created
-
-### Example 3: Order with Stock
-
-```typescript
-export async function POST(request: Request) {
-  const txManager = getInjection('ITransactionManagerService')
-  const createOrderUseCase = getInjection('CreateOrderUseCase')
-  const decrementStockUseCase = getInjection('DecrementStockUseCase')
-
-  const { userId, productId, quantity } = await request.json()
-
-  const result = await txManager.execute(async (trx) => {
-    // 1. Create order
-    const orderResult = await createOrderUseCase.execute(
-      { userId, productId, quantity },
-      trx
-    )
-    if (orderResult.isFailure) return Result.fail(orderResult.error)
-
-    // 2. Decrement stock
-    const stockResult = await decrementStockUseCase.execute(
-      { productId, quantity },
-      trx
-    )
-    if (stockResult.isFailure) {
-      // Insufficient stock → rollback order
-      return Result.fail(stockResult.error)
-    }
-
-    return Result.ok(orderResult.value)
-  })
-
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
-  return Response.json(result.value, { status: 201 })
-}
-```
-
-## Nested Transactions
-
-If a UseCase calls another UseCase that starts a transaction, use the `parent` parameter:
-
-```typescript
-// UseCase A starts a transaction
-export class CreateOrderWithPaymentUseCase {
-  constructor(
-    private txManager: ITransactionManagerService,
-    private createOrderUseCase: CreateOrderUseCase,
-    private processPaymentUseCase: ProcessPaymentUseCase
-  ) {}
-
-  async execute(input: CreateOrderWithPaymentInput): Promise<Result<Order>> {
-    return await this.txManager.execute(async (trx) => {
-      const orderResult = await this.createOrderUseCase.execute(input, trx)
-      if (orderResult.isFailure) return Result.fail(orderResult.error)
-
-      const paymentResult = await this.processPaymentUseCase.execute(
-        { orderId: orderResult.value.id },
-        trx  // ✅ Pass same transaction
-      )
-      if (paymentResult.isFailure) return Result.fail(paymentResult.error)
-
-      return Result.ok(orderResult.value)
-    })
+    return await this.userRepo.create(userOrError.value, trx)
   }
 }
 ```
 
-**Important:** Drizzle doesn't truly support nested transactions. The `parent` parameter simply allows reusing the existing transaction.
+### Repository
 
-## Best Practices
+```typescript
+export class DrizzleUserRepository implements IUserRepository {
+  async create(user: User, trx?: Transaction): Promise<Result<User>> {
+    const database = trx ?? db  // Use transaction if provided
+    await database.insert(users).values(UserMapper.toPersistence(user))
+    return Result.ok(user)
+  }
+}
+```
+
+## Rules
 
 ### ✅ Do
 
-**Manage transaction at Controller level**
 ```typescript
-// ✅ GOOD
-export async function POST(request: Request) {
-  const txManager = getInjection('ITransactionManagerService')
-
-  const result = await txManager.execute(async (trx) => {
-    // Compose UseCases here
-  })
-}
-```
-
-**Pass trx to all repositories**
-```typescript
-// ✅ GOOD
-async create(entity: Entity, trx?: Transaction): Promise<Result<Entity>> {
-  const database = trx ?? db
-  await database.insert(...)
-}
-```
-
-**Return Result in callback**
-```typescript
-// ✅ GOOD
+// Controller manages transaction
 await txManager.execute(async (trx) => {
-  const result = await useCase.execute(input, trx)
-  if (result.isFailure) return Result.fail(result.error)  // Rollback
-  return Result.ok(result.value)  // Commit
+  await useCase1.execute(input1, trx)
+  await useCase2.execute(input2, trx)
 })
+
+// Pass trx to all repos
+async execute(input, trx?: Transaction) {
+  return await this.repo.create(entity, trx)
+}
+
+// Use trx if provided
+const database = trx ?? db
 ```
 
 ### ❌ Don't
 
-**UseCase starting a transaction**
 ```typescript
-// ❌ BAD - UseCase manages transaction
+// Use Case managing transaction
 class CreateUserUseCase {
-  async execute(input: CreateUserInput): Promise<Result<User>> {
+  async execute(input) {
     return await this.txManager.execute(async (trx) => {
-      // Impossible to compose this UseCase in a parent transaction!
+      // Can't compose with other Use Cases!
     })
   }
 }
-```
 
-**Forgetting to pass trx to repository**
-```typescript
-// ❌ BAD - Doesn't pass trx
-await txManager.execute(async (trx) => {
-  await this.repo.create(user)  // ❌ Uses db, not trx!
-})
-
-// ✅ GOOD
-await txManager.execute(async (trx) => {
-  await this.repo.create(user, trx)  // ✅ Uses trx
-})
-```
-
-**Throwing exceptions instead of Result**
-```typescript
-// ❌ BAD - Throw instead of Result
-await txManager.execute(async (trx) => {
-  if (error) throw new Error('Failed')  // Rollback but not type-safe
-})
-
-// ✅ GOOD
-await txManager.execute(async (trx) => {
-  if (error) return Result.fail('Failed')  // Rollback + type-safe
-})
-```
-
-## Testing
-
-### Test without transaction (fast)
-
-```typescript
-describe('CreateUserUseCase', () => {
-  it('should create user', async () => {
-    const mockRepo = { create: vi.fn().mockResolvedValue(Result.ok(user)) }
-    const useCase = new CreateUserUseCase(mockRepo)
-
-    const result = await useCase.execute(input)  // Without trx
-
-    expect(result.isSuccess).toBe(true)
-  })
-})
-```
-
-### Test with transaction (integration)
-
-```typescript
-describe('POST /api/users (integration)', () => {
-  it('should rollback on email failure', async () => {
-    const txManager = new TransactionService()
-    const userRepo = new DrizzleUserRepository()
-    const emailService = { send: vi.fn().mockResolvedValue(Result.fail('SMTP error')) }
-
-    const result = await txManager.execute(async (trx) => {
-      const userResult = await createUserUseCase.execute(input, trx)
-      if (userResult.isFailure) return Result.fail(userResult.error)
-
-      const emailResult = await sendEmailUseCase.execute({ userId: userResult.value.id }, trx)
-      if (emailResult.isFailure) return Result.fail(emailResult.error)
-
-      return Result.ok(userResult.value)
-    })
-
-    expect(result.isFailure).toBe(true)
-
-    // Verify user does NOT exist in DB (rollback)
-    const userInDb = await userRepo.findById(user.id)
-    expect(userInDb.value.isNone()).toBe(true)
-  })
-})
+// Forgetting to pass trx
+await this.repo.create(user)  // Uses default db, not trx!
 ```
 
 ## Next Steps
 
-- [Testing Strategy →](/docs/guides/testing) - Test transactions
-- [Dependency Rule →](/docs/architecture/dependency-rule) - Why Controller manages transactions
-- [Your First Use Case →](/docs/guides/first-use-case) - Implement with transactions
+- [Testing](/docs/guides/testing)
+- [First Use Case](/docs/guides/first-use-case)

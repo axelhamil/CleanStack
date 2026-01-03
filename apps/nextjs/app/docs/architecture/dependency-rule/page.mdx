@@ -1,566 +1,117 @@
 # Dependency Rule
 
-The fundamental rule of Clean Architecture.
+## The Rule
 
-## The Golden Rule
-
-**All dependencies point INWARD, toward the Domain.**
+**All dependencies point INWARD toward the Domain.**
 
 ```
-╔═══════════════════════════════════╗
-║ Adapters (External)               ║
-║                                   ║
-║ ✅ Can import:                    ║
-║    • Application                  ║
-║    • Domain                       ║
-║    • Frameworks (Next.js, etc.)   ║
-╚═════════════════╦═════════════════╝
-                  ║
-                  ║ depends on
-                  ║
-╔═════════════════╩═════════════════╗
-║ Application                       ║
-║                                   ║
-║ ✅ Can import:                    ║
-║    • Domain                       ║
-║    • ddd-kit                      ║
-║                                   ║
-║ ❌ CANNOT import:                 ║
-║    • Adapters                     ║
-╚═════════════════╦═════════════════╝
-                  ║
-                  ║ depends on
-                  ║
-╔═════════════════╩═════════════════╗
-║ Domain (Core)                     ║
-║                                   ║
-║ ✅ Can import:                    ║
-║    • ddd-kit ONLY                 ║
-║                                   ║
-║ ❌ CANNOT import:                 ║
-║    • Application                  ║
-║    • Adapters                     ║
-║    • Frameworks                   ║
-║    • Database                     ║
-╚═══════════════════════════════════╝
+╔════════════════════════════════════╗
+║ Adapters                           ║
+║ ✅ Can import: Application, Domain ║
+║ ✅ Frameworks allowed              ║
+╚═══════════════╦════════════════════╝
+                ║
+╔═══════════════╩════════════════════╗
+║ Application                        ║
+║ ✅ Can import: Domain, ddd-kit     ║
+║ ❌ Cannot import: Adapters         ║
+╚═══════════════╦════════════════════╝
+                ║
+╔═══════════════╩════════════════════╗
+║ Domain (Core)                      ║
+║ ✅ Can import: ddd-kit ONLY        ║
+║ ❌ Cannot import: anything else    ║
+╚════════════════════════════════════╝
 ```
 
-## Why This Rule?
+## Why?
 
-### 1. Business Independence
-
-Domain depends on nothing → can be tested and reused everywhere.
-
-**Without the rule:**
+### Testability
+Domain is 100% testable without DB/framework:
 ```typescript
-// ❌ Domain coupled to Next.js
-import { NextRequest } from 'next/server'
-
-export class User extends Entity<UserProps> {
-  static fromRequest(req: NextRequest): Result<User> {
-    // Impossible to reuse User without Next.js
-  }
-}
-```
-
-**With the rule:**
-```typescript
-// ✅ Pure Domain
-import { Entity, Result } from '@packages/ddd-kit'
-
-export class User extends Entity<UserProps> {
-  static create(props: CreateUserProps): Result<User> {
-    // Works everywhere: Next.js, Express, CLI, etc.
-  }
-}
-```
-
-### 2. Testability
-
-Each layer can be tested without heavy dependencies.
-
-**Domain** - Ultra-fast tests without DB/framework:
-```typescript
-import { describe, it, expect } from 'vitest'
-import { Email } from './Email'
-
-describe('Email Value Object', () => {
-  it('should validate email format', () => {
-    const result = Email.create('user@example.com')
-    expect(result.isSuccess).toBe(true)
-  })
-  // No need for DB, API, Next.js - just TypeScript!
-})
-```
-
-**Application** - Tests with simple mocks:
-```typescript
-describe('CreateUserUseCase', () => {
-  it('should create user', async () => {
-    const mockRepo = { create: vi.fn().mockResolvedValue(Result.ok(user)) }
-    const useCase = new CreateUserUseCase(mockRepo)
-
-    const result = await useCase.execute(input)
-
-    expect(result.isSuccess).toBe(true)
-    // No need for real DB!
+describe('Email', () => {
+  it('rejects invalid format', () => {
+    expect(Email.create('invalid').isFailure).toBe(true)
   })
 })
 ```
 
-### 3. Easy Changes
-
-Replacing a framework or DB only touches Adapters.
-
-**Scenario: Migrate from Drizzle to Prisma**
-- ✅ Domain intact (0 modifications)
-- ✅ Application intact (0 modifications)
-- ✅ Only Repository implementations change (Adapters)
-
+### Easy Changes
+Replace Drizzle→Prisma: only touch Adapters.
 ```typescript
-// Application layer - UNCHANGED
-export interface IUserRepository extends BaseRepository<User> {
-  findByEmail(email: string): Promise<Result<Option<User>>>
-}
+// Application unchanged
+export interface IUserRepository extends BaseRepository<User> { }
 
-// Adapters layer - BEFORE
-export class DrizzleUserRepository implements IUserRepository { }
-
-// Adapters layer - AFTER
+// Only create new adapter
 export class PrismaUserRepository implements IUserRepository { }
 ```
 
-### 4. AI-Friendly
-
-AI instantly understands where to put code.
-
-**Prompt:** "Add a `phoneNumber` field to User"
-
-AI knows:
-1. Create `PhoneNumber.ts` in **Domain** (Value Object)
-2. Add `phoneNumber: PhoneNumber` to `UserProps` in **Domain**
-3. Update `CreateUserUseCase` in **Application**
-4. Modify `UserMapper` in **Adapters**
-
-Why? **Because layers are explicit and imports are forbidden.**
-
 ## Rules by Layer
 
-### Domain Layer
-
-**ZERO dependencies except `@packages/ddd-kit`.**
-
-#### ✅ Allowed
-
+### Domain
 ```typescript
-// Only ddd-kit
-import { Entity, Result, UUID, ValueObject } from '@packages/ddd-kit'
-
-// Other Domain files
+// ✅ Allowed
+import { Entity, Result, UUID } from '@packages/ddd-kit'
 import { Email } from './Email'
-import { UserName } from './UserName'
-import { UserCreatedEvent } from './events/UserCreatedEvent'
 
-// Native TypeScript types
-import type { SomeType } from './types'
-```
-
-#### ❌ Forbidden
-
-```typescript
-// ❌ FORBIDDEN: Application
-import { CreateUserUseCase } from '@/application/use-cases/CreateUserUseCase'
-
-// ❌ FORBIDDEN: Adapters
-import { DrizzleUserRepository } from '@/adapters/out/persistence/DrizzleUserRepository'
-
-// ❌ FORBIDDEN: Next.js framework
+// ❌ Forbidden
+import { db } from '@packages/drizzle'
 import { NextRequest } from 'next/server'
-import { useRouter } from 'next/navigation'
-
-// ❌ FORBIDDEN: Database
-import { db } from '@packages/drizzle'
-import { eq } from 'drizzle-orm'
-
-// ❌ FORBIDDEN: External validation
 import { z } from 'zod'
-
-// ❌ FORBIDDEN: External APIs
-import Stripe from 'stripe'
-import sgMail from '@sendgrid/mail'
-
-// ❌ FORBIDDEN: Utility libraries
-import axios from 'axios'
-import dayjs from 'dayjs'
+import { CreateUserUseCase } from '@/application/..'
 ```
 
-**Common violation example:**
+### Application
 ```typescript
-// ❌ BAD - Domain imports Zod
-import { z } from 'zod'
-
-export class Email extends ValueObject<{ value: string }> {
-  protected validate(props): Result<typeof props> {
-    const schema = z.string().email()  // ❌ Coupled to Zod
-    const result = schema.safeParse(props.value)
-    return result.success ? Result.ok(props) : Result.fail(result.error)
-  }
-}
-```
-
-```typescript
-// ✅ GOOD - Pure TypeScript validation
-export class Email extends ValueObject<{ value: string }> {
-  protected validate(props): Result<typeof props> {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-    if (!emailRegex.test(props.value)) {
-      return Result.fail('Invalid email format')
-    }
-
-    return Result.ok(props)
-  }
-}
-```
-
-### Application Layer
-
-**Can import Domain + ddd-kit. That's it.**
-
-#### ✅ Allowed
-
-```typescript
-// Domain
+// ✅ Allowed
 import { User } from '@/domain/user/User'
-import { Email } from '@/domain/user/Email'
-import { UserCreatedEvent } from '@/domain/user/events/UserCreatedEvent'
-
-// ddd-kit
-import { Result, UseCase, Option, Some, None } from '@packages/ddd-kit'
-
-// Interfaces in Application
 import type { IUserRepository } from '@/application/ports/IUserRepository'
-import type { IEmailService } from '@/application/ports/IEmailService'
+
+// ❌ Forbidden
+import { DrizzleUserRepository } from '@/adapters/..'
+import { db } from '@packages/drizzle'
 ```
 
-#### ❌ Forbidden
-
+### Adapters
 ```typescript
-// ❌ FORBIDDEN: Adapters (concrete implementations)
-import { DrizzleUserRepository } from '@/adapters/out/persistence/DrizzleUserRepository'
-import { SendGridEmailService } from '@/adapters/out/email/SendGridEmailService'
-
-// ❌ FORBIDDEN: Controllers
-import { createUser } from '@/adapters/in/api/users/route'
-
-// ❌ FORBIDDEN: Database
+// ✅ All allowed
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+import { User } from '@/domain/user/User'
 import { db } from '@packages/drizzle'
-
-// ❌ FORBIDDEN: Framework
 import { NextRequest } from 'next/server'
-
-// ❌ FORBIDDEN: External APIs
-import Stripe from 'stripe'
 ```
-
-**Common violation example:**
-```typescript
-// ❌ BAD - Use Case imports concrete implementation
-import { DrizzleUserRepository } from '@/adapters/out/persistence/DrizzleUserRepository'
-
-export class CreateUserUseCase {
-  private repo = new DrizzleUserRepository()  // ❌ Direct coupling
-
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    return await this.repo.create(...)
-  }
-}
-```
-
-```typescript
-// ✅ GOOD - Use Case depends on interface
-import type { IUserRepository } from '@/application/ports/IUserRepository'
-
-export class CreateUserUseCase {
-  constructor(
-    private readonly repo: IUserRepository  // ✅ Interface (Dependency Inversion)
-  ) {}
-
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    return await this.repo.create(...)
-  }
-}
-```
-
-### Adapters Layer
-
-**Can import EVERYTHING. It's the external layer.**
-
-#### ✅ Allowed
-
-```typescript
-// Application (ports/interfaces)
-import type { IUserRepository } from '@/application/ports/IUserRepository'
-import type { IEmailService } from '@/application/ports/IEmailService'
-
-// Domain
-import { User } from '@/domain/user/User'
-import { Email } from '@/domain/user/Email'
-
-// ddd-kit
-import { Result, Option, Some, None } from '@packages/ddd-kit'
-
-// Database
-import { db } from '@packages/drizzle'
-import { users } from '@packages/drizzle/schema'
-import { eq } from 'drizzle-orm'
-
-// Framework
-import { NextRequest, NextResponse } from 'next/server'
-
-// Validation
-import { z } from 'zod'
-
-// External APIs
-import Stripe from 'stripe'
-import sgMail from '@sendgrid/mail'
-
-// DI Container
-import { getInjection } from '@/common/di/container'
-```
-
-**No restrictions** - this is the layer that connects to the outside world.
 
 ## Dependency Inversion
 
-The key principle: **Application defines interfaces, Adapters implements them.**
+Application defines **what**, Adapters define **how**.
 
-### Complete Pattern
-
-```
-┌─────────────────────────────────────────────┐
-│ Application Layer                           │
-│                                             │
-│ interface IUserRepository {                 │
-│   create(user: User): Promise<Result<User>> │
-│ }                                           │
-│                                             │
-│ class CreateUserUseCase {                   │
-│   constructor(repo: IUserRepository) {}     │ ← Depends on INTERFACE
-│ }                                           │
-└─────────────────────────────────────────────┘
-                    ▲
-                    │ implements
-                    │
-┌─────────────────────────────────────────────┐
-│ Adapters Layer                              │
-│                                             │
-│ class DrizzleUserRepository                 │
-│       implements IUserRepository {          │
-│   create(user: User): Promise<Result<User>> │
-│     // Drizzle implementation               │
-│   }                                         │
-│ }                                           │
-└─────────────────────────────────────────────┘
-```
-
-### Why?
-
-**Without inversion:**
 ```typescript
-// ❌ Application depends on implementation
-import { DrizzleUserRepository } from '@/adapters/...'
-
-class CreateUserUseCase {
-  constructor(private repo: DrizzleUserRepository) {}
-  // Coupled to Drizzle - impossible to change without breaking Application
-}
-```
-
-**With inversion:**
-```typescript
-// ✅ Application defines the contract
+// Application defines interface
 export interface IUserRepository {
   create(user: User): Promise<Result<User>>
 }
 
-class CreateUserUseCase {
-  constructor(private repo: IUserRepository) {}
-  // Accepts ANY implementation
-}
-
-// Adapters implements
-class DrizzleUserRepository implements IUserRepository { }
-class PrismaUserRepository implements IUserRepository { }
-class InMemoryUserRepository implements IUserRepository { }
-```
-
-**Benefits:**
-- ✅ Replace Drizzle → Prisma without touching Application
-- ✅ Tests with InMemoryRepository
-- ✅ Application defines its needs, not how to satisfy them
-
-## Detecting Violations
-
-### With TypeScript
-
-The compiler prevents forbidden imports:
-
-```typescript
-// Domain layer
-import { db } from '@packages/drizzle'  // ❌ TS Error
-
-export class User extends Entity<UserProps> {
-  async save() {
-    await db.insert(users).values(this)  // Won't compile!
-  }
-}
-```
-
-**Resolve:**
-```bash
-pnpm type-check
-# Error: Cannot find module '@packages/drizzle' in domain layer
-```
-
-### With ESLint (optional)
-
-Configure `eslint-plugin-import` to forbid certain imports:
-
-```json
-{
-  "rules": {
-    "import/no-restricted-paths": [
-      "error",
-      {
-        "zones": [
-          {
-            "target": "./src/domain",
-            "from": "./src/application"
-          },
-          {
-            "target": "./src/domain",
-            "from": "./src/adapters"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### With Architecture Decision Records
-
-Document the rule for new developers and AI:
-
-```markdown
-# ADR: Dependency Rule
-
-**Status**: Accepted
-
-**Decision**: All dependencies point inward. Domain has ZERO external dependencies.
-
-**Consequences**:
-- Domain is framework-agnostic
-- Use Cases depend on interfaces (ports), not implementations
-- Adapters implement Application ports
-```
-
-## Real Examples
-
-### ✅ Correct example: User creation
-
-```typescript
-// 1. Domain - Pure, no dependencies
-import { Entity, Result, UUID } from '@packages/ddd-kit'
-
-export class User extends Entity<UserProps> {
-  static create(props: CreateUserProps): Result<User> {
-    // Pure business logic
-    return Result.ok(new User(props, UUID.create()))
-  }
-}
-
-// 2. Application - Depends on Domain + defines interface
-import { User } from '@/domain/user/User'
-import type { BaseRepository } from '@packages/ddd-kit'
-
-export interface IUserRepository extends BaseRepository<User> { }
-
+// Use Case depends on interface
 export class CreateUserUseCase {
-  constructor(private repo: IUserRepository) {}  // Interface!
-
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    const userOrError = User.create(input)
-    if (userOrError.isFailure) return Result.fail(userOrError.error)
-
-    return await this.repo.create(userOrError.value)
-  }
+  constructor(private repo: IUserRepository) {}
 }
 
-// 3. Adapters - Implements the interface
-import type { IUserRepository } from '@/application/ports/IUserRepository'
-import { db } from '@packages/drizzle'
+// Adapter implements
+export class DrizzleUserRepository implements IUserRepository { }
 
-export class DrizzleUserRepository implements IUserRepository {
-  async create(user: User): Promise<Result<User>> {
-    try {
-      await db.insert(users).values(UserMapper.toPersistence(user))
-      return Result.ok(user)
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Failed to create'))
-    }
-  }
-}
-
-// 4. DI Container - Wire dependencies
+// DI wires them
 container.bind('IUserRepository').toClass(DrizzleUserRepository)
-container.bind('CreateUserUseCase').toClass(CreateUserUseCase)
-
-// 5. Route Handler - Use the Use Case
-import { getInjection } from '@/common/di/container'
-
-export async function POST(request: Request) {
-  const useCase = getInjection('CreateUserUseCase')
-  const result = await useCase.execute(await request.json())
-
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 })
-  }
-
-  return Response.json(result.value, { status: 201 })
-}
 ```
 
-**Dependency flow:**
-```
-Route Handler
-    ↓ uses
-CreateUserUseCase (depends on IUserRepository interface)
-    ↓ uses
-User Domain (depends on ddd-kit)
+## Checklist
 
-DrizzleUserRepository implements IUserRepository
-    ↓ uses
-Database (Drizzle)
-```
-
-**Notice:** No arrows point outward!
-
-## Checklist Before Commit
-
-Before committing, verify:
-
-- [ ] Domain imports ONLY from `@packages/ddd-kit`
-- [ ] Application imports ONLY from Domain + ddd-kit + its own ports
-- [ ] Application defines **interfaces** (ports), not implementations
-- [ ] Adapters implements Application interfaces
-- [ ] Use Cases receive interfaces via constructor (DI)
-- [ ] DI Container wires concrete implementations
-- [ ] `pnpm type-check` passes without errors
+Before commit:
+- [ ] Domain imports only from `@packages/ddd-kit`
+- [ ] Application imports only from Domain + its own ports
+- [ ] Adapters implements Application ports
+- [ ] `pnpm type-check` passes
 
 ## Next Steps
 
-- [Transaction Pattern →](/docs/guides/transactions) - Manage transactions
-- [Testing Strategy →](/docs/guides/testing) - Test each layer
-- [Your First Use Case →](/docs/guides/first-use-case) - Apply the Dependency Rule
+- [Layers](/docs/architecture/layers)
+- [First Use Case](/docs/guides/first-use-case)

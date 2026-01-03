@@ -1,361 +1,128 @@
 # Claude Code
 
-Guide complet pour utiliser Claude Code avec CleanStack.
+Best tool for CleanStack development.
 
-## Installation
-
-### 1. Installer Claude Code CLI
+## Setup
 
 ```bash
-# macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh | sh
-
-# Ou via npm
+# Install
 npm install -g @anthropics/claude-code
-```
 
-### 2. Configuration
-
-```bash
 # Login
 claude-code auth login
 
-# Vérifier l'installation
-claude-code --version
+# Open project
+cd your-project && claude-code
 ```
 
-### 3. Ouvrir le projet
+## Why Claude Code?
 
-```bash
-cd your-cleanstack-project
-claude-code
-```
+- Reads `CLAUDE.md` at startup
+- Respects Dependency Rule automatically
+- Generates DDD patterns correctly
+- Creates atomic commits
 
-## Pourquoi Claude Code + CleanStack ?
+## Essential Prompts
 
-Claude Code comprend **nativement** Clean Architecture grâce à CLAUDE.md :
-
-✅ **Lit CLAUDE.md** au démarrage - Comprend toute l'architecture
-✅ **Respecte la Dependency Rule** - Ne viole jamais les imports
-✅ **Génère des patterns DDD** - Value Objects, Entities, Use Cases
-✅ **Crée des tests** - Unit, integration, E2E
-✅ **Fait des commits atomiques** - Conventional Commits automatiques
-
-## Prompts essentiels
-
-### Créer un feature complet
+### Create Feature
 
 ```
-Crée un feature Product avec Clean Architecture :
+Create Product feature with Clean Architecture:
 
 **Domain** (domain/product/)
-- Value Object: ProductName (1-100 chars, pas vide)
-- Value Object: Price (amount ≥ 0, currency EUR/USD/GBP)
-- Entity: Product (name, description, price, isActive)
-- Event: ProductCreatedEvent
+- Value Object: ProductName (1-100 chars)
+- Value Object: Price (amount ≥ 0, currency EUR/USD)
+- Entity: Product (name, description, price)
 
 **Application** (application/)
 - Interface: IProductRepository
-- Use Case: CreateProductUseCase (valide + persiste + dispatch event)
+- Use Case: CreateProductUseCase
 - Use Case: GetProductByIdUseCase
 
 **Adapters** (adapters/)
-- Drizzle schema (packages/drizzle/src/schema/products.ts)
-- Mapper: ProductMapper (domain ↔ DB)
-- Repository: DrizzleProductRepository
-- Route: POST /api/products (avec validation Zod)
+- Drizzle schema
+- DrizzleProductRepository
+- Route: POST /api/products
 - Route: GET /api/products/[id]
 
 **Infrastructure**
-- Enregistre dans DI container (common/di/modules/product.module.ts)
-- Génère migration Drizzle
+- Register in DI container
+- Generate migration
 
 **Tests**
-- Unit tests pour Value Objects
-- Unit tests pour Entity
-- Integration test pour Use Case
+- Unit tests for VOs and Entity
 ```
 
-**Résultat :** ~15 fichiers générés en 2 minutes, tous conformes.
-
-### Ajouter une fonctionnalité
+### Add Method
 
 ```
-Dans le User entity, ajoute une méthode business canMakePurchase() :
+In User entity, add canMakePurchase():
 
-Règles métier :
-1. User doit être actif (isActive = true)
-2. User ne doit pas être banni (isBanned = false)
-3. User doit avoir un email vérifié (emailVerified = true)
+Rules:
+1. User must be active
+2. User must not be banned
+3. Email must be verified
 
-Si une règle échoue, retourne Result.fail() avec message explicite.
-Si toutes passent, retourne Result.ok(true).
-
-Ajoute aussi les tests unitaires dans domain/user/__TESTS__/User.test.ts
+Return Result<boolean> with explicit error.
+Add tests.
 ```
 
 ### Refactoring
 
 ```
-Refactoring : renomme le Value Object Email en EmailAddress partout.
-
-Fichiers à modifier :
+Rename Email to EmailAddress:
 - domain/user/Email.ts → EmailAddress.ts
-- domain/user/User.ts (import + type)
-- application/use-cases/*.ts
-- adapters/out/persistence/mappers/UserMapper.ts
-- Tous les tests
+- Update all imports
+- Update tests
 
-Assure-toi de respecter les imports et l'architecture.
-Fais un commit atomique avec message : "refactor(domain): rename Email to EmailAddress"
+Commit: "refactor(domain): rename Email to EmailAddress"
 ```
 
 ### Debugging
 
 ```
-J'ai cette erreur TypeScript :
+I have this error:
+[paste error]
 
-[coller l'erreur]
-
-Analyse le problème et propose une solution conforme à Clean Architecture.
+Analyze and fix while respecting Clean Architecture.
 ```
 
-## Exemples avancés
-
-### Migration Drizzle
-
-```
-Ajoute un champ phoneNumber au User :
-
-1. Domain : crée PhoneNumber Value Object (10-15 chiffres, format international)
-2. User entity : ajoute phoneNumber: Option<PhoneNumber> (optionnel)
-3. Schema Drizzle : ajoute colonne phoneNumber VARCHAR(20) NULL
-4. Génère la migration Drizzle
-5. Update UserMapper pour mapper phoneNumber
-6. Update CreateUserUseCase pour accepter phoneNumber optionnel
-7. Tests unitaires pour PhoneNumber
-```
-
-### Transaction complexe
-
-```
-Crée un Use Case CreateOrderWithPaymentUseCase :
-
-Logique :
-1. Vérifie que l'user existe
-2. Vérifie le stock des produits
-3. Crée l'Order (avec items)
-4. Décrémente le stock
-5. Crée le Payment
-6. TOUT dans une transaction - si une étape échoue, rollback complet
-
-Utilise TransactionService au niveau Controller.
-Retourne Result<Order>.
-```
-
-### Event-driven
-
-```
-Setup Domain Events pour User :
-
-1. UserCreatedEvent → envoie email de bienvenue
-2. UserEmailChangedEvent → envoie email de confirmation
-3. UserDeletedEvent → clean up data
-
-Crée les events dans domain/user/events/
-Configure les handlers dans application/events/handlers/
-Assure-toi que les events sont dispatched APRÈS persistence.
-```
-
-## Workflow de développement
-
-### 1. Nouvelle fonctionnalité
+## Workflow
 
 ```bash
-# Prompt
-"Crée un feature Cart avec Clean Architecture complet"
+# 1. Create feature
+"Create Cart feature with Clean Architecture"
 
-# Claude génère les fichiers
-# ...
+# 2. Review
+"Explain your architecture choices"
 
-# Review
-claude-code: "Explique les choix d'architecture que tu as faits"
-
-# Tests
+# 3. Test
 pnpm test
 
-# Commit (Claude fait le commit)
-claude-code: "Commit cette feature avec Conventional Commits"
+# 4. Commit
+"Commit with Conventional Commits"
 ```
 
-### 2. Bug fix
+## Tips
 
-```bash
-# Prompt
-"Fix : le CreateUserUseCase ne vérifie pas si l'email existe déjà.
-Ajoute cette vérification et retourne ConflictException si email existe."
-
-# Claude modifie le Use Case
-# ...
-
-# Tests
-pnpm test
-
-# Commit
-claude-code: "Commit ce fix"
+**Be specific:**
+```
+✅ "In the domain layer, create..."
+❌ "Create something for users"
 ```
 
-### 3. Code review
-
-```bash
-# Prompt
-"Review le fichier CreateProductUseCase.ts et vérifie :
-1. Respect de la Dependency Rule
-2. Gestion des erreurs avec Result
-3. Validation complète
-4. Tests coverage"
-
-# Claude analyse et propose améliorations
+**Ask for tests:**
+```
+✅ "Generate unit tests too"
+❌ [forget tests]
 ```
 
-## Bonnes pratiques
-
-### ✅ Prompts efficaces
-
-**Sois spécifique sur la layer**
+**Reference CLAUDE.md:**
 ```
-✅ "Dans le domain layer, crée..."
-❌ "Crée un truc pour les users"
+✅ "According to CLAUDE.md, how to..."
 ```
 
-**Demande des tests**
-```
-✅ "Génère aussi les tests unitaires"
-❌ [oublie les tests]
-```
+## Next Steps
 
-**Référence CLAUDE.md**
-```
-✅ "Selon CLAUDE.md, comment implémenter..."
-❌ "Fais comme tu veux"
-```
-
-**Demande des commits**
-```
-✅ "Commit avec Conventional Commits"
-❌ [laisse tout uncommitted]
-```
-
-### ❌ À éviter
-
-**Prompts vagues**
-```
-❌ "Améliore le code"  // Quoi ? Comment ?
-```
-
-**Demander des violations**
-```
-❌ "Dans le domain, appelle la base de données"  // Violation !
-```
-
-**Tout faire d'un coup**
-```
-❌ "Crée toute l'app de A à Z"  // Trop vague
-✅ "Crée le feature User step by step"
-```
-
-## Commandes utiles
-
-### Analyse de code
-
-```
-Analyse le fichier src/domain/user/User.ts et vérifie :
-- Respect des patterns Entity
-- Immutabilité
-- Business logic
-- Tests coverage
-```
-
-### Génération de tests
-
-```
-Génère les tests manquants pour :
-- domain/user/Email.ts (Value Object)
-- domain/user/User.ts (Entity)
-- application/use-cases/CreateUserUseCase.ts
-
-Coverage minimum : 90%
-```
-
-### Documentation
-
-```
-Génère la JSDoc pour CreateUserUseCase avec :
-- Description claire
-- @param pour chaque paramètre
-- @returns avec type exact
-- @throws pour les erreurs possibles
-- @example avec usage complet
-```
-
-## Trucs et astuces
-
-### Accélérer le développement
-
-1. **Créer des aliases de prompts** dans `.claude/config.yml` :
-
-```yaml
-aliases:
-  vo: "Crée un Value Object dans domain/ avec validation complète et tests"
-  uc: "Crée un Use Case dans application/ qui retourne Result"
-  repo: "Crée repository interface + implémentation Drizzle"
-```
-
-2. **Utiliser le contexte** :
-
-```
-Continue avec la même architecture et crée GetProductByIdUseCase
-```
-
-3. **Demander des explications** :
-
-```
-Explique pourquoi tu as choisi cette implémentation
-```
-
-### Debugging avec Claude
-
-```
-J'ai cette erreur [erreur] dans [fichier].
-
-Debug step by step :
-1. Identifie la cause
-2. Explique pourquoi ça arrive
-3. Propose la solution
-4. Génère le code corrigé
-5. Explique comment éviter ça à l'avenir
-```
-
-## Comparaison vs autres IA
-
-| Feature | Claude Code | Cursor | Copilot |
-|---------|-------------|--------|---------|
-| **Comprend Clean Arch** | ✅ Excellent | ⚠️ Moyen | ❌ Faible |
-| **Respecte Dependency Rule** | ✅ Toujours | ⚠️ Parfois | ❌ Rarement |
-| **Génère tests** | ✅ Automatique | ⚠️ Sur demande | ❌ Basique |
-| **Conventional Commits** | ✅ Oui | ❌ Non | ❌ Non |
-| **Multi-fichiers** | ✅ Excellent | ✅ Bon | ⚠️ Limité |
-| **Refactoring safe** | ✅ Excellent | ✅ Bon | ⚠️ Risqué |
-
-## Ressources
-
-- [Documentation Claude Code](https://github.com/anthropics/claude-code)
-- [Prompts utiles](/docs/ai/prompts)
-- [Votre premier Use Case](/docs/guides/first-use-case)
-- [Architecture Layers](/docs/architecture/layers)
-
-## Prochaines étapes
-
-- [Guide Cursor →](/docs/ai/cursor) - Alternative à Claude Code
-- [Prompts →](/docs/ai/prompts) - Collection complète
-- [Testing →](/docs/guides/testing) - Tester le code généré par l'IA
+- [Cursor](/docs/ai/cursor)
+- [Prompts](/docs/ai/prompts)

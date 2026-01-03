@@ -1,235 +1,117 @@
-# Développement IA
+# AI Development
 
-CleanStack est le **premier starter Next.js optimisé pour le développement avec IA**.
+CleanStack is optimized for AI-assisted development.
 
-## Pourquoi CleanStack est AI-Friendly
+## Why AI-Friendly?
 
-### 🎯 Patterns répétables
-
-L'IA reconnaît instantanément les patterns DDD :
+### Repeatable Patterns
+AI recognizes DDD patterns instantly:
 
 ```typescript
-// L'IA sait que c'est un Value Object
+// AI knows this is a Value Object
 export class Email extends ValueObject<EmailProps> {
-  protected validate(value: EmailProps): Result<EmailProps> {
-    // Pattern reconnu → génère validation correcte
+  protected validate(props): Result<EmailProps> {
+    // Generates correct validation
   }
 }
 
-// L'IA sait que c'est une Entity
-export class User extends Entity<UserProps> {
-  static create(props: CreateUserProps): Result<User> {
-    // Pattern reconnu → génère factory method correct
-  }
-}
-
-// L'IA sait que c'est un Use Case
+// AI knows this is a Use Case
 export class CreateUserUseCase implements UseCase<Input, Output> {
-  async execute(input: Input): Promise<Result<Output>> {
-    // Pattern reconnu → génère orchestration correcte
+  async execute(input): Promise<Result<Output>> {
+    // Generates correct orchestration
   }
 }
 ```
 
-**Résultat :** L'IA génère du code cohérent qui respecte vos patterns.
-
-### 📁 Architecture explicite
-
-L'IA sait **exactement où placer chaque fichier** :
+### Explicit Architecture
+AI knows **exactly** where to place files:
 
 ```
-domain/          ← Value Objects, Entities (ZERO dependencies)
-application/     ← Use Cases, Ports (interfaces)
-adapters/        ← Controllers, Repositories (implémentations)
+domain/       ← Value Objects, Entities (zero deps)
+application/  ← Use Cases, Ports
+adapters/     ← Controllers, Repositories
 ```
 
-**Prompt :** "Ajoute un champ phoneNumber à User"
-
-**L'IA sait :**
-1. Créer `PhoneNumber.ts` dans **domain/user/**
-2. Ajouter `phoneNumber: PhoneNumber` à `UserProps`
-3. Mettre à jour `CreateUserUseCase` dans **application/**
-4. Modifier `UserMapper` dans **adapters/**
-
-### 🔒 Types stricts
-
-TypeScript + Result + Option = L'IA ne peut pas tricher :
+### Strict Types
+TypeScript + Result + Option = AI can't cheat:
 
 ```typescript
-// ❌ L'IA ne peut PAS générer ça (TypeScript error)
+// ❌ AI can't generate this (TypeScript error)
 const user = await userRepo.findById(id)
-console.log(user.email)  // Type error: user is Result<Option<User>>
+console.log(user.email)  // Error: user is Result<Option<User>>
 
-// ✅ L'IA DOIT générer ça
+// ✅ AI must generate this
 const result = await userRepo.findById(id)
-if (result.isFailure) return Result.fail(result.getError())
-
-const userOption = result.getValue()
-if (userOption.isNone()) return Result.fail('User not found')
-
-const user = userOption.unwrap()
-console.log(user.get('email').value.value)
+if (result.isFailure) return Result.fail(result.error)
+if (result.value.isNone()) return Result.fail('Not found')
+const user = result.value.unwrap()
 ```
 
-**Résultat :** Le compilateur force l'IA à écrire du code correct.
+## Recommended Tools
 
-### 📚 Documentation complète
+### Claude Code (Best)
+- Understands Clean Architecture natively
+- Respects Dependency Rule automatically
+- Generates complete Use Cases
+- Creates atomic commits
 
-Chaque pattern a une documentation détaillée avec exemples :
+[Guide →](/docs/ai/claude-code)
 
-- [Value Objects](/docs/core-concepts/value-objects) - Comment créer
-- [Entities](/docs/core-concepts/entities) - Comment utiliser `get()`
-- [Use Cases](/docs/guides/first-use-case) - Pattern complet
-- [Repositories](/docs/architecture/layers) - Interfaces vs implémentations
+### Cursor
+- Great autocomplete
+- Multi-file editing
+- Codebase chat
 
-L'IA lit cette doc et génère du code conforme.
+[Guide →](/docs/ai/cursor)
 
-## Outils IA supportés
+## Example Prompts
 
-### ⚡ Claude Code (Recommandé)
-
-Le meilleur outil pour CleanStack. Utilise Claude Sonnet 4.5.
-
-**Pourquoi ?**
-- ✅ Comprend Clean Architecture nativement
-- ✅ Respecte la Dependency Rule automatiquement
-- ✅ Génère des Use Cases complets en une commande
-- ✅ Détecte les violations d'architecture
-
-[Guide complet Claude Code →](/docs/ai/claude-code)
-
-### 🎨 Cursor
-
-Excellent pour l'édition contextuelle et les petites modifications.
-
-**Pourquoi ?**
-- ✅ Autocomplétion intelligente
-- ✅ Modifications multi-fichiers
-- ✅ Chat avec le codebase
-
-[Guide complet Cursor →](/docs/ai/cursor)
-
-### 🤖 GitHub Copilot
-
-Bon pour l'autocomplétion, mais moins performant sur l'architecture.
-
-**Limitations :**
-- ⚠️ Ne comprend pas toujours la Dependency Rule
-- ⚠️ Peut générer des violations (imports interdits)
-- ⚠️ Nécessite plus de guidance
-
-## Exemples concrets
-
-### Créer un nouveau feature complet
-
-**Prompt pour Claude Code :**
+**Create feature:**
 ```
-Crée un feature Product complet :
-- Value Object: Price (montant + devise)
-- Entity: Product (name, description, price)
+Create a Product feature:
+- Value Object: ProductName (3-100 chars)
+- Entity: Product (name, price, isActive)
 - Use Case: CreateProductUseCase
 - Repository: IProductRepository + DrizzleProductRepository
-- Route API: POST /api/products
-- Ajoute au DI container
+- Route: POST /api/products
+- Register in DI container
 ```
 
-**Résultat :** L'IA génère 6-8 fichiers parfaitement structurés et conformes.
-
-### Ajouter validation complexe
-
-**Prompt :**
+**Add validation:**
 ```
-Dans le User, ajoute une méthode canPurchase() qui vérifie :
-1. User est actif
-2. User n'est pas banni
-3. User a un email vérifié
-4. User a une adresse
-Retourne Result<boolean> avec message d'erreur explicite
+Add canPurchase() method to User that checks:
+1. User is active
+2. User has verified email
+Return Result<boolean> with explicit error message.
 ```
 
-**Résultat :** Méthode générée dans le Domain, pas dans le Controller.
-
-### Refactoring safe
-
-**Prompt :**
+**Refactoring:**
 ```
-Renomme Email en EmailAddress partout dans le projet.
-Assure-toi de mettre à jour :
-- Domain
-- Application (use cases)
-- Adapters (repositories, mappers)
+Rename Email to EmailAddress everywhere:
+- domain/user/
+- application/use-cases/
+- adapters/out/
 - Tests
 ```
 
-**Résultat :** Refactoring complet sans casser l'architecture.
+## Best Practices
 
-## Prompts utiles
-
-Consultez notre collection de prompts testés :
-
-[Prompts AI →](/docs/ai/prompts)
-
-## Best Practices IA
-
-### ✅ À faire
-
-**Donner du contexte architectural**
+### ✅ Do
 ```
-"Dans le domain layer, crée un Value Object Money qui..."
+"In the domain layer, create..."
+"Create a Use Case that returns Result<User>"
+"Generate tests for this Value Object"
 ```
 
-**Spécifier les patterns**
+### ❌ Don't
 ```
-"Crée un Use Case qui retourne Result<User>"
-```
-
-**Référencer les layers**
-```
-"L'interface IUserRepository va dans application/ports/,
-l'implémentation DrizzleUserRepository dans adapters/out/"
+"Add a user"              // Where? How?
+"In domain, call the DB"  // Violation!
+"Return the user"         // Result? Option? null?
 ```
 
-**Demander des tests**
-```
-"Génère aussi les tests unitaires pour ce Value Object"
-```
+## Next Steps
 
-### ❌ À éviter
-
-**Prompts vagues**
-```
-"Ajoute un user"  // Où ? Comment ? Quel pattern ?
-```
-
-**Demander des violations**
-```
-"Dans le domain, ajoute un appel à la DB"  // ❌ Violation
-```
-
-**Oublier les types**
-```
-"Retourne l'user"  // Result<User> ? Option<User> ? User | null ?
-```
-
-## Avantages CleanStack + IA
-
-| Critère | CleanStack | Starter classique |
-|---------|------------|-------------------|
-| **Vitesse de dev** | 10x plus rapide | Baseline |
-| **Qualité du code** | ✅ Patterns forcés | ⚠️ Inconsistant |
-| **Refactoring** | ✅ Safe (types stricts) | ⚠️ Risqué |
-| **Onboarding** | 1 jour (IA + doc) | 1-2 semaines |
-| **Maintenance** | ✅ Code prévisible | ⚠️ Dépend du dev |
-
-## Démonstration
-
-Vidéo de création d'un feature complet avec Claude Code en 5 minutes :
-
-<video src="/demos/claude-code-demo.mp4" controls />
-
-## Prochaines étapes
-
-- [Guide Claude Code →](/docs/ai/claude-code) - Setup et exemples
-- [Guide Cursor →](/docs/ai/cursor) - Configuration
-- [Prompts utiles →](/docs/ai/prompts) - Collection testée
-- [Votre premier Use Case →](/docs/guides/first-use-case) - Tuto complet
+- [Claude Code](/docs/ai/claude-code)
+- [Cursor](/docs/ai/cursor)
+- [Prompts](/docs/ai/prompts)

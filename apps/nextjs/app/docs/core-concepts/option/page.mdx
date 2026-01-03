@@ -1,538 +1,107 @@
 # Option Pattern
 
-Handle absence of value without `null` or `undefined`.
+Handle absence of value without `null`.
 
-## What is Option?
-
-`Option<T>` is a type that represents either **a present value** (`Some<T>`), or **an absence of value** (`None<T>`).
+## Why Option?
 
 ```typescript
-type Option<T> = Some<T> | None<T>
-```
+// ❌ Null - easy to forget check
+const user = await findUser(id) // User | null
+console.log(user.email) // Can crash!
 
-It's the equivalent of `Maybe` in Haskell or `Option` in Rust/Scala.
-
-### Why Use Option?
-
-**Problem with null/undefined:**
-
-```typescript
-// ❌ With null - dangerous!
-function findUser(id: string): User | null {
-  // ...
-  return user ?? null
-}
-
-// Risky usage
-const user = findUser('123')
-console.log(user.email)  // ☠️ Can crash if null!
-
-// Manual protection easily forgotten
-if (user) {
-  console.log(user.email)  // Easy to forget this check
-}
-```
-
-**Solution with Option:**
-
-```typescript
-// ✅ With Option - safe
-function findUser(id: string): Result<Option<User>> {
-  // ...
-  if (!user) {
-    return Result.ok(Option.none())  // Explicit absence
-  }
-  return Result.ok(Option.some(user))
-}
-
-// Safe usage - pattern matching forced
-import { match } from '@packages/ddd-kit'
-
-const result = await findUser('123')
-if (result.isFailure) {
-  return handleError(result.getError())
-}
-
-const message = match(result.getValue(), {
-  Some: (user) => `Found ${user.email}`,  // ✅ user definitely exists
-  None: () => 'User not found'
+// ✅ Option - forced handling
+const result = await findUser(id) // Result<Option<User>>
+match(result.value, {
+  Some: (user) => console.log(user.email),
+  None: () => console.log('Not found')
 })
 ```
 
-## Creating Option
-
-### Option.some() - Present Value
-
-```typescript
-import { Option } from '@packages/ddd-kit'
-
-const userOption = Option.some({ id: '123', name: 'Alice' })
-
-userOption.isSome()  // true
-userOption.isNone()  // false
-userOption.unwrap()  // { id: '123', name: 'Alice' }
-```
-
-### Option.none() - Absence of Value
-
-```typescript
-import { Option } from '@packages/ddd-kit'
-
-const emptyOption = Option.none<User>()
-
-emptyOption.isSome()  // false
-emptyOption.isNone()  // true
-// emptyOption.unwrap()  // ⚠️ Throws Error!
-```
-
-### Option.fromNullable() - From null/undefined
-
-```typescript
-import { Option } from '@packages/ddd-kit'
-
-const value1: string | null = 'hello'
-const option1 = Option.fromNullable(value1)  // Some('hello')
-
-const value2: string | null = null
-const option2 = Option.fromNullable(value2)  // None()
-```
-
-## Pattern Matching
-
-The `match()` function forces handling of both cases:
+## API
 
 ```typescript
 import { Option, match } from '@packages/ddd-kit'
 
-const userOption: Option<User> = await findUser(id)
+// Present value
+const some = Option.some({ id: '1', name: 'Alice' })
+some.isSome()   // true
+some.unwrap()   // { id: '1', name: 'Alice' }
+
+// Absent value
+const none = Option.none<User>()
+none.isNone()   // true
+// none.unwrap() // Throws!
+```
+
+## Pattern Matching
+
+```typescript
+import { match } from '@packages/ddd-kit'
 
 const message = match(userOption, {
   Some: (user) => `Hello, ${user.name}!`,
   None: () => 'User not found'
 })
-
-console.log(message)
-```
-
-**Important:** `match` is an **external function**, not a method on Option.
-
-### Without match (dangerous)
-
-```typescript
-// ❌ Dangerous - can crash
-if (userOption.isSome()) {
-  console.log(userOption.unwrap().name)
-}
-// If we forget the check, crash!
-```
-
-### With match (safe)
-
-```typescript
-// ✅ Safe - both cases are handled
-import { match } from '@packages/ddd-kit'
-
-match(userOption, {
-  Some: (user) => console.log(user.name),
-  None: () => console.log('No user')
-})
 ```
 
 ## Useful Methods
 
-### map() - Transform Value
-
-Applies a function if value is present.
-
 ```typescript
-import { Option } from '@packages/ddd-kit'
+// map - transform if present
+userOption.map(user => user.name) // Option<string>
 
-const userOption = Option.some({ id: '1', name: 'Alice' })
+// flatMap - chain Options
+userOption.flatMap(user => findManager(user.managerId))
 
-const nameOption = userOption.map(user => user.name)
-// Some('Alice')
+// unwrapOr - default value
+userOption.unwrapOr(guestUser)
 
-const emptyOption = Option.none<User>()
-const emptyName = emptyOption.map(user => user.name)
-// None<string>()
-```
-
-### flatMap() - Chain Options
-
-Chains operations that return Options.
-
-```typescript
-const userOption = Option.some({ id: '1', managerId: '2' })
-
-const managerOption = userOption.flatMap(user =>
-  user.managerId
-    ? Option.some(findManager(user.managerId))
-    : Option.none()
-)
-```
-
-### unwrap() - Extract Value (dangerous)
-
-```typescript
-const userOption = Option.some({ id: '1', name: 'Alice' })
-
-// ⚠️ Throws if None
-const user = userOption.unwrap()  // { id: '1', name: 'Alice' }
-
-const emptyOption = Option.none<User>()
-// emptyOption.unwrap()  // ☠️ Throws Error: "Called unwrap on a None value"
-```
-
-### unwrapOr() - Default Value
-
-```typescript
-const userOption = Option.none<User>()
-
-const user = userOption.unwrapOr({
-  id: '0',
-  name: 'Guest'
-})
-// { id: '0', name: 'Guest' }
-```
-
-### unwrapOrElse() - Computed Default Value
-
-```typescript
-const userOption = Option.none<User>()
-
-const user = userOption.unwrapOrElse(() => ({
-  id: crypto.randomUUID(),
-  name: 'Guest'
-}))
-```
-
-### filter() - Filter
-
-```typescript
-const userOption = Option.some({ id: '1', name: 'Alice', age: 25 })
-
-const adultOption = userOption.filter(user => user.age >= 18)
-// Some({ id: '1', name: 'Alice', age: 25 })
-
-const minorOption = userOption.filter(user => user.age < 18)
-// None()
-```
-
-### or() - Alternative Value
-
-```typescript
-const option1 = Option.none<string>()
-const option2 = Option.some('fallback')
-
-const result = option1.or(option2)
-// Some('fallback')
-```
-
-### orElse() - Computed Alternative Value
-
-```typescript
-const option = Option.none<User>()
-
-const result = option.orElse(() => Option.some(guestUser))
-// Some(guestUser)
-```
-
-### inspect() - Observe Value
-
-```typescript
-const userOption = Option.some({ id: '1', name: 'Alice' })
-
-userOption
-  .inspect(user => console.log('Found user:', user.name))
-  .map(user => user.email)
-// Logs: "Found user: Alice"
-```
-
-### toUndefined() / toNull() - Conversion
-
-```typescript
-const someOption = Option.some('hello')
-someOption.toUndefined()  // 'hello'
-someOption.toNull()       // 'hello'
-
-const noneOption = Option.none<string>()
-noneOption.toUndefined()  // undefined
-noneOption.toNull()       // null
+// filter - filter by predicate
+userOption.filter(user => user.age >= 18)
 ```
 
 ## In Repositories
 
-Search methods always return `Result<Option<T>>`:
-
 ```typescript
-// Application layer - Interface
-export interface IUserRepository extends BaseRepository<User> {
-  findByEmail(email: Email): Promise<Result<Option<User>>>
-}
-
-// Adapters layer - Implementation
-export class DrizzleUserRepository implements IUserRepository {
-  async findById(id: UUID): Promise<Result<Option<User>>> {
-    try {
-      const row = await db.query.users.findFirst({
-        where: eq(users.id, id.value)
-      })
-
-      // No result = None
-      if (!row) {
-        return Result.ok(Option.none())
-      }
-
-      // Domain mapping
-      const userOrError = UserMapper.toDomain(row)
-      if (userOrError.isFailure) {
-        return Result.fail(userOrError.getError())
-      }
-
-      // Result present = Some
-      return Result.ok(Option.some(userOrError.getValue()))
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Failed to find user'))
-    }
-  }
-
-  async findByEmail(email: Email): Promise<Result<Option<User>>> {
-    try {
-      const row = await db.query.users.findFirst({
-        where: eq(users.email, email.value)
-      })
-
-      if (!row) {
-        return Result.ok(Option.none())  // Email not found
-      }
-
-      const userOrError = UserMapper.toDomain(row)
-      if (userOrError.isFailure) {
-        return Result.fail(userOrError.getError())
-      }
-
-      return Result.ok(Option.some(userOrError.getValue()))
-    } catch (error) {
-      return Result.fail(new DatabaseOperationError('Query failed'))
-    }
-  }
+async findById(id: UUID): Promise<Result<Option<User>>> {
+  const row = await db.query.users.findFirst({ where: eq(users.id, id.value) })
+  if (!row) return Result.ok(Option.none())
+  return Result.ok(Option.some(UserMapper.toDomain(row).value))
 }
 ```
 
 ## In Use Cases
 
-Explicit handling of absence with pattern matching:
-
 ```typescript
-import { match } from '@packages/ddd-kit'
+async execute(userId: string): Promise<Result<User>> {
+  const result = await this.userRepo.findById(UUID.createFrom(userId).value)
+  if (result.isFailure) return Result.fail(result.error)
 
-export class GetUserByIdUseCase implements UseCase<string, User> {
-  constructor(private readonly userRepo: IUserRepository) {}
-
-  async execute(userId: string): Promise<Result<User>> {
-    // 1. Create UUID
-    const idOrError = UUID.createFrom(userId)
-    if (idOrError.isFailure) {
-      return Result.fail('Invalid user ID')
-    }
-
-    // 2. Find user
-    const userOrError = await this.userRepo.findById(idOrError.getValue())
-    if (userOrError.isFailure) {
-      return Result.fail(userOrError.getError())
-    }
-
-    // 3. Handle absence with match (external function)
-    return match(userOrError.getValue(), {
-      Some: (user) => Result.ok(user),  // ✅ Found
-      None: () => Result.fail(new NotFoundException('User not found'))
-    })
-  }
-}
-```
-
-### Check Existence
-
-```typescript
-import { match } from '@packages/ddd-kit'
-
-export class CreateOrderUseCase {
-  async execute(input: CreateOrderInput): Promise<Result<Order>> {
-    // Check that user exists
-    const userOrError = await this.userRepo.findById(input.userId)
-    if (userOrError.isFailure) {
-      return Result.fail(userOrError.getError())
-    }
-
-    // Pattern 1: with match (recommended)
-    return match(userOrError.getValue(), {
-      Some: (user) => this.createOrderForUser(user, input),
-      None: () => Result.fail(new NotFoundException('User not found'))
-    })
-
-    // Pattern 2: with isNone + unwrap
-    if (userOrError.getValue().isNone()) {
-      return Result.fail(new NotFoundException('User not found'))
-    }
-    const user = userOrError.getValue().unwrap()
-    return this.createOrderForUser(user, input)
-  }
-}
-```
-
-## Combining Result and Option
-
-Repositories return `Result<Option<T>>` to handle:
-- **Result.fail** - System error (DB crash, timeout)
-- **Option.none** - Normal absence of data (404)
-
-```typescript
-import { match } from '@packages/ddd-kit'
-
-async function getUserEmail(userId: string): Promise<Result<string>> {
-  const result = await userRepo.findById(userId)
-
-  // System error
-  if (result.isFailure) {
-    return Result.fail(result.getError())
-  }
-
-  // Data absence
-  return match(result.getValue(), {
-    Some: (user) => Result.ok(user.get('email').value),
-    None: () => Result.fail('User not found')
+  return match(result.value, {
+    Some: (user) => Result.ok(user),
+    None: () => Result.fail(new NotFoundException('User not found'))
   })
 }
 ```
 
-## In Controllers
-
-Transform Option into HTTP status:
-
-```typescript
-import { match } from '@packages/ddd-kit'
-
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const useCase = getInjection('GetUserByIdUseCase')
-
-  const result = await useCase.execute(params.id)
-
-  // Use case error
-  if (result.isFailure) {
-    const error = result.getError()
-
-    if (error instanceof NotFoundException) {
-      return Response.json({ error: error.message }, { status: 404 })
-    }
-
-    return Response.json({ error: error.message }, { status: 400 })
-  }
-
-  // Success
-  return Response.json(result.getValue(), { status: 200 })
-}
-```
-
-## Practical Examples
-
-### Optional Value in Entity
-
-```typescript
-class User extends Entity<UserProps> {
-  getManager(): Option<UUID> {
-    const managerId = this.get('managerId')
-    return Option.fromNullable(managerId)
-  }
-
-  async getManagerName(
-    userRepo: IUserRepository
-  ): Promise<Result<Option<string>>> {
-    return match(this.getManager(), {
-      Some: async (managerId) => {
-        const managerOrError = await userRepo.findById(managerId)
-        if (managerOrError.isFailure) {
-          return Result.fail(managerOrError.getError())
-        }
-
-        return Result.ok(
-          managerOrError.getValue().map(manager => manager.get('name'))
-        )
-      },
-      None: () => Promise.resolve(Result.ok(Option.none()))
-    })
-  }
-}
-```
-
-### Chaining Transformations
-
-```typescript
-const emailOption = userOption
-  .map(user => user.get('email'))  // Option<Email>
-  .map(email => email.value)       // Option<string>
-  .map(str => str.toLowerCase())   // Option<string>
-
-const email = emailOption.unwrapOr('no-email@example.com')
-```
-
-## Best Practices
+## Rules
 
 ### ✅ Do
-
 ```typescript
-// Return Result<Option<T>> in queries
-async findById(id: UUID): Promise<Result<Option<User>>>
-
-// Use match for pattern matching
-import { match } from '@packages/ddd-kit'
-
-match(option, {
-  Some: (value) => doSomething(value),
-  None: () => handleAbsence()
-})
-
-// unwrapOr for safe default value
-const user = userOption.unwrapOr(guestUser)
-
-// Chain with map/flatMap
-userOption
-  .map(user => user.get('email'))
-  .map(email => email.value)
-  .unwrapOr('no-email@example.com')
-
-// Option.fromNullable to convert null/undefined
-const option = Option.fromNullable(maybeNull)
+return Result.ok(Option.none())        // Explicit absence
+return Result.ok(Option.some(user))    // Explicit presence
+match(option, { Some: ..., None: ... }) // Pattern matching
+option.unwrapOr(defaultValue)          // Safe default
 ```
 
-### ❌ Avoid
-
+### ❌ Don't
 ```typescript
-// ❌ DO NOT return null
-async findById(id: UUID): Promise<User | null>
-
-// ❌ DO NOT use unwrap without checking
-const user = userOption.unwrap()  // Can throw!
-
-// ❌ DO NOT use match as a method
-option.match({ ... })  // ❌ match is not a method!
-
-// ✅ Use match as a function
-match(option, { ... })  // ✅ Correct
+return null                // Use Option.none()
+option.unwrap()           // Without checking isSome()
+option.match({ ... })     // match is external function
 ```
-
-## Advantages
-
-1. **Safety** - No more `Cannot read property of null`
-2. **Explicit** - Absence of value is in the type
-3. **Composable** - map/flatMap for chaining
-4. **Testable** - Easy to test `None` cases
-5. **Functional** - Elegant pattern matching
 
 ## Next Steps
 
-- [Result Pattern →](/docs/core-concepts/result) - Handle errors
-- [Value Objects →](/docs/core-concepts/value-objects) - Create Value Objects
-- [Your First Use Case →](/docs/guides/first-use-case) - Complete example with Option
+- [Result Pattern](/docs/core-concepts/result)
+- [Value Objects](/docs/core-concepts/value-objects)

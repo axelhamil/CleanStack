@@ -1,290 +1,86 @@
 # Cursor
 
-Guide pour utiliser Cursor avec CleanStack.
+Great for quick edits and autocomplete.
 
-## Installation
+## Setup
 
-### 1. Installer Cursor
+1. Download from [cursor.sh](https://cursor.sh)
+2. Open project: `cursor .`
+3. Settings → Enable "Codebase indexing"
+4. Model: Claude 3.5 Sonnet
 
-Téléchargez depuis [cursor.sh](https://cursor.sh)
+## Shortcuts
 
-### 2. Ouvrir le projet
-
-```bash
-cd your-cleanstack-project
-cursor .
+### Cmd+K - Quick Edit
+Select code → Cmd+K:
+```
+"Add validation for phoneNumber"
+"Convert to Result pattern"
+"Add unit tests"
 ```
 
-### 3. Configuration recommandée
-
-**Settings > Cursor Settings**
-
-- ✅ Enable "Codebase indexing"
-- ✅ Enable "Auto-import suggestions"
-- ✅ Model: Claude 3.5 Sonnet (meilleur pour Clean Architecture)
-
-## Utilisation avec CleanStack
-
-### Cmd/Ctrl + K - Quick Edit
-
-**Parfait pour :** Modifications locales et refactoring
-
+### Cmd+L - Chat
 ```
-Sélectionnez du code → Cmd+K
-
-Prompts :
-- "Ajoute validation pour phoneNumber"
-- "Convertis en Result pattern"
-- "Ajoute tests unitaires"
-```
-
-**Exemple :**
-
-Sélectionnez `Email.create()` → Cmd+K :
-```
-Ajoute validation : email doit être @company.com seulement
-```
-
-### Cmd/Ctrl + L - Chat
-
-**Parfait pour :** Questions et génération multi-fichiers
-
-```
-Cmd+L pour ouvrir le chat
-
-Prompts :
-- "Explique la Dependency Rule dans ce projet"
-- "Où dois-je créer un nouveau Value Object ?"
-- "Crée CreateProductUseCase selon le pattern du projet"
-```
-
-**Exemple :**
-```
-Crée un Value Object Price avec validation :
-- amount ≥ 0
-- currency dans ['EUR', 'USD', 'GBP']
-
-Suit le pattern de Email.ts
+"Explain the Dependency Rule"
+"Where to create a new Value Object?"
+"Create CreateProductUseCase like the project pattern"
 ```
 
 ### Tab - Autocomplete
+Type class name → Cursor suggests structure based on patterns.
 
-**Parfait pour :** Complétion de code
+## Useful Prompts
 
-Cursor suggère automatiquement en suivant vos patterns :
-
-```typescript
-// Tapez "export class ProductName"
-// → Cursor suggère toute la structure ValueObject
-
-export class ProductName extends ValueObject<{ value: string }> {
-  protected validate(value: { value: string }): Result<{ value: string }> {
-    // Suggestions basées sur vos autres VO
-  }
-}
+**Architecture:**
+```
+@CLAUDE.md Explain the dependency rules
+Where to create a Product repository?
 ```
 
-## Workflow recommandé
-
-### 1. Création de Value Object
-
-**Cmd+L:**
+**Code generation:**
 ```
-Crée un Value Object PhoneNumber dans domain/user/ :
-- Format international (+33...)
-- 10-15 chiffres
-- Validation stricte
-Suis le pattern de Email.ts
+Create DrizzleProductRepository implementing IProductRepository.
+Use DrizzleUserRepository pattern.
 ```
 
-### 2. Création d'Entity
-
-**Cmd+L:**
+**Multi-file edit:**
 ```
-Crée une Entity Product dans domain/product/ :
-- Props: name (ProductName), price (Price), description (string)
-- Factory create() avec validation
-- Méthode updatePrice()
-- Utilise get() pour accéder aux props (pas de getters manuels)
+Rename Email to EmailAddress in:
+- domain/user/
+- application/use-cases/
+- adapters/out/
 ```
 
-### 3. Création de Use Case
+## .cursorrules
 
-**Cmd+L:**
-```
-Crée CreateProductUseCase dans application/use-cases/ :
-1. Valide les inputs (ProductName, Price)
-2. Crée Product entity
-3. Persiste via IProductRepository
-4. Retourne Result<Product>
-
-Dépendances : injecte IProductRepository (interface)
-```
-
-### 4. Refactoring
-
-**Sélection + Cmd+K:**
-```
-Sélectionnez la méthode
-
-Prompt: "Extrait cette logique dans une méthode privée"
-Ou: "Convertis en Result pattern"
-```
-
-## Prompts utiles
-
-### Architecture
+Create at project root:
 
 ```
-@CLAUDE.md Explique la règle de dépendances
-```
+# CleanStack Rules
 
-```
-Où dois-je créer un repository pour Product ?
-Montre-moi la structure des dossiers.
-```
+## Dependencies
+- domain/ cannot import from application/ or adapters/
+- application/ cannot import from adapters/
 
-### Code generation
-
-```
-Génère DrizzleProductRepository qui implémente IProductRepository.
-Utilise le pattern de DrizzleUserRepository.
-```
-
-```
-Crée le schema Drizzle pour Product dans packages/drizzle/src/schema/
-```
-
-### Testing
-
-```
-Génère les tests pour @domain/product/ProductName.ts
-Coverage : 100%
-```
-
-## Fonctionnalités avancées
-
-### @-mentions
-
-Référencez des fichiers pour donner du contexte :
-
-```
-@domain/user/Email.ts Crée ProductName en suivant ce pattern
-```
-
-```
-@application/use-cases/CreateUserUseCase.ts
-Crée CreateProductUseCase similaire
-```
-
-### Codebase search
-
-```
-Cmd+P puis tapez :
-"Value Object" → Trouve tous les Value Objects
-"UseCase" → Trouve tous les Use Cases
-```
-
-### Multi-file edit
-
-Cursor peut éditer plusieurs fichiers simultanément :
-
-```
-Renomme Email en EmailAddress dans :
-- domain/user/Email.ts
-- domain/user/User.ts
-- application/use-cases/CreateUserUseCase.ts
-- adapters/out/persistence/mappers/UserMapper.ts
-```
-
-## Configuration Cursor Rules
-
-Créez `.cursorrules` à la racine :
-
-```
-# CleanStack Architecture Rules
-
-## Dependency Rule
-- domain/ ne peut JAMAIS importer de application/ ou adapters/
-- application/ ne peut JAMAIS importer de adapters/
-- adapters/ peut importer application/ et domain/
-
-## Patterns obligatoires
-- Value Objects : extends ValueObject, validate() obligatoire
-- Entities : extends Entity, factory create(), pas de getters manuels (utiliser get())
-- Use Cases : implements UseCase, retourne Result<T>
-- Repositories : interface dans application/ports/, implémentation dans adapters/out/
+## Patterns
+- Value Objects: extend ValueObject, implement validate()
+- Entities: extend Entity, factory create(), use get()
+- Use Cases: implement UseCase, return Result<T>
 
 ## Error handling
-- JAMAIS throw dans domain/ ou application/
-- TOUJOURS Result<T> pour les opérations qui peuvent échouer
-- TOUJOURS Option<T> pour les queries qui peuvent retourner vide
-
-## Imports interdits dans domain/
-- @packages/drizzle
-- next/server
-- zod (sauf pour Value Object si vraiment nécessaire, privilégier regex)
-
-## Tests obligatoires
-- Chaque Value Object doit avoir tests unitaires
-- Chaque Entity doit avoir tests unitaires
-- Chaque Use Case doit avoir tests avec mocks
+- NEVER throw in domain/ or application/
+- ALWAYS use Result<T> and Option<T>
 ```
 
-## Tips & Tricks
+## Claude Code vs Cursor
 
-### Apprendre le codebase
+**Cursor:** Excellent autocomplete, good multi-file editing, medium architecture understanding, no commits
 
-```
-Cmd+L: "Explique l'architecture de ce projet"
-Cmd+L: "@CLAUDE.md Résume les règles principales"
-```
+**Claude Code:** Basic autocomplete, excellent multi-file editing, excellent architecture understanding, creates commits
 
-### Debugging
+**Recommendation:** Use both - Cursor for daily dev, Claude Code for complex features.
 
-```
-Cmd+L: "Pourquoi j'ai cette erreur TypeScript ?"
-[Coller l'erreur]
-```
+## Next Steps
 
-### Code review
-
-```
-Cmd+L: "Review @application/use-cases/CreateUserUseCase.ts
-Vérifie :
-- Dependency Rule
-- Result pattern
-- Validation
-- Tests"
-```
-
-## Comparaison Cursor vs Claude Code
-
-| Feature | Cursor | Claude Code |
-|---------|--------|-------------|
-| **Autocomplete** | ✅ Excellent | ⚠️ Basique |
-| **Chat** | ✅ Bon | ✅ Excellent |
-| **Multi-fichiers** | ✅ Bon | ✅ Excellent |
-| **Understand Architecture** | ⚠️ Moyen | ✅ Excellent |
-| **Conventional Commits** | ❌ Non | ✅ Oui |
-| **Prix** | 💰 $20/mois | 💰 $20/mois |
-
-**Recommandation :**
-- **Cursor** → Édition rapide, autocomplete
-- **Claude Code** → Features complexes, architecture
-
-**Combo gagnant :** Utiliser les deux !
-- Cursor pour le dev quotidien
-- Claude Code pour les features complexes
-
-## Ressources
-
-- [Cursor Documentation](https://cursor.sh/docs)
-- [Claude Code Guide](/docs/ai/claude-code)
-- [Prompts utiles](/docs/ai/prompts)
-
-## Prochaines étapes
-
-- [Prompts →](/docs/ai/prompts) - Collection complète
-- [Claude Code →](/docs/ai/claude-code) - Alternative puissante
-- [Votre premier Use Case →](/docs/guides/first-use-case) - Pratique
+- [Claude Code](/docs/ai/claude-code)
+- [Prompts](/docs/ai/prompts)
