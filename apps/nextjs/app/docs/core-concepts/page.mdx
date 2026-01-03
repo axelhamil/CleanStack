@@ -1,0 +1,320 @@
+# Core Concepts
+
+Domain-Driven Design patterns that form the foundation of CleanStack.
+
+## Overview
+
+CleanStack uses DDD tactical patterns to model your business domain. These patterns are provided by the `@packages/ddd-kit` package and are recognized by AI to generate consistent code.
+
+### The 5 Essential Patterns
+
+**[Result Pattern](/docs/core-concepts/result)** - Error handling without exceptions
+- Replaces `try/catch` with values
+- Forces error handling at compile-time
+- Example: `Result<User, Error>`
+
+**[Option Pattern](/docs/core-concepts/option)** - Absence of value without `null`
+- Eliminates `null` and `undefined`
+- Safe pattern matching with `Some` / `None`
+- Example: `Option<User>`
+
+**[Value Objects](/docs/core-concepts/value-objects)** - Immutable business concepts
+- Encapsulated validation
+- Value-based comparison
+- Example: `Email`, `Money`, `Address`
+
+**[Entities](/docs/core-concepts/entities)** - Objects with identity
+- Unique identity (UUID)
+- Encapsulated business logic
+- Example: `User`, `Order`, `Product`
+
+**Aggregates** - Consistency boundaries
+- Coordinates modifications of related entities
+- Manages Domain Events
+- Example: `UserAggregate`, `OrderAggregate`
+
+## Why These Patterns?
+
+### Problems Solved
+
+**Without DDD:**
+```typescript
+// ❌ Common problems
+function createUser(email: string): User | null {
+  if (!email.includes('@')) {
+    throw new Error('Invalid email') // Silent exception
+  }
+
+  const user = db.users.create({ email })
+  return user ?? null  // Null can cause bugs
+}
+
+// Dangerous usage
+const user = createUser(input.email)  // May throw
+user.name  // May be undefined - crash!
+```
+
+**With DDD:**
+```typescript
+// ✅ Safe and explicit
+function createUser(email: string): Result<User> {
+  const emailOrError = Email.create(email)
+  if (emailOrError.isFailure) {
+    return Result.fail(emailOrError.error)  // Explicit error
+  }
+
+  const userOrError = await repo.create(...)
+  return userOrError  // Result<User> - error forced
+}
+
+// Safe usage
+const result = await createUser(input.email)
+if (result.isFailure) {
+  return handleError(result.error)  // Forced by compiler
+}
+const user = result.value  // Type-safe!
+```
+
+### Advantages
+
+1. **Safety** - Compiler forces error handling
+2. **Clarity** - Explicit intent in types
+3. **Testability** - Business logic without side effects
+4. **Maintainability** - Recognizable patterns
+5. **Documentation** - Types document behavior
+
+## Result Pattern
+
+The `Result<T, E>` pattern replaces exceptions with values.
+
+### Problem Solved
+
+```typescript
+// ❌ With exceptions
+try {
+  const user = await createUser(data)
+  const order = await createOrder(user)
+  return order
+} catch (error) {
+  // What is the error type? We don't know
+  // Which operation failed? Mystery
+}
+
+// ✅ With Result
+const userResult = await createUser(data)
+if (userResult.isFailure) {
+  return Result.fail(userResult.error)  // Known type
+}
+
+const orderResult = await createOrder(userResult.value)
+if (orderResult.isFailure) {
+  return Result.fail(orderResult.error)  // Known type
+}
+
+return Result.ok(orderResult.value)
+```
+
+[Learn Result →](/docs/core-concepts/result)
+
+## Option Pattern
+
+The `Option<T>` pattern eliminates `null` and `undefined`.
+
+### Problem Solved
+
+```typescript
+// ❌ With null
+const user = await findUser(id)  // User | null
+if (user) {
+  console.log(user.email)
+} else {
+  console.log('Not found')
+}
+// Forgetting check = runtime crash
+
+// ✅ With Option
+const userOption = await findUser(id)  // Result<Option<User>>
+userOption.match({
+  some: (user) => console.log(user.email),
+  none: () => console.log('Not found')
+})
+// Forced by compiler
+```
+
+[Learn Option →](/docs/core-concepts/option)
+
+## Value Objects
+
+Value Objects represent business concepts without identity.
+
+### Characteristics
+
+- **Immutable** - Frozen with `Object.freeze()`
+- **Validated** - Creation via `create()` factory
+- **Comparable by value** - Equality based on properties
+- **Without identity** - `Email("a@b.com")` === `Email("a@b.com")`
+
+### Example
+
+```typescript
+export class Email extends ValueObject<{ value: string }> {
+  private constructor(props: { value: string }) {
+    super(props)
+    Object.freeze(this)  // Immutability
+  }
+
+  get value(): string {
+    return this.props.value
+  }
+
+  static create(email: string): Result<Email> {
+    if (!EMAIL_REGEX.test(email)) {
+      return Result.fail('Invalid email format')
+    }
+    return Result.ok(new Email({ value: email.toLowerCase() }))
+  }
+}
+
+// Usage
+const emailOrError = Email.create('USER@EXAMPLE.COM')
+if (emailOrError.isSuccess) {
+  const email = emailOrError.value
+  console.log(email.value)  // "user@example.com"
+  // email.value = 'other'  // ❌ Immutable!
+}
+```
+
+[Learn Value Objects →](/docs/core-concepts/value-objects)
+
+## Entities & Aggregates
+
+Entities have a unique identity. Aggregates are consistency boundaries.
+
+### Entity
+
+```typescript
+export class User extends Entity<UserProps> {
+  private constructor(props: UserProps, id?: UUID) {
+    super(props, id)
+  }
+
+  get email(): Email {
+    return this.props.email
+  }
+
+  // Business logic
+  updateEmail(newEmail: Email): Result<User> {
+    // Returns a NEW instance
+    return Result.ok(new User({
+      ...this.props,
+      email: newEmail
+    }, this.id))
+  }
+
+  static create(props: CreateUserProps): Result<User> {
+    return Result.ok(new User(props, UUID.create()))
+  }
+}
+
+// Two Users are identical if same ID
+const user1 = User.create({ email: Email.create('a@b.com') })
+const user2 = User.create({ email: Email.create('a@b.com') })
+user1.equals(user2)  // false (different IDs)
+```
+
+### Aggregate
+
+```typescript
+export class User extends Aggregate<UserProps> {
+  static create(props: CreateUserProps): Result<User> {
+    const user = new User(props)
+
+    // Raise domain event
+    user.addEvent(new UserCreatedEvent(user.id))
+
+    return Result.ok(user)
+  }
+}
+
+// After persistence
+user.markEventsForDispatch()
+DomainEvents.dispatch(user.id)  // Fire events
+```
+
+[Learn Entities & Aggregates →](/docs/core-concepts/entities)
+
+## Pattern Composition
+
+These patterns combine to create robust code:
+
+```typescript
+// Use Case combining all patterns
+export class CreateUserUseCase {
+  async execute(input: CreateUserInput): Promise<Result<User>> {
+    // 1. Value Object with validation
+    const emailOrError = Email.create(input.email)
+    if (emailOrError.isFailure) {
+      return Result.fail(emailOrError.error)
+    }
+
+    // 2. Check with Option
+    const existingOrError = await this.repo.findByEmail(emailOrError.value)
+    if (existingOrError.isFailure) {
+      return Result.fail(existingOrError.error)
+    }
+
+    if (existingOrError.value.isSome()) {
+      return Result.fail(new ConflictException('Email exists'))
+    }
+
+    // 3. Entity/Aggregate creation
+    const userOrError = User.create({
+      email: emailOrError.value,
+      name: input.name
+    })
+    if (userOrError.isFailure) {
+      return Result.fail(userOrError.error)
+    }
+
+    // 4. Persistence returning Result
+    const savedOrError = await this.repo.create(userOrError.value)
+    if (savedOrError.isFailure) {
+      return Result.fail(savedOrError.error)
+    }
+
+    // 5. Success!
+    return Result.ok(savedOrError.value)
+  }
+}
+```
+
+## Usage Rules
+
+### ✅ Do
+
+- Always return `Result<T>` in Domain and Application
+- Use `Option<T>` for queries (find)
+- Freeze Value Objects with `Object.freeze()`
+- Create via static factory methods
+- Validate in constructors/factories
+
+### ❌ Avoid
+
+- `throw new Error()` in Domain/Application
+- Returning `null` or `undefined`
+- Mutating domain objects
+- Public constructors
+- Validation logic in controllers
+
+## Next Steps
+
+Dive deeper into each pattern:
+
+- [Result Pattern →](/docs/core-concepts/result) - Error handling
+- [Option Pattern →](/docs/core-concepts/option) - Absence of value
+- [Value Objects →](/docs/core-concepts/value-objects) - Immutable concepts
+- [Entities & Aggregates →](/docs/core-concepts/entities) - Objects with identity
+
+Or move on to architecture:
+
+- [Clean Architecture →](/docs/architecture) - Layer separation

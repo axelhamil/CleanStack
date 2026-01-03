@@ -1,0 +1,271 @@
+# Getting Started
+
+Get started with CleanStack in less than 5 minutes.
+
+## Prerequisites
+
+Before you begin, make sure you have installed:
+
+- **Node.js** ≥ 24.12.0 ([download](https://nodejs.org))
+- **PNPM** 10.26.2 (enable with `corepack enable`)
+- **Docker Desktop** ([download](https://docker.com/get-started))
+
+Check your installation:
+
+```bash
+node --version  # ≥ v24.12.0
+pnpm --version  # 10.26.2
+docker --version
+```
+
+## Quick Installation
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/axelhamil/nextjs-clean-architecture-starter my-app
+cd my-app
+pnpm install
+```
+
+This command installs all monorepo packages (Next.js, DDD-kit, Drizzle, UI).
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+The `.env` file contains:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cleanstack"
+```
+
+The default configuration works out of the box. No changes needed for local development.
+
+### 3. Start the Database
+
+```bash
+pnpm db
+```
+
+This command:
+- Launches PostgreSQL 17 in Docker
+- Creates a `cleanstack` database on port `5432`
+- Is ready to receive your schema
+
+Verify the container is running:
+
+```bash
+docker ps | grep postgres
+```
+
+### 4. Initialize Schema
+
+```bash
+pnpm db:push
+```
+
+This command:
+- Reads schemas from `packages/drizzle/src/schema/`
+- Creates tables in PostgreSQL
+- Generates TypeScript types for Drizzle
+
+### 5. Start the Server
+
+```bash
+pnpm dev
+```
+
+This command:
+- Runs `db:generate` to update types
+- Starts Next.js on http://localhost:3000
+- Enables hot-reload
+
+Visit **[localhost:3000](http://localhost:3000)** - you should see the landing page!
+
+## Verify Installation
+
+Run all quality checks:
+
+```bash
+pnpm validate
+```
+
+This command runs:
+- ✅ TypeScript type-checking
+- ✅ Biome linting
+- ✅ Vitest tests
+
+If everything passes, your environment is ready!
+
+## Next Steps
+
+### For Beginners
+
+1. **Understand the architecture** - [Read Clean Architecture →](/docs/architecture)
+2. **Learn the patterns** - [Discover DDD →](/docs/core-concepts)
+3. **Create your first use case** - [Practical guide →](/docs/guides/first-use-case)
+
+### For Experienced Developers
+
+1. **Explore the code** - Check out `apps/nextjs/src/domain/`
+2. **Read CLAUDE.md** - Complete architecture documentation
+3. **Review .cursorrules** - Patterns and anti-patterns
+
+## Useful Commands
+
+### Development
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Production build
+- `pnpm start` - Start production version
+
+### Database
+
+- `pnpm db` - Start PostgreSQL (Docker)
+- `pnpm db:push` - Apply schema (dev)
+- `pnpm db:generate` - Generate migrations
+- `pnpm db:studio` - Open Drizzle Studio UI
+
+### Quality
+
+- `pnpm validate` - Type-check + lint + tests
+- `pnpm type-check` - TypeScript verification
+- `pnpm check` - Biome linting
+- `pnpm test` - Vitest tests
+
+## Troubleshooting
+
+### Port 5432 Already in Use
+
+Another PostgreSQL is running on your machine.
+
+**Solution 1:** Stop the other PostgreSQL
+```bash
+sudo systemctl stop postgresql
+```
+
+**Solution 2:** Change the port
+```yaml
+# docker-compose.yml
+ports:
+  - "5433:5432"
+
+# .env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/cleanstack"
+```
+
+### TypeScript Errors After Schema Changes
+
+Database types are out of sync.
+
+**Solution:**
+```bash
+pnpm db:generate  # Regenerate types
+pnpm type-check   # Should pass now
+```
+
+### Port 3000 Already in Use
+
+**Solution:**
+```bash
+PORT=3001 pnpm dev
+```
+
+### Database Connection Error
+
+PostgreSQL is not running or not accessible.
+
+**Solution:**
+```bash
+docker ps  # Check if postgres is running
+pnpm db    # Restart if needed
+
+# Test connection
+psql postgresql://postgres:postgres@localhost:5432/cleanstack
+```
+
+### Turborepo Build Stuck
+
+Turborepo cache is corrupted.
+
+**Solution:**
+```bash
+pnpm clean      # Clean everything
+pnpm install    # Reinstall
+pnpm build      # Rebuild
+```
+
+## Project Structure
+
+```
+my-app/
+├── apps/nextjs/                    # Next.js application
+│   ├── app/                        # App Router (pages, layouts)
+│   ├── src/                        # Clean Architecture layers
+│   │   ├── domain/                # ← Pure business logic
+│   │   ├── application/           # ← Use cases & ports
+│   │   └── adapters/              # ← Controllers & repos
+│   └── common/                     # DI, env, i18n
+│
+├── packages/
+│   ├── ddd-kit/                   # DDD primitives (Result, Entity, etc.)
+│   ├── drizzle/                   # DB schema & migrations
+│   ├── ui/                        # shadcn/ui components
+│   └── typescript-config/         # Shared TypeScript configs
+│
+└── turbo.json                      # Turborepo configuration
+```
+
+## Development Workflow
+
+### Modify Database Schema
+
+```bash
+# 1. Edit the schema
+code packages/drizzle/src/schema/users.ts
+
+# 2. Generate migration
+pnpm db:generate
+
+# 3. Apply changes
+pnpm db:push      # Dev: direct push
+pnpm db:migrate   # Prod: versioned migration
+```
+
+### Add a Use Case
+
+```bash
+# 1. Create Value Objects (domain)
+# 2. Define repository interface (application/ports)
+# 3. Implement use case (application/use-cases)
+# 4. Implement repository (adapters/out)
+# 5. Register in DI container (common/di/modules)
+# 6. Create API route (app/api)
+```
+
+Follow the [complete practical guide →](/docs/guides/first-use-case)
+
+### Run Tests
+
+```bash
+# All tests
+pnpm test
+
+# Specific package tests
+cd packages/ddd-kit && pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# With coverage
+pnpm test:coverage
+```
+
+## Ready to Code?
+
+Now that your environment is set up, learn the core concepts:
+
+**Next:** [Core Concepts →](/docs/core-concepts)

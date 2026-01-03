@@ -1,0 +1,554 @@
+# Your First Use Case
+
+Step-by-step guide to create a complete feature with Clean Architecture.
+
+## What You Will Build
+
+A REST API to create products with:
+- Business validation (name, price)
+- PostgreSQL persistence
+- Layered architecture
+- Error handling with Result/Option
+
+## Step 1: Define the Domain
+
+Always start with the business core: Value Objects and Entities.
+
+### Product Name (Value Object)
+
+```typescript
+// apps/nextjs/src/domain/product/ProductName.ts
+import { Result, ValueObject } from '@packages/ddd-kit'
+
+interface ProductNameProps {
+  value: string
+}
+
+export class ProductName extends ValueObject<ProductNameProps> {
+  private constructor(props: ProductNameProps) {
+    super(props)
+    Object.freeze(this)  // Immutability
+  }
+
+  get value(): string {
+    return this.props.value
+  }
+
+  static create(name: string): Result<ProductName> {
+    // Business validation
+    if (!name || name.trim().length === 0) {
+      return Result.fail('Product name is required')
+    }
+
+    if (name.length > 100) {
+      return Result.fail('Product name too long (max 100 characters)')
+    }
+
+    return Result.ok(new ProductName({ value: name.trim() }))
+  }
+}
+```
+
+**Key points:**
+- ✅ Private constructor - prevents direct creation
+- ✅ Factory `create()` - only way to create the object
+- ✅ `Object.freeze()` - guaranteed immutability
+- ✅ Returns `Result<T>` - explicit error handling
+
+### Product (Entity)
+
+```typescript
+// apps/nextjs/src/domain/product/Product.ts
+import { Entity, Result, UUID } from '@packages/ddd-kit'
+import type { ProductName } from './ProductName'
+
+interface ProductProps {
+  name: ProductName
+  price: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export class Product extends Entity<ProductProps> {
+  private constructor(props: ProductProps, id?: UUID) {
+    super(props, id)
+  }
+
+  get name(): ProductName {
+    return this.props.name
+  }
+
+  get price(): number {
+    return this.props.price
+  }
+
+  get createdAt(): Date {
+    return this.props.createdAt
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt
+  }
+
+  static create(props: {
+    name: ProductName
+    price: number
+  }): Result<Product> {
+    // Business rule: positive price
+    if (props.price < 0) {
+      return Result.fail('Price cannot be negative')
+    }
+
+    if (props.price > 1000000) {
+      return Result.fail('Price too high')
+    }
+
+    const now = new Date()
+
+    return Result.ok(new Product({
+      name: props.name,
+      price: props.price,
+      createdAt: now,
+      updatedAt: now
+    }, UUID.create()))
+  }
+}
+```
+
+**Key points:**
+- ✅ Private constructor
+- ✅ Factory `create()` with business rules
+- ✅ Read-only getters
+- ✅ No setters - immutability
+
+## Step 2: Repository Interface (Port)
+
+Define the contract in the Application layer.
+
+```typescript
+// apps/nextjs/src/application/ports/IProductRepository.ts
+import type { BaseRepository } from '@packages/ddd-kit'
+import type { Product } from '@/domain/product/Product'
+
+export interface IProductRepository extends BaseRepository<Product> {
+  // Custom methods if needed
+}
+```
+
+**Key points:**
+- ✅ Interface in Application
+- ✅ Extends `BaseRepository<T>` from ddd-kit
+- ✅ No implementation here
+
+## Step 3: Use Case
+
+Orchestrate the business logic.
+
+```typescript
+// apps/nextjs/src/application/use-cases/CreateProductUseCase.ts
+import { Result, type UseCase } from '@packages/ddd-kit'
+import { Product } from '@/domain/product/Product'
+import { ProductName } from '@/domain/product/ProductName'
+import type { IProductRepository } from '@/application/ports/IProductRepository'
+import type { Transaction } from 'drizzle-orm/node-postgres'
+
+export interface CreateProductInput {
+  name: string
+  price: number
+}
+
+export class CreateProductUseCase implements UseCase<CreateProductInput, Product> {
+  constructor(private readonly productRepo: IProductRepository) {}
+
+  async execute(
+    input: CreateProductInput,
+    trx?: Transaction
+  ): Promise<Result<Product>> {
+    // 1. Create Value Object with validation
+    const nameOrError = ProductName.create(input.name)
+    if (nameOrError.isFailure) {
+      return Result.fail(nameOrError.error)
+    }
+
+    // 2. Create Entity with business rules
+    const productOrError = Product.create({
+      name: nameOrError.value,
+      price: input.price
+    })
+    if (productOrError.isFailure) {
+      return Result.fail(productOrError.error)
+    }
+
+    // 3. Persist via repository
+    const savedOrError = await this.productRepo.create(productOrError.value, trx)
+    if (savedOrError.isFailure) {
+      return Result.fail(savedOrError.error)
+    }
+
+    return Result.ok(savedOrError.value)
+  }
+}
+```
+
+**Key points:**
+- ✅ Implements `UseCase<Input, Output>`
+- ✅ Returns `Promise<Result<T>>`
+- ✅ Transaction support via `trx?`
+- ✅ No `try/catch` - Result pattern
+
+## Step 4: Database Schema
+
+Define the PostgreSQL table.
+
+```typescript
+// packages/drizzle/src/schema/products.ts
+import { pgTable, text, real, uuid, timestamp } from 'drizzle-orm/pg-core'
+
+export const products = pgTable('products', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  price: real('price').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+```
+
+Generate and apply:
+```bash
+pnpm db:generate  # Generate migration
+pnpm db:push      # Apply to DB
+```
+
+## Step 5: Repository Implementation
+
+Implement the interface in the Adapters layer.
+
+```typescript
+// apps/nextjs/src/adapters/out/persistence/DrizzleProductRepository.ts
+import { Result, Option, Some, None, type UUID, DatabaseOperationError } from '@packages/ddd-kit'
+import { db } from '@packages/drizzle'
+import { products } from '@packages/drizzle/schema'
+import { eq } from 'drizzle-orm'
+import type { Transaction } from 'drizzle-orm/node-postgres'
+import type { IProductRepository } from '@/application/ports/IProductRepository'
+import type { Product } from '@/domain/product/Product'
+import { ProductMapper } from './mappers/ProductMapper'
+
+export class DrizzleProductRepository implements IProductRepository {
+  async create(product: Product, trx?: Transaction): Promise<Result<Product>> {
+    try {
+      const database = trx ?? db
+
+      await database.insert(products).values({
+        id: product.id.value,
+        name: product.name.value,
+        price: product.price,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+      })
+
+      return Result.ok(product)
+    } catch (error) {
+      return Result.fail(
+        new DatabaseOperationError('Failed to create product', { cause: error })
+      )
+    }
+  }
+
+  async findById(id: UUID, trx?: Transaction): Promise<Result<Option<Product>>> {
+    try {
+      const database = trx ?? db
+
+      const row = await database.query.products.findFirst({
+        where: eq(products.id, id.value)
+      })
+
+      if (!row) {
+        return Result.ok(None())  // ✅ Option, not null
+      }
+
+      const productOrError = ProductMapper.toDomain(row)
+      if (productOrError.isFailure) {
+        return Result.fail(productOrError.error)
+      }
+
+      return Result.ok(Some(productOrError.value))
+    } catch (error) {
+      return Result.fail(
+        new DatabaseOperationError('Failed to find product', { cause: error })
+      )
+    }
+  }
+
+  // Implement other BaseRepository methods...
+  async update(product: Product, trx?: Transaction): Promise<Result<Product>> { /* ... */ }
+  async delete(id: UUID, trx?: Transaction): Promise<Result<void>> { /* ... */ }
+  async findAll(trx?: Transaction): Promise<Result<Product[]>> { /* ... */ }
+  async exists(id: UUID, trx?: Transaction): Promise<Result<boolean>> { /* ... */ }
+  async count(trx?: Transaction): Promise<Result<number>> { /* ... */ }
+}
+```
+
+### Mapper Domain ↔ Database
+
+```typescript
+// apps/nextjs/src/adapters/out/persistence/mappers/ProductMapper.ts
+import { Result, UUID } from '@packages/ddd-kit'
+import { Product } from '@/domain/product/Product'
+import { ProductName } from '@/domain/product/ProductName'
+
+export class ProductMapper {
+  static toDomain(row: any): Result<Product> {
+    const nameOrError = ProductName.create(row.name)
+    if (nameOrError.isFailure) {
+      return Result.fail(nameOrError.error)
+    }
+
+    // Reconstruct entity from DB
+    return Result.ok(
+      Object.assign(
+        Object.create(Product.prototype),
+        {
+          _id: UUID.createFrom(row.id),
+          props: {
+            name: nameOrError.value,
+            price: row.price,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          },
+        }
+      )
+    )
+  }
+
+  static toPersistence(product: Product) {
+    return {
+      id: product.id.value,
+      name: product.name.value,
+      price: product.price,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+    }
+  }
+}
+```
+
+**Key points:**
+- ✅ Implementation in Adapters
+- ✅ Returns `Result<T>` and `Result<Option<T>>`
+- ✅ Transaction support (`trx?`)
+- ✅ Mapper separates Domain and DB
+
+## Step 6: DI Container
+
+Register dependencies.
+
+```typescript
+// apps/nextjs/src/common/di/modules/product.module.ts
+import type { ApplicationContainer } from '@evyweb/ioctopus'
+import { DrizzleProductRepository } from '@/adapters/out/persistence/DrizzleProductRepository'
+import { CreateProductUseCase } from '@/application/use-cases/CreateProductUseCase'
+
+export const productModule = (container: ApplicationContainer) => {
+  // Repository
+  container.bind('IProductRepository').toClass(DrizzleProductRepository)
+
+  // Use Cases
+  container.bind('CreateProductUseCase').toClass(CreateProductUseCase)
+}
+```
+
+```typescript
+// apps/nextjs/src/common/di/container.ts
+import { ApplicationContainer } from '@evyweb/ioctopus'
+import { productModule } from './modules/product.module'
+
+const container = new ApplicationContainer()
+
+// Register module
+productModule(container)
+
+export { container }
+export const getInjection = <K extends keyof DITokenMapping>(
+  token: K
+): DITokenMapping[K] => container.get(token)
+```
+
+```typescript
+// apps/nextjs/src/common/di/types.ts
+import type { CreateProductUseCase } from '@/application/use-cases/CreateProductUseCase'
+import type { IProductRepository } from '@/application/ports/IProductRepository'
+
+export interface DITokenMapping {
+  IProductRepository: IProductRepository
+  CreateProductUseCase: CreateProductUseCase
+  // ... other tokens
+}
+```
+
+## Step 7: API Route
+
+Expose via HTTP.
+
+```typescript
+// apps/nextjs/src/app/api/products/route.ts
+import { getInjection } from '@/common/di/container'
+import { z } from 'zod'
+
+const createProductSchema = z.object({
+  name: z.string().min(1).max(100),
+  price: z.number().min(0).max(1000000)
+})
+
+export async function POST(request: Request) {
+  try {
+    // 1. Parse & validate input
+    const body = await request.json()
+    const validation = createProductSchema.safeParse(body)
+
+    if (!validation.success) {
+      return Response.json(
+        { error: 'Validation failed', details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
+    // 2. Execute use case
+    const useCase = getInjection('CreateProductUseCase')
+    const result = await useCase.execute(validation.data)
+
+    // 3. Transform Result → HTTP
+    if (result.isFailure) {
+      return Response.json(
+        { error: result.error },
+        { status: 400 }
+      )
+    }
+
+    const product = result.value
+
+    // 4. Return response
+    return Response.json(
+      {
+        id: product.id.value,
+        name: product.name.value,
+        price: product.price,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error('Failed to create product:', error)
+    return Response.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**Key points:**
+- ✅ Zod validation in the Adapter layer
+- ✅ Use Case retrieved via DI
+- ✅ Transform Result → HTTP status
+- ✅ No business logic here
+
+## Step 8: Test
+
+### Start the server
+
+```bash
+pnpm dev
+```
+
+### Create a product
+
+```bash
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "MacBook Pro",
+    "price": 2499
+  }'
+```
+
+Response:
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "name": "MacBook Pro",
+  "price": 2499,
+  "createdAt": "2025-01-15T10:30:00.000Z",
+  "updatedAt": "2025-01-15T10:30:00.000Z"
+}
+```
+
+### Test validations
+
+**Empty name:**
+```bash
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name": "", "price": 100}'
+
+# Response: 400 - "Product name is required"
+```
+
+**Negative price:**
+```bash
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Product", "price": -10}'
+
+# Response: 400 - "Price cannot be negative"
+```
+
+## Summary
+
+You just created a complete feature following Clean Architecture:
+
+**✅ Domain (zero dependencies)**
+- `ProductName.ts` - Value Object with validation
+- `Product.ts` - Entity with business rules
+
+**✅ Application (orchestration)**
+- `IProductRepository.ts` - Port (interface)
+- `CreateProductUseCase.ts` - Business logic
+
+**✅ Adapters (implementations)**
+- `DrizzleProductRepository.ts` - Drizzle implementation
+- `ProductMapper.ts` - Domain ↔ Database
+- `route.ts` - HTTP endpoint
+
+**✅ Infrastructure**
+- DI container configuration
+- Database schema
+
+## Key Takeaways
+
+**Dependency Rule:**
+- Domain imports nothing
+- Application defines interfaces
+- Adapters implements everything
+
+**Error Handling:**
+- `Result<T>` everywhere
+- `Option<T>` for queries
+- No exceptions
+
+**Immutability:**
+- `Object.freeze()` on Value Objects
+- No setters on Entities
+- New instances for updates
+
+**Testing:**
+- Domain testable without DB
+- Use Cases testable with mocks
+- Adapters tested with integration
+
+## Next Steps
+
+- [Transactions →](/docs/guides/transactions) - Multi-step operations
+- [Testing →](/docs/guides/testing) - Test each layer
+- [Advanced Value Objects →](/docs/core-concepts/value-objects) - Advanced patterns

@@ -1,0 +1,891 @@
+# Testing
+
+Testing strategy for Clean Architecture.
+
+## Testing Philosophy
+
+Clean Architecture makes testing **easy, fast, and reliable**.
+
+### Testing Pyramid
+
+```
+           /\
+          /  \        E2E Tests (10%)
+         /____\       Few, slow, via API
+        /      \
+       /        \     Integration Tests (30%)
+      /__________\    Some, medium
+     /            \   UseCases + real DB
+    /              \
+   /                \ Unit Tests (60%)
+  /__________________\ Many, fast
+                      Domain without DB/framework
+```
+
+**Rule:** The higher you go, the slower and more fragile.
+
+### Tests by Layer
+
+- **Domain** → Pure unit tests (ms)
+- **Application** → Integration tests with mocks (100ms)
+- **Adapters** → Integration/E2E tests with DB (1s)
+
+## Vitest Configuration
+
+### Base Setup
+
+The project uses Vitest with shared configuration.
+
+```typescript
+// packages/test/base-vitest.config.ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      exclude: ['node_modules/', 'dist/', '**/__TESTS__/']
+    }
+  }
+})
+```
+
+```typescript
+// packages/ddd-kit/vitest.config.ts
+import { defineConfig, mergeConfig } from 'vitest/config'
+import baseConfig from '@packages/test/base-vitest.config'
+
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    test: {
+      // Package-specific config
+    }
+  })
+)
+```
+
+### Commands
+
+- `pnpm test` - Run all tests
+- `pnpm test:watch` - Watch mode
+- `pnpm test:coverage` - Generate coverage
+- `cd packages/ddd-kit && pnpm test` - Test specific package
+
+## Testing the Domain
+
+### Value Objects
+
+Value Objects are **100% testable without dependencies**.
+
+```typescript
+// domain/user/__TESTS__/Email.test.ts
+import { describe, it, expect } from 'vitest'
+import { Email } from '../Email'
+
+describe('Email Value Object', () => {
+  describe('create', () => {
+    it('should create valid email', () => {
+      const result = Email.create('user@example.com')
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.getValue().value).toBe('user@example.com')
+    })
+
+    it('should normalize email to lowercase', () => {
+      const result = Email.create('USER@EXAMPLE.COM')
+
+      expect(result.getValue().value).toBe('user@example.com')
+    })
+
+    it('should reject invalid format', () => {
+      const result = Email.create('invalid-email')
+
+      expect(result.isFailure).toBe(true)
+      expect(result.getError()).toBe('Invalid email format')
+    })
+
+    it('should reject empty email', () => {
+      const result = Email.create('')
+
+      expect(result.isFailure).toBe(true)
+      expect(result.getError()).toBe('Email is required')
+    })
+
+    it('should reject email too long', () => {
+      const longEmail = 'a'.repeat(250) + '@example.com'
+      const result = Email.create(longEmail)
+
+      expect(result.isFailure).toBe(true)
+      expect(result.getError()).toBe('Email too long')
+    })
+  })
+
+  describe('equals', () => {
+    it('should be equal if same value', () => {
+      const email1 = Email.create('user@example.com').getValue()
+      const email2 = Email.create('user@example.com').getValue()
+
+      expect(email1.equals(email2)).toBe(true)
+    })
+
+    it('should be equal after normalization', () => {
+      const email1 = Email.create('USER@EXAMPLE.COM').getValue()
+      const email2 = Email.create('user@example.com').getValue()
+
+      expect(email1.equals(email2)).toBe(true)
+    })
+
+    it('should not be equal if different value', () => {
+      const email1 = Email.create('user1@example.com').getValue()
+      const email2 = Email.create('user2@example.com').getValue()
+
+      expect(email1.equals(email2)).toBe(false)
+    })
+  })
+})
+```
+
+**Advantages:**
+- ✅ Ultra-fast tests (no DB, no IO)
+- ✅ No mocks needed
+- ✅ Executable anywhere (CI, local, watch mode)
+
+### Entities
+
+Entities are also testable without DB.
+
+```typescript
+// domain/user/__TESTS__/User.test.ts
+import { describe, it, expect } from 'vitest'
+import { User } from '../User'
+import { Email } from '../Email'
+
+describe('User Entity', () => {
+  const validEmail = Email.create('user@example.com').getValue()
+
+  describe('create', () => {
+    it('should create user with valid props', () => {
+      const result = User.create({
+        email: validEmail,
+        name: 'Alice'
+      })
+
+      expect(result.isSuccess).toBe(true)
+      const user = result.getValue()
+      expect(user.email).toBe(validEmail)
+      expect(user.name).toBe('Alice')
+      expect(user.isActive).toBe(true)
+    })
+
+    it('should reject empty name', () => {
+      const result = User.create({
+        email: validEmail,
+        name: ''
+      })
+
+      expect(result.isFailure).toBe(true)
+      expect(result.getError()).toBe('Name cannot be empty')
+    })
+
+    it('should trim name', () => {
+      const result = User.create({
+        email: validEmail,
+        name: '  Alice  '
+      })
+
+      expect(result.getValue().name).toBe('Alice')
+    })
+
+    it('should generate UUID if not provided', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+
+      expect(user._id).toBeDefined()
+      expect(user._id.value).toMatch(/^[0-9a-f-]{36}$/)
+    })
+  })
+
+  describe('updateName', () => {
+    it('should return new instance with updated name', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const result = user.updateName('Bob')
+
+      expect(result.isSuccess).toBe(true)
+      const updated = result.getValue()
+
+      expect(updated.name).toBe('Bob')
+      expect(user.name).toBe('Alice')  // Original unchanged
+      expect(updated._id.equals(user._id)).toBe(true)  // Same ID
+    })
+
+    it('should reject empty name', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const result = user.updateName('')
+
+      expect(result.isFailure).toBe(true)
+    })
+  })
+
+  describe('deactivate', () => {
+    it('should deactivate active user', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const result = user.deactivate()
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.getValue().isActive).toBe(false)
+    })
+
+    it('should reject if already inactive', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const deactivated = user.deactivate().getValue()
+      const result = deactivated.deactivate()
+
+      expect(result.isFailure).toBe(true)
+      expect(result.getError()).toBe('User is already inactive')
+    })
+  })
+
+  describe('canPlaceOrder', () => {
+    it('should allow if active', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+
+      expect(user.canPlaceOrder()).toBe(true)
+    })
+
+    it('should not allow if inactive', () => {
+      const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const deactivated = user.deactivate().getValue()
+
+      expect(deactivated.canPlaceOrder()).toBe(false)
+    })
+  })
+
+  describe('equals', () => {
+    it('should be equal if same ID', () => {
+      const user1 = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const user2 = User.create({ email: validEmail, name: 'Bob' }, user1._id).getValue()
+
+      expect(user1.equals(user2)).toBe(true)
+    })
+
+    it('should not be equal if different ID', () => {
+      const user1 = User.create({ email: validEmail, name: 'Alice' }).getValue()
+      const user2 = User.create({ email: validEmail, name: 'Alice' }).getValue()
+
+      expect(user1.equals(user2)).toBe(false)
+    })
+  })
+})
+```
+
+### Aggregates & Domain Events
+
+```typescript
+// domain/user/__TESTS__/UserAggregate.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { User } from '../User'
+import { Email } from '../Email'
+import { DomainEvents } from '@packages/ddd-kit'
+import { UserCreatedEvent } from '../events/UserCreatedEvent'
+
+describe('User Aggregate', () => {
+  const validEmail = Email.create('user@example.com').getValue()
+
+  beforeEach(() => {
+    DomainEvents.clearHandlers()
+  })
+
+  it('should add UserCreatedEvent on creation', () => {
+    const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+
+    expect(user.hasEvents()).toBe(true)
+    expect(user.getEventCount()).toBe(1)
+  })
+
+  it('should dispatch events to subscribers', async () => {
+    const handler = vi.fn()
+    DomainEvents.subscribe('UserCreated', handler)
+
+    const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+    user.markEventsForDispatch()
+    await DomainEvents.dispatch(user._id.value.toString())
+
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'UserCreated',
+        aggregateId: user._id.value.toString(),
+        email: 'user@example.com'
+      })
+    )
+  })
+
+  it('should clear events after dispatch', async () => {
+    const user = User.create({ email: validEmail, name: 'Alice' }).getValue()
+    user.markEventsForDispatch()
+    await DomainEvents.dispatch(user._id.value.toString())
+
+    expect(user.hasEvents()).toBe(false)
+  })
+})
+```
+
+## Testing the Application
+
+### UseCases with Mocks
+
+UseCases are tested with **repository mocks**.
+
+```typescript
+// application/use-cases/__TESTS__/CreateUserUseCase.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { CreateUserUseCase } from '../CreateUserUseCase'
+import { User } from '@/domain/user/User'
+import { Email } from '@/domain/user/Email'
+import { Result, None, Some } from '@packages/ddd-kit'
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+
+describe('CreateUserUseCase', () => {
+  const createMockRepo = (): IUserRepository => ({
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    findById: vi.fn(),
+    findByEmail: vi.fn(),
+    findAll: vi.fn(),
+    exists: vi.fn(),
+    count: vi.fn()
+  })
+
+  it('should create user successfully', async () => {
+    const mockRepo = createMockRepo()
+    const mockUser = User.create({
+      email: Email.create('user@example.com').getValue(),
+      name: 'Alice'
+    }).getValue()
+
+    vi.mocked(mockRepo.findByEmail).mockResolvedValue(Result.ok(None.of()))
+    vi.mocked(mockRepo.create).mockResolvedValue(Result.ok(mockUser))
+
+    const useCase = new CreateUserUseCase(mockRepo)
+    const result = await useCase.execute({
+      email: 'user@example.com',
+      name: 'Alice'
+    })
+
+    expect(result.isSuccess).toBe(true)
+    expect(result.getValue().email.value).toBe('user@example.com')
+    expect(mockRepo.findByEmail).toHaveBeenCalledWith('user@example.com')
+    expect(mockRepo.create).toHaveBeenCalledOnce()
+  })
+
+  it('should fail if email already exists', async () => {
+    const mockRepo = createMockRepo()
+    const existingUser = User.create({
+      email: Email.create('user@example.com').getValue(),
+      name: 'Bob'
+    }).getValue()
+
+    vi.mocked(mockRepo.findByEmail).mockResolvedValue(Result.ok(Some.of(existingUser)))
+
+    const useCase = new CreateUserUseCase(mockRepo)
+    const result = await useCase.execute({
+      email: 'user@example.com',
+      name: 'Alice'
+    })
+
+    expect(result.isFailure).toBe(true)
+    expect(result.getError()).toContain('Email already exists')
+    expect(mockRepo.create).not.toHaveBeenCalled()
+  })
+
+  it('should fail if email is invalid', async () => {
+    const mockRepo = createMockRepo()
+    const useCase = new CreateUserUseCase(mockRepo)
+
+    const result = await useCase.execute({
+      email: 'invalid-email',
+      name: 'Alice'
+    })
+
+    expect(result.isFailure).toBe(true)
+    expect(result.getError()).toBe('Invalid email format')
+    expect(mockRepo.findByEmail).not.toHaveBeenCalled()
+  })
+
+  it('should fail if name is empty', async () => {
+    const mockRepo = createMockRepo()
+    const useCase = new CreateUserUseCase(mockRepo)
+
+    const result = await useCase.execute({
+      email: 'user@example.com',
+      name: ''
+    })
+
+    expect(result.isFailure).toBe(true)
+    expect(result.getError()).toBe('Name cannot be empty')
+  })
+})
+```
+
+**Advantages:**
+- ✅ Fast tests (no real DB)
+- ✅ Full control over results
+- ✅ Easily testable in parallel
+
+## Testing Adapters
+
+### Repositories with Test DB
+
+Repositories are tested with a **real test database**.
+
+```typescript
+// adapters/out/persistence/__TESTS__/DrizzleUserRepository.test.ts
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { DrizzleUserRepository } from '../DrizzleUserRepository'
+import { User } from '@/domain/user/User'
+import { Email } from '@/domain/user/Email'
+import { UUID } from '@packages/ddd-kit'
+import { db } from '@packages/drizzle'
+import { users } from '@packages/drizzle/schema'
+
+describe('DrizzleUserRepository (integration)', () => {
+  let repo: DrizzleUserRepository
+
+  beforeEach(async () => {
+    repo = new DrizzleUserRepository()
+    // Clean DB before each test
+    await db.delete(users)
+  })
+
+  afterEach(async () => {
+    // Cleanup after each test
+    await db.delete(users)
+  })
+
+  describe('create', () => {
+    it('should persist user in database', async () => {
+      const user = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Alice'
+      }).getValue()
+
+      const result = await repo.create(user)
+
+      expect(result.isSuccess).toBe(true)
+
+      // Verify in DB
+      const rows = await db.select().from(users)
+      expect(rows).toHaveLength(1)
+      expect(rows[0].email).toBe('user@example.com')
+      expect(rows[0].name).toBe('Alice')
+    })
+
+    it('should fail if email already exists', async () => {
+      const user1 = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Alice'
+      }).getValue()
+
+      await repo.create(user1)
+
+      const user2 = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Bob'
+      }).getValue()
+
+      const result = await repo.create(user2)
+
+      expect(result.isFailure).toBe(true)
+    })
+  })
+
+  describe('findById', () => {
+    it('should return Some if user exists', async () => {
+      const user = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Alice'
+      }).getValue()
+
+      await repo.create(user)
+
+      const result = await repo.findById(user._id)
+
+      expect(result.isSuccess).toBe(true)
+      const option = result.getValue()
+      expect(option.isSome()).toBe(true)
+      expect(option.unwrap().email.value).toBe('user@example.com')
+    })
+
+    it('should return None if user does not exist', async () => {
+      const result = await repo.findById(UUID.create())
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.getValue().isNone()).toBe(true)
+    })
+  })
+
+  describe('update', () => {
+    it('should update user in database', async () => {
+      const user = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Alice'
+      }).getValue()
+
+      await repo.create(user)
+
+      const updated = user.updateName('Bob').getValue()
+      const result = await repo.update(updated)
+
+      expect(result.isSuccess).toBe(true)
+
+      // Verify in DB
+      const rows = await db.select().from(users).where(eq(users.id, user._id.value))
+      expect(rows[0].name).toBe('Bob')
+    })
+  })
+
+  describe('delete', () => {
+    it('should remove user from database', async () => {
+      const user = User.create({
+        email: Email.create('user@example.com').getValue(),
+        name: 'Alice'
+      }).getValue()
+
+      await repo.create(user)
+      const result = await repo.delete(user._id)
+
+      expect(result.isSuccess).toBe(true)
+
+      // Verify deletion
+      const rows = await db.select().from(users)
+      expect(rows).toHaveLength(0)
+    })
+  })
+})
+```
+
+**Test DB Setup:**
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    setupFiles: ['./tests/setup.ts'],
+    environment: 'node'
+  }
+})
+```
+
+```typescript
+// tests/setup.ts
+import { beforeAll, afterAll } from 'vitest'
+import { db } from '@packages/drizzle'
+
+beforeAll(async () => {
+  // Connect to test DB
+  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/cleanstack_test'
+})
+
+afterAll(async () => {
+  // Close connection
+  await db.$client.end()
+})
+```
+
+### Route Handlers (E2E)
+
+```typescript
+// adapters/in/api/users/__TESTS__/route.test.ts
+import { describe, it, expect, beforeEach } from 'vitest'
+import { POST } from '../route'
+import { db } from '@packages/drizzle'
+import { users } from '@packages/drizzle/schema'
+
+describe('POST /api/users (E2E)', () => {
+  beforeEach(async () => {
+    await db.delete(users)
+  })
+
+  it('should create user and return 201', async () => {
+    const request = new Request('http://localhost:3000/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'user@example.com',
+        name: 'Alice'
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(data.email).toBe('user@example.com')
+    expect(data.name).toBe('Alice')
+
+    // Verify in DB
+    const rows = await db.select().from(users)
+    expect(rows).toHaveLength(1)
+  })
+
+  it('should return 400 if email is invalid', async () => {
+    const request = new Request('http://localhost:3000/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'invalid',
+        name: 'Alice'
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('Invalid email')
+  })
+
+  it('should return 409 if email already exists', async () => {
+    // Create first user
+    await POST(new Request('http://localhost:3000/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'user@example.com',
+        name: 'Alice'
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    }))
+
+    // Try to create with same email
+    const request = new Request('http://localhost:3000/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'user@example.com',
+        name: 'Bob'
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(data.error).toContain('already exists')
+  })
+})
+```
+
+## Mocking Strategies
+
+### Repository Mock
+
+```typescript
+const createMockRepo = <T>(overrides?: Partial<IRepository<T>>): IRepository<T> => ({
+  create: vi.fn().mockResolvedValue(Result.ok({} as T)),
+  update: vi.fn().mockResolvedValue(Result.ok({} as T)),
+  delete: vi.fn().mockResolvedValue(Result.ok(undefined)),
+  findById: vi.fn().mockResolvedValue(Result.ok(None.of())),
+  findAll: vi.fn().mockResolvedValue(Result.ok([])),
+  exists: vi.fn().mockResolvedValue(Result.ok(false)),
+  count: vi.fn().mockResolvedValue(Result.ok(0)),
+  ...overrides
+})
+```
+
+### External Service Mock
+
+```typescript
+const createMockEmailService = (): IEmailService => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(Result.ok(undefined)),
+  sendPasswordReset: vi.fn().mockResolvedValue(Result.ok(undefined))
+})
+```
+
+### InMemory Repository (for testing)
+
+```typescript
+// adapters/out/persistence/InMemoryUserRepository.ts
+export class InMemoryUserRepository implements IUserRepository {
+  private users: Map<string, User> = new Map()
+
+  async create(user: User): Promise<Result<User>> {
+    if (this.users.has(user._id.value)) {
+      return Result.fail('User already exists')
+    }
+    this.users.set(user._id.value, user)
+    return Result.ok(user)
+  }
+
+  async findById(id: UUID): Promise<Result<Option<User>>> {
+    const user = this.users.get(id.value)
+    return Result.ok(user ? Some.of(user) : None.of())
+  }
+
+  // Implement other methods...
+
+  // Helper for tests
+  clear() {
+    this.users.clear()
+  }
+}
+```
+
+**Usage:**
+```typescript
+describe('CreateUserUseCase (with InMemory)', () => {
+  let repo: InMemoryUserRepository
+
+  beforeEach(() => {
+    repo = new InMemoryUserRepository()
+  })
+
+  it('should create user', async () => {
+    const useCase = new CreateUserUseCase(repo)
+    const result = await useCase.execute({
+      email: 'user@example.com',
+      name: 'Alice'
+    })
+
+    expect(result.isSuccess).toBe(true)
+    expect(repo.users.size).toBe(1)
+  })
+})
+```
+
+## Coverage
+
+### Configuration
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '**/__TESTS__/',
+        '**/*.test.ts',
+        '**/*.config.ts'
+      ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 75,
+        statements: 80
+      }
+    }
+  }
+})
+```
+
+### Generate Report
+
+```bash
+pnpm test:coverage
+```
+
+**Output:**
+```
+--------------------|---------|----------|---------|---------|
+File                | % Stmts | % Branch | % Funcs | % Lines |
+--------------------|---------|----------|---------|---------|
+domain/             |   95.00 |    90.00 |   92.00 |   95.50 |
+  Email.ts          |  100.00 |   100.00 |  100.00 |  100.00 |
+  User.ts           |   92.00 |    85.00 |   88.00 |   93.00 |
+application/        |   88.00 |    82.00 |   85.00 |   89.00 |
+  CreateUserUseCase |   90.00 |    85.00 |   88.00 |   91.00 |
+adapters/           |   75.00 |    70.00 |   72.00 |   76.00 |
+  DrizzleUserRepo   |   80.00 |    75.00 |   78.00 |   81.00 |
+--------------------|---------|----------|---------|---------|
+```
+
+## Best Practices
+
+### ✅ Do
+
+**Test behavior, not implementation**
+```typescript
+// ✅ GOOD - tests behavior
+it('should reject invalid email', () => {
+  const result = Email.create('invalid')
+  expect(result.isFailure).toBe(true)
+})
+
+// ❌ BAD - tests implementation
+it('should call validate method', () => {
+  const spy = vi.spyOn(Email.prototype, 'validate')
+  Email.create('test@example.com')
+  expect(spy).toHaveBeenCalled()
+})
+```
+
+**Arrange-Act-Assert (AAA)**
+```typescript
+it('should create user', async () => {
+  // Arrange
+  const mockRepo = createMockRepo()
+  const useCase = new CreateUserUseCase(mockRepo)
+
+  // Act
+  const result = await useCase.execute({ email: 'test@example.com', name: 'Alice' })
+
+  // Assert
+  expect(result.isSuccess).toBe(true)
+})
+```
+
+**Descriptive test names**
+```typescript
+// ✅ GOOD
+it('should reject email longer than 255 characters', () => { })
+
+// ❌ BAD
+it('test email validation', () => { })
+```
+
+### ❌ Don't
+
+**Fragile tests that break on minor refactoring**
+```typescript
+// ❌ BAD - too many implementation details
+expect(user._props.email.value).toBe('...')  // ❌ Accesses internals
+
+// ✅ GOOD - uses public API
+expect(user.email.value).toBe('...')
+```
+
+**Tests that depend on each other**
+```typescript
+// ❌ BAD - dependent tests
+let user: User
+
+it('should create user', () => {
+  user = User.create(...).getValue()  // ❌ Modifies global state
+})
+
+it('should update user', () => {
+  user.updateName('Bob')  // ❌ Depends on previous test
+})
+
+// ✅ GOOD - independent tests
+it('should update user', () => {
+  const user = User.create(...).getValue()
+  const updated = user.updateName('Bob').getValue()
+  expect(updated.name).toBe('Bob')
+})
+```
+
+## Next Steps
+
+- [Your First Use Case →](/docs/guides/first-use-case) - Create a feature with TDD
+- [Transactions →](/docs/guides/transactions) - Test transactions
+- [Core Concepts →](/docs/core-concepts) - Deep dive into DDD patterns

@@ -1,0 +1,405 @@
+# Value Objects
+
+Immutable business concepts without identity.
+
+## What is a Value Object?
+
+A Value Object is an object defined by its **attributes**, not by an identity. Two Value Objects with the same attributes are considered equal.
+
+### Characteristics
+
+**Immutability** - Once created, a Value Object cannot be modified
+- Props are `Object.freeze()` automatically by the parent class
+- No setters, only a `value` getter
+- To modify, create a new instance
+
+**Encapsulated validation** - Validation logic lives in the Value Object
+- Static `create()` method (provided by parent) validates before creation
+- Returns `Result<T>` to indicate success/failure
+- Impossible to create an invalid Value Object
+
+**Value-based comparison** - Equality based on attributes
+- `email1.equals(email2)` compares values (provided by parent)
+- No unique identity like Entities
+
+## Creating a Value Object
+
+### Simple API - Just validate()
+
+**To create a Value Object, you only need to implement `validate()`.**
+
+The parent `ValueObject` class automatically provides:
+- ✅ Public constructor
+- ✅ Static `create()` method
+- ✅ `value` getter
+- ✅ `equals()` method
+
+```typescript
+import { Result, ValueObject } from '@packages/ddd-kit'
+
+interface EmailProps {
+  value: string
+}
+
+export class Email extends ValueObject<EmailProps> {
+  // ✅ Only thing to implement: validate()
+  protected validate(value: EmailProps): Result<EmailProps> {
+    if (!value.value || value.value.trim().length === 0) {
+      return Result.fail('Email is required')
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(value.value)) {
+      return Result.fail('Invalid email format')
+    }
+
+    if (value.value.length > 255) {
+      return Result.fail('Email too long')
+    }
+
+    return Result.ok(value)
+  }
+}
+```
+
+**That's it!** No constructor, no `create()`, no getter - the parent class provides everything.
+
+### Usage
+
+```typescript
+// ✅ create() provided automatically by parent class
+const emailOrError = Email.create({ value: 'user@example.com' })
+
+if (emailOrError.isFailure) {
+  console.error(emailOrError.getError())  // "Invalid email format"
+  return
+}
+
+const email = emailOrError.getValue()
+
+// ✅ value provided automatically by parent class
+console.log(email.value)  // { value: 'user@example.com' }
+console.log(email.value.value)  // 'user@example.com'
+
+// ❌ Cannot modify (immutable)
+// email.value = { ... }  // Error - Object.freeze()
+
+// ❌ Cannot create directly
+// const email = new Email({ value: '...' })  // No validation!
+```
+
+## Common Value Object Examples
+
+### Money
+
+```typescript
+import { Result, ValueObject } from '@packages/ddd-kit'
+
+interface MoneyProps {
+  amount: number
+  currency: string
+}
+
+export class Money extends ValueObject<MoneyProps> {
+  private static readonly VALID_CURRENCIES = ['EUR', 'USD', 'GBP']
+
+  protected validate(value: MoneyProps): Result<MoneyProps> {
+    if (value.amount < 0) {
+      return Result.fail('Amount cannot be negative')
+    }
+
+    if (!Money.VALID_CURRENCIES.includes(value.currency)) {
+      return Result.fail(`Invalid currency: ${value.currency}`)
+    }
+
+    return Result.ok(value)
+  }
+
+  // Custom business logic
+  add(other: Money): Result<Money> {
+    if (this.value.currency !== other.value.currency) {
+      return Result.fail('Cannot add different currencies')
+    }
+
+    return Money.create({
+      amount: this.value.amount + other.value.amount,
+      currency: this.value.currency
+    })
+  }
+
+  multiply(factor: number): Result<Money> {
+    return Money.create({
+      amount: this.value.amount * factor,
+      currency: this.value.currency
+    })
+  }
+}
+
+// Usage
+const price = Money.create({ amount: 100, currency: 'EUR' }).getValue()
+const quantity = 3
+const total = price.multiply(quantity).getValue()
+console.log(total.value.amount)  // 300
+```
+
+### Address
+
+```typescript
+interface AddressProps {
+  street: string
+  city: string
+  zipCode: string
+  country: string
+}
+
+export class Address extends ValueObject<AddressProps> {
+  protected validate(value: AddressProps): Result<AddressProps> {
+    if (!value.street || value.street.trim().length === 0) {
+      return Result.fail('Street is required')
+    }
+
+    if (!value.city || value.city.trim().length === 0) {
+      return Result.fail('City is required')
+    }
+
+    // French zip code validation
+    if (value.country === 'FR' && !/^\d{5}$/.test(value.zipCode)) {
+      return Result.fail('Invalid French zip code')
+    }
+
+    return Result.ok(value)
+  }
+
+  // Business logic
+  isSameCity(other: Address): boolean {
+    return this.value.city.toLowerCase() === other.value.city.toLowerCase()
+  }
+
+  toString(): string {
+    return `${this.value.street}, ${this.value.zipCode} ${this.value.city}, ${this.value.country}`
+  }
+}
+
+// Usage with normalization
+const addressOrError = Address.create({
+  street: '  1 rue Example  ',  // Will be normalized
+  city: 'Paris',
+  zipCode: '75001',
+  country: 'FR'
+})
+```
+
+### PhoneNumber
+
+```typescript
+interface PhoneNumberProps {
+  value: string
+}
+
+export class PhoneNumber extends ValueObject<PhoneNumberProps> {
+  protected validate(value: PhoneNumberProps): Result<PhoneNumberProps> {
+    // Remove all non-numeric characters
+    const digits = value.value.replace(/\D/g, '')
+
+    if (digits.length < 10 || digits.length > 15) {
+      return Result.fail('Invalid phone number length')
+    }
+
+    // Normalize by keeping only digits
+    return Result.ok({ value: digits })
+  }
+
+  // Formatting for display
+  format(style: 'international' | 'local' = 'local'): string {
+    const digits = this.value.value
+
+    if (style === 'international') {
+      return `+${digits.slice(0, 2)} ${digits.slice(2)}`
+    }
+
+    // French format: 06 12 34 56 78
+    return digits.match(/.{1,2}/g)?.join(' ') || digits
+  }
+}
+
+// Usage
+const phone = PhoneNumber.create({ value: '06-12-34-56-78' }).getValue()
+console.log(phone.format('local'))          // "06 12 34 56 78"
+console.log(phone.format('international'))  // "+33 612345678"
+```
+
+## Comparing Value Objects
+
+The `equals()` method (provided by parent) compares values:
+
+```typescript
+const email1 = Email.create({ value: 'user@example.com' }).getValue()
+const email2 = Email.create({ value: 'user@example.com' }).getValue()
+
+console.log(email1.equals(email2))  // true - same props
+
+const money1 = Money.create({ amount: 100, currency: 'EUR' }).getValue()
+const money2 = Money.create({ amount: 100, currency: 'EUR' }).getValue()
+const money3 = Money.create({ amount: 100, currency: 'USD' }).getValue()
+
+console.log(money1.equals(money2))  // true - same props
+console.log(money1.equals(money3))  // false - different currencies
+```
+
+## Value Objects in Entities
+
+Entities use Value Objects for their props:
+
+```typescript
+import { Entity, Result, UUID } from '@packages/ddd-kit'
+
+interface UserProps {
+  email: Email
+  name: string
+  address: Address
+}
+
+export class User extends Entity<UserProps> {
+  static create(props: {
+    email: Email
+    name: string
+    address: Address
+  }, id?: UUID): Result<User> {
+    return Result.ok(new User(props, id))
+  }
+
+  // Update returns a NEW instance
+  updateEmail(newEmail: Email): Result<User> {
+    return Result.ok(this.clone({
+      email: newEmail  // Replace the Value Object
+    }))
+  }
+}
+
+// Usage
+const emailOrError = Email.create({ value: 'user@example.com' })
+const addressOrError = Address.create({
+  street: '1 rue Example',
+  city: 'Paris',
+  zipCode: '75001',
+  country: 'FR'
+})
+
+const combined = Result.combine([emailOrError, addressOrError])
+if (combined.isFailure) {
+  console.error('Validation failed')
+  return
+}
+
+const user = User.create({
+  email: emailOrError.getValue(),
+  name: 'Alice',
+  address: addressOrError.getValue()
+}).getValue()
+```
+
+## When to Use a Value Object?
+
+**✅ Use a Value Object if:**
+
+- The concept has validation rules (Email, Money)
+- The value should be immutable
+- Equality is based on value, not identity
+- The concept has business logic (Money.add(), Address.isSameCity())
+
+**❌ DO NOT use a Value Object if:**
+
+- It's just a primitive without validation (a simple `string` is enough)
+- The object has a unique identity (use Entity)
+- The object should be mutable
+
+**Examples:**
+- ✅ Email - has validation + immutability needed
+- ✅ Money - has logic (add, multiply) + validation
+- ✅ DateRange - has validation (start < end) + logic
+- ❌ User ID - has an identity → Entity or UUID
+- ❌ Simple string without rules → primitive is enough
+
+## Best Practices
+
+### ✅ Do
+
+**Implement only validate()**
+```typescript
+export class Email extends ValueObject<EmailProps> {
+  // ✅ Only thing needed
+  protected validate(value: EmailProps): Result<EmailProps> {
+    // Complete validation
+    if (!value.value) return Result.fail('Required')
+    if (!REGEX.test(value.value)) return Result.fail('Invalid format')
+    return Result.ok(value)
+  }
+}
+```
+
+**Normalization in validate()**
+```typescript
+protected validate(value: EmailProps): Result<EmailProps> {
+  const normalized = value.value.toLowerCase().trim()
+
+  if (!EMAIL_REGEX.test(normalized)) {
+    return Result.fail('Invalid email format')
+  }
+
+  // Return normalized value
+  return Result.ok({ value: normalized })
+}
+```
+
+**Custom business methods**
+```typescript
+export class Money extends ValueObject<MoneyProps> {
+  protected validate(value: MoneyProps): Result<MoneyProps> {
+    // ...
+  }
+
+  // ✅ Custom business logic in addition to validate()
+  add(other: Money): Result<Money> {
+    if (this.value.currency !== other.value.currency) {
+      return Result.fail('Currency mismatch')
+    }
+    return Money.create({
+      amount: this.value.amount + other.value.amount,
+      currency: this.value.currency
+    })
+  }
+}
+```
+
+### ❌ Avoid
+
+**Don't recreate what already exists**
+```typescript
+export class Email extends ValueObject<EmailProps> {
+  // ❌ UNNECESSARY - constructor provided by parent
+  private constructor(value: EmailProps) {
+    super(value)
+  }
+
+  // ❌ UNNECESSARY - create() provided by parent
+  static create(email: string): Result<Email> {
+    return ValueObject.create.call(Email, { value: email })
+  }
+
+  // ❌ UNNECESSARY - value provided by parent
+  get value(): string {
+    return this._value.value
+  }
+
+  // ✅ ONLY THIS
+  protected validate(value: EmailProps): Result<EmailProps> {
+    // validation
+  }
+}
+```
+
+## Next Steps
+
+- [Entities & Aggregates →](/docs/core-concepts/entities) - Objects with identity
+- [Result Pattern →](/docs/core-concepts/result) - Validation and errors
+- [Your First Use Case →](/docs/guides/first-use-case) - Use Value Objects

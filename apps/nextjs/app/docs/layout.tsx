@@ -7,21 +7,99 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-const navItems = [
+const navSections = [
   {
-    href: "/docs/installation",
-    label: "Getting Started",
-    icon: "🚀",
+    title: "Introduction",
+    items: [
+      {
+        href: "/docs",
+        label: "Overview",
+      },
+      {
+        href: "/docs/getting-started",
+        label: "Getting Started",
+      },
+    ],
   },
   {
-    href: "/docs/architecture",
-    label: "Architecture",
-    icon: "🏗️",
+    title: "Core Concepts",
+    items: [
+      {
+        href: "/docs/core-concepts",
+        label: "DDD Patterns",
+      },
+      {
+        href: "/docs/core-concepts/result",
+        label: "Result Pattern",
+      },
+      {
+        href: "/docs/core-concepts/option",
+        label: "Option Pattern",
+      },
+      {
+        href: "/docs/core-concepts/value-objects",
+        label: "Value Objects",
+      },
+      {
+        href: "/docs/core-concepts/entities",
+        label: "Entities & Aggregates",
+      },
+    ],
   },
   {
-    href: "/docs/claude-code",
-    label: "AI Development",
-    icon: "🤖",
+    title: "Architecture",
+    items: [
+      {
+        href: "/docs/architecture",
+        label: "Clean Architecture",
+      },
+      {
+        href: "/docs/architecture/layers",
+        label: "Layers",
+      },
+      {
+        href: "/docs/architecture/dependency-rule",
+        label: "Dependency Rule",
+      },
+    ],
+  },
+  {
+    title: "AI Development",
+    items: [
+      {
+        href: "/docs/ai",
+        label: "AI-Friendly Development",
+      },
+      {
+        href: "/docs/ai/claude-code",
+        label: "Claude Code",
+      },
+      {
+        href: "/docs/ai/cursor",
+        label: "Cursor",
+      },
+      {
+        href: "/docs/ai/prompts",
+        label: "Prompts",
+      },
+    ],
+  },
+  {
+    title: "Guides",
+    items: [
+      {
+        href: "/docs/guides/first-use-case",
+        label: "Your First Use Case",
+      },
+      {
+        href: "/docs/guides/transactions",
+        label: "Transactions",
+      },
+      {
+        href: "/docs/guides/testing",
+        label: "Testing",
+      },
+    ],
   },
 ];
 
@@ -29,119 +107,124 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const currentPage = navItems.find((item) => item.href === pathname);
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-black/80 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-black text-lg hover:opacity-70 transition-opacity"
-            >
-              <BookOpen className="w-6 h-6" />
-              <span className="hidden sm:inline">CleanStack</span>
-            </Link>
-
-            {/* Breadcrumbs */}
-            <nav className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-14 items-center justify-between">
+            <div className="flex items-center gap-6">
               <Link
-                href="/docs"
-                className="hover:text-black dark:hover:text-white transition-colors"
+                href="/"
+                className="flex items-center gap-2 font-bold text-base hover:opacity-70 transition-opacity"
               >
-                Docs
+                <BookOpen className="w-5 h-5" />
+                <span className="hidden sm:inline">CleanStack</span>
               </Link>
-              {currentPage && (
-                <>
-                  <ChevronRight className="w-4 h-4" />
-                  <span className="text-black dark:text-white font-medium">
-                    {currentPage.label}
-                  </span>
-                </>
-              )}
-            </nav>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
-              target="_blank"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              GitHub
-            </Link>
+              <nav className="hidden md:flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                <Link
+                  href="/docs"
+                  className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  Docs
+                </Link>
+              </nav>
+            </div>
 
-            {/* Mobile menu button */}
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-colors"
-            >
-              {isSidebarOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+              >
+                <Github className="w-4 h-4" />
+                GitHub
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-md transition-colors"
+                aria-label="Toggle navigation"
+              >
+                {isSidebarOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8 relative">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex gap-8 lg:gap-12 py-8">
           {/* Sidebar - Desktop */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24">
-              <nav className="space-y-1">
-                {navItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`
-												flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
-												${
-                          isActive
-                            ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900"
-                        }
-											`}
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
+          <aside className="hidden lg:block w-56 shrink-0">
+            <nav className="sticky top-24 space-y-6">
+              {navSections.map((section) => (
+                <div key={section.title}>
+                  <h3 className="mb-2 px-2 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                    {section.title}
+                  </h3>
+                  <ul className="space-y-1">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            className={`
+															block px-2 py-1.5 text-sm rounded-md transition-colors
+															${
+                                isActive
+                                  ? "bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white font-medium"
+                                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900/50 hover:text-gray-900 dark:hover:text-white"
+                              }
+														`}
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
 
-              {/* Quick Links */}
-              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-                <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 px-4">
+              <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+                <h3 className="mb-2 px-2 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                   Resources
-                </div>
-                <div className="space-y-1 text-sm">
-                  <Link
-                    href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
-                    target="_blank"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    <Github className="w-4 h-4" />
-                    GitHub
-                  </Link>
-                  <Link
-                    href="https://claude.ai/code"
-                    target="_blank"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    🤖 Claude Code
-                  </Link>
-                </div>
+                </h3>
+                <ul className="space-y-1 text-sm">
+                  <li>
+                    <Link
+                      href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-2 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      <Github className="w-4 h-4" />
+                      GitHub
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="https://claude.ai/code"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-2 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      <span className="text-base">🤖</span>
+                      Claude Code
+                    </Link>
+                  </li>
+                </ul>
               </div>
-            </div>
+            </nav>
           </aside>
 
           {/* Mobile Sidebar */}
@@ -150,121 +233,102 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 top-16 z-40 bg-black/50"
+              className="lg:hidden fixed inset-0 top-14 z-40 bg-black/20 dark:bg-black/40"
               onClick={() => setIsSidebarOpen(false)}
             >
               <motion.aside
                 initial={{ x: -300 }}
                 animate={{ x: 0 }}
                 exit={{ x: -300 }}
-                className="w-64 h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 p-4"
+                className="w-64 h-full bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-6 overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <nav className="space-y-1">
-                  {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`
-													flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
-													${
-                            isActive
-                              ? "bg-black dark:bg-white text-white dark:text-black"
-                              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900"
-                          }
-												`}
-                      >
-                        <span className="text-lg">{item.icon}</span>
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                <nav className="space-y-6">
+                  {navSections.map((section) => (
+                    <div key={section.title}>
+                      <h3 className="mb-2 px-2 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                        {section.title}
+                      </h3>
+                      <ul className="space-y-1">
+                        {section.items.map((item) => {
+                          const isActive = pathname === item.href;
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                onClick={() => setIsSidebarOpen(false)}
+                                className={`
+																	block px-2 py-1.5 text-sm rounded-md transition-colors
+																	${
+                                    isActive
+                                      ? "bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white font-medium"
+                                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900/50 hover:text-gray-900 dark:hover:text-white"
+                                  }
+																`}
+                              >
+                                {item.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
                 </nav>
               </motion.aside>
             </motion.div>
           )}
 
           {/* Main Content */}
-          <main className="flex-1 min-w-0">
-            <article
-              className="prose prose-gray dark:prose-invert max-w-none
-							prose-headings:font-bold prose-headings:tracking-tight
-							prose-h1:text-4xl prose-h1:mb-8 prose-h1:mt-0
-							prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:pb-3 prose-h2:border-b prose-h2:border-gray-200 dark:prose-h2:border-gray-800
-							prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
-							prose-h4:text-xl prose-h4:mt-6 prose-h4:mb-3
-							prose-p:text-base prose-p:leading-7 prose-p:mb-6
-							prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
-							prose-strong:text-black dark:prose-strong:text-white prose-strong:font-semibold
-							prose-code:text-sm prose-code:bg-gray-100 dark:prose-code:bg-gray-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-							prose-pre:bg-gray-900 dark:prose-pre:bg-black prose-pre:border prose-pre:border-gray-700 dark:prose-pre:border-gray-800 prose-pre:rounded-xl prose-pre:shadow-lg
-							prose-ul:my-6 prose-ul:list-disc prose-ul:pl-6
-							prose-ol:my-6 prose-ol:list-decimal prose-ol:pl-6
-							prose-li:my-2 prose-li:leading-7
-							prose-table:my-8
-							prose-img:rounded-lg prose-img:shadow-lg
-						"
-            >
+          <main className="flex-1 min-w-0 max-w-3xl">
+            <article className="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-20 prose-headings:font-semibold prose-h1:text-3xl prose-h1:mb-6 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h4:text-lg prose-h4:mt-6 prose-h4:mb-2 prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline prose-a:font-normal prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-semibold prose-code:text-sm prose-code:bg-gray-100 dark:prose-code:bg-gray-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:before:content-none prose-code:after:content-none prose-pre:bg-gray-900 dark:prose-pre:bg-black prose-pre:border prose-pre:border-gray-700 prose-pre:rounded-lg prose-pre:text-sm prose-ul:my-5 prose-ul:list-disc prose-ol:my-5 prose-ol:list-decimal prose-li:my-1.5 prose-li:text-gray-700 dark:prose-li:text-gray-300">
               {children}
             </article>
 
             {/* Navigation Footer */}
-            <nav className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+            <nav className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between text-sm">
               {(() => {
-                const currentIndex = navItems.findIndex(
+                const allItems = navSections.flatMap((s) => s.items);
+                const currentIndex = allItems.findIndex(
                   (i) => i.href === pathname,
                 );
                 const prevItem =
-                  currentIndex > 0 ? navItems[currentIndex - 1] : null;
+                  currentIndex > 0 ? allItems[currentIndex - 1] : null;
                 const nextItem =
-                  currentIndex < navItems.length - 1
-                    ? navItems[currentIndex + 1]
+                  currentIndex < allItems.length - 1
+                    ? allItems[currentIndex + 1]
                     : null;
 
                 return (
                   <>
-                    {prevItem && (
+                    {prevItem ? (
                       <Link
                         href={prevItem.href}
-                        className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                        className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors font-medium group"
                       >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                        Previous
+                        <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
+                        <span>{prevItem.label}</span>
                       </Link>
+                    ) : (
+                      <div />
                     )}
 
-                    {nextItem && (
+                    {nextItem ? (
                       <Link
                         href={nextItem.href}
-                        className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors ml-auto"
+                        className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors font-medium ml-auto group"
                       >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
+                        <span>{nextItem.label}</span>
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                       </Link>
+                    ) : (
+                      <div />
                     )}
                   </>
                 );
               })()}
             </nav>
           </main>
-
-          {/* Right Sidebar - Table of Contents (only on large screens) */}
-          <aside className="hidden xl:block w-64 shrink-0">
-            <div className="sticky top-24">
-              <div className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-3">
-                On this page
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                {/* TOC will be auto-generated */}
-                <div className="text-xs italic">
-                  Table of contents auto-generated from headings
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </div>
     </div>

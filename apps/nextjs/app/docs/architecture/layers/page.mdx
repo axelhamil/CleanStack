@@ -1,0 +1,516 @@
+# Layers
+
+Detail of each Clean Architecture layer.
+
+## The 3 Layers
+
+CleanStack implements Clean Architecture with 3 concentric layers:
+
+```
+╔═══════════════════════════════════╗
+║ Domain (Core)                     ║  <- Pure business logic
+║ • Entities, Value Objects         ║     Zero dependencies
+║ • Aggregates, Domain Events       ║
+╚═════════════════╦═════════════════╝
+                  ║ depends on
+╔═════════════════╩═════════════════╗
+║ Application                       ║  <- Orchestration
+║ • Use Cases                       ║     Depends on: Domain
+║ • Ports (interfaces)              ║
+╚═════════════════╦═════════════════╝
+                  ║ depends on
+╔═════════════════╩═════════════════╗
+║ Adapters (External)               ║  <- Implementations
+║ • Controllers, Repositories       ║     Depends on: App + Domain
+║ • Database, External APIs         ║
+╚═══════════════════════════════════╝
+```
+
+## Domain Layer
+
+**The core of your application.** Contains all business logic.
+
+### Location
+
+```
+apps/nextjs/src/domain/
+├── user/
+│   ├── User.ts              # Entity/Aggregate
+│   ├── Email.ts             # Value Object
+│   ├── UserName.ts          # Value Object
+│   └── events/
+│       └── UserCreatedEvent.ts
+├── order/
+│   ├── Order.ts
+│   ├── OrderItem.ts
+│   ├── Money.ts
+│   └── events/
+└── shared/
+    └── Address.ts           # Shared Value Object
+```
+
+### Content
+
+**Entities** - Objects with identity
+
+```typescript
+// domain/user/User.ts
+import { Entity, Result, UUID } from '@packages/ddd-kit'
+
+export class User extends Entity<UserProps> {
+  // Business logic here
+  canPlaceOrder(): boolean {
+    return this.isActive && !this.isBanned
+  }
+}
+```
+
+**Value Objects** - Concepts without identity
+```typescript
+// domain/user/Email.ts
+import { ValueObject, Result } from '@packages/ddd-kit'
+
+export class Email extends ValueObject<{ value: string }> {
+  protected validate(props): Result<typeof props> {
+    // Validation here
+  }
+}
+```
+
+**Aggregates** - Consistency boundaries
+```typescript
+// domain/order/Order.ts
+import { Aggregate } from '@packages/ddd-kit'
+
+export class Order extends Aggregate<OrderProps> {
+  addItem(item: OrderItem): Result<Order> {
+    // Coordinate modifications
+  }
+}
+```
+
+**Domain Events** - Business events
+```typescript
+// domain/user/events/UserCreatedEvent.ts
+export class UserCreatedEvent {
+  type = 'UserCreated'
+  constructor(
+    public readonly aggregateId: string,
+    public readonly email: string
+  ) {}
+}
+```
+
+### Strict Rules
+
+❌ **FORBIDDEN in Domain:**
+```typescript
+// ❌ DO NOT import frameworks
+import { NextRequest } from 'next/server'  // FORBIDDEN
+import { z } from 'zod'  // FORBIDDEN
+
+// ❌ DO NOT import DB
+import { db } from '@packages/drizzle'  // FORBIDDEN
+
+// ❌ DO NOT import external APIs
+import Stripe from 'stripe'  // FORBIDDEN
+
+// ❌ DO NOT import from Application or Adapters
+import { CreateUserUseCase } from '@/application/...'  // FORBIDDEN
+```
+
+✅ **ALLOWED in Domain:**
+```typescript
+// ✅ Only ddd-kit
+import { Entity, Result, UUID } from '@packages/ddd-kit'
+
+// ✅ Other Domain files
+import { Email } from './Email'
+import { UserCreatedEvent } from './events/UserCreatedEvent'
+```
+
+### Testability
+
+Domain is 100% testable without DB, without framework:
+
+```typescript
+import { describe, it, expect } from 'vitest'
+import { Email } from './Email'
+
+describe('Email Value Object', () => {
+  it('should create valid email', () => {
+    const result = Email.create('user@example.com')
+    expect(result.isSuccess).toBe(true)
+  })
+
+  it('should reject invalid email', () => {
+    const result = Email.create('invalid')
+    expect(result.isFailure).toBe(true)
+    expect(result.getError()).toBe('Invalid email format')
+  })
+})
+```
+
+## Application Layer
+
+**Coordinates business logic.** Orchestrates Use Cases.
+
+### Location
+
+```
+apps/nextjs/src/application/
+├── use-cases/
+│   ├── CreateUserUseCase.ts
+│   ├── UpdateUserEmailUseCase.ts
+│   └── GetUserByIdUseCase.ts
+└── ports/                    # Interfaces only
+    ├── IUserRepository.ts
+    ├── IEmailService.ts
+    └── IPaymentGateway.ts
+```
+
+### Content
+
+**Use Cases** - Business scenarios
+```typescript
+// application/use-cases/CreateUserUseCase.ts
+import { Result, UseCase } from '@packages/ddd-kit'
+import { User } from '@/domain/user/User'
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+
+export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
+  constructor(
+    private readonly userRepo: IUserRepository  // Interface
+  ) {}
+
+  async execute(input: CreateUserInput): Promise<Result<User>> {
+    // 1. Create Value Objects
+    const emailOrError = Email.create(input.email)
+    if (emailOrError.isFailure) return Result.fail(emailOrError.getError())
+
+    // 2. Create Entity
+    const userOrError = User.create({ email: emailOrError.getValue() })
+    if (userOrError.isFailure) return Result.fail(userOrError.getError())
+
+    // 3. Persist via repository
+    return await this.userRepo.create(userOrError.getValue())
+  }
+}
+```
+
+**Ports (Interfaces)** - Contracts for Adapters
+```typescript
+// application/ports/IUserRepository.ts
+import type { BaseRepository } from '@packages/ddd-kit'
+import type { User } from '@/domain/user/User'
+
+export interface IUserRepository extends BaseRepository<User> {
+  findByEmail(email: string): Promise<Result<Option<User>>>
+}
+```
+
+```typescript
+// application/ports/IEmailService.ts
+export interface IEmailService {
+  sendWelcomeEmail(to: string, name: string): Promise<Result<void>>
+}
+```
+
+### Rules
+
+✅ **ALLOWED:**
+```typescript
+// ✅ Import from Domain
+import { User } from '@/domain/user/User'
+import { Email } from '@/domain/user/Email'
+
+// ✅ Use ddd-kit
+import { Result, UseCase } from '@packages/ddd-kit'
+
+// ✅ Define interfaces
+export interface IUserRepository { }
+```
+
+❌ **FORBIDDEN:**
+```typescript
+// ❌ DO NOT import implementations
+import { DrizzleUserRepository } from '@/adapters/...'  // FORBIDDEN
+
+// ❌ DO NOT import frameworks
+import { NextRequest } from 'next/server'  // FORBIDDEN
+
+// ❌ DO NOT access DB
+import { db } from '@packages/drizzle'  // FORBIDDEN
+```
+
+### Testability
+
+Use Cases are testable with mocks:
+
+```typescript
+import { describe, it, expect, vi } from 'vitest'
+import { CreateUserUseCase } from './CreateUserUseCase'
+
+describe('CreateUserUseCase', () => {
+  it('should create user', async () => {
+    // Mock repository
+    const mockRepo = {
+      create: vi.fn().mockResolvedValue(Result.ok(mockUser))
+    }
+
+    const useCase = new CreateUserUseCase(mockRepo)
+    const result = await useCase.execute({
+      email: 'test@example.com',
+      name: 'Test'
+    })
+
+    expect(result.isSuccess).toBe(true)
+    expect(mockRepo.create).toHaveBeenCalledOnce()
+  })
+})
+```
+
+## Adapters Layer
+
+**Connects to the outside world.** Implements Application ports.
+
+### Location
+
+```
+apps/nextjs/src/adapters/
+├── in/                       # Input adapters
+│   └── api/
+│       └── users/
+│           └── route.ts      # Next.js route handler
+└── out/                      # Output adapters
+    ├── persistence/
+    │   ├── DrizzleUserRepository.ts
+    │   ├── mappers/
+    │   │   └── UserMapper.ts
+    │   └── InMemoryUserRepository.ts  # For tests
+    ├── email/
+    │   └── SendGridEmailService.ts
+    └── payment/
+        └── StripePaymentGateway.ts
+```
+
+### In Adapters (Input)
+
+Controllers, Route Handlers, GraphQL Resolvers...
+
+```typescript
+// adapters/in/api/users/route.ts
+import { getInjection } from '@/common/di/container'
+import { z } from 'zod'
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string()
+})
+
+export async function POST(request: Request) {
+  // 1. Validate input (adapter layer)
+  const body = await request.json()
+  const validation = schema.safeParse(body)
+
+  if (!validation.success) {
+    return Response.json({ error: validation.error }, { status: 400 })
+  }
+
+  // 2. Execute use case
+  const useCase = getInjection('CreateUserUseCase')
+  const result = await useCase.execute(validation.data)
+
+  // 3. Transform Result → HTTP
+  if (result.isFailure) {
+    return Response.json({ error: result.getError() }, { status: 400 })
+  }
+
+  return Response.json(result.getValue(), { status: 201 })
+}
+```
+
+### Out Adapters (Output)
+
+Repositories, External services...
+
+**Repository Implementation**
+```typescript
+// adapters/out/persistence/DrizzleUserRepository.ts
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+import { db } from '@packages/drizzle'
+import { users } from '@packages/drizzle/schema'
+import { Result, Option, Some, None } from '@packages/ddd-kit'
+
+export class DrizzleUserRepository implements IUserRepository {
+  async create(user: User): Promise<Result<User>> {
+    try {
+      const data = UserMapper.toPersistence(user)
+      await db.insert(users).values(data)
+      return Result.ok(user)
+    } catch (error) {
+      return Result.fail(new DatabaseOperationError('Failed to create'))
+    }
+  }
+
+  async findById(id: UUID): Promise<Result<Option<User>>> {
+    try {
+      const row = await db.query.users.findFirst({
+        where: eq(users.id, id.value)
+      })
+
+      if (!row) return Result.ok(None.of())
+
+      const userOrError = UserMapper.toDomain(row)
+      if (userOrError.isFailure) return Result.fail(userOrError.getError())
+
+      return Result.ok(Some.of(userOrError.getValue()))
+    } catch (error) {
+      return Result.fail(new DatabaseOperationError('Query failed'))
+    }
+  }
+}
+```
+
+**Mapper Domain ↔ Database**
+```typescript
+// adapters/out/persistence/mappers/UserMapper.ts
+export class UserMapper {
+  static toDomain(row: any): Result<User> {
+    const emailOrError = Email.create(row.email)
+    if (emailOrError.isFailure) return Result.fail(emailOrError.getError())
+
+    return User.create({
+      email: emailOrError.getValue(),
+      name: row.name
+    }, UUID.createFrom(row.id))
+  }
+
+  static toPersistence(user: User) {
+    return {
+      id: user._id.value,
+      email: user.email.value,
+      name: user.name,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }
+  }
+}
+```
+
+**External Service**
+```typescript
+// adapters/out/email/SendGridEmailService.ts
+import type { IEmailService } from '@/application/ports/IEmailService'
+import sgMail from '@sendgrid/mail'
+
+export class SendGridEmailService implements IEmailService {
+  constructor(private readonly apiKey: string) {
+    sgMail.setApiKey(apiKey)
+  }
+
+  async sendWelcomeEmail(to: string, name: string): Promise<Result<void>> {
+    try {
+      await sgMail.send({
+        to,
+        from: 'noreply@example.com',
+        subject: `Welcome ${name}!`,
+        text: `Hello ${name}, welcome to our platform!`
+      })
+
+      return Result.ok()
+    } catch (error) {
+      return Result.fail('Failed to send email')
+    }
+  }
+}
+```
+
+### Rules
+
+✅ **ALLOWED:**
+```typescript
+// ✅ Import from Application and Domain
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+import { User } from '@/domain/user/User'
+
+// ✅ Use frameworks
+import { db } from '@packages/drizzle'
+import { NextRequest } from 'next/server'
+import Stripe from 'stripe'
+
+// ✅ Implement ports
+export class DrizzleUserRepository implements IUserRepository { }
+```
+
+❌ **FORBIDDEN:**
+```typescript
+// ❌ No restrictions - external layer
+// But respect Application interfaces
+```
+
+## Communication Between Layers
+
+### Request Flow
+
+```
+1. HTTP POST /api/users
+   ↓
+2. Route Handler (adapters/in)
+   - Validate input with Zod
+   ↓
+3. Use Case (application)
+   - Create Value Objects (domain)
+   - Create Entity (domain)
+   - Call IUserRepository (application/ports)
+   ↓
+4. Repository Implementation (adapters/out)
+   - Map User → Database row
+   - INSERT into PostgreSQL
+   ↓
+5. Return: Result<User>
+   ↓
+6. Response JSON 201
+```
+
+### Dependency Injection
+
+The DI Container wires implementations:
+
+```typescript
+// common/di/modules/user.module.ts
+export const userModule = (container: ApplicationContainer) => {
+  // Bind interface → implementation
+  container.bind('IUserRepository').toClass(DrizzleUserRepository)
+
+  // Bind use case
+  container.bind('CreateUserUseCase').toClass(CreateUserUseCase)
+}
+
+// adapters/in/api/users/route.ts
+const useCase = getInjection('CreateUserUseCase')
+// Automatically injects DrizzleUserRepository
+```
+
+## Benefits of This Architecture
+
+**Testability**
+- Domain testable without DB/framework
+- Application testable with mocks
+- Adapters testable in integration
+
+**Easy Changes**
+- Replace Drizzle → Prisma: only touch Adapters
+- Replace Next.js → Express: only touch In Adapters
+- Business logic remains intact
+
+**AI-Friendly**
+- Repeatable patterns → AI generates consistent code
+- Clear separation → AI knows where to place each file
+- Strict types → AI cannot violate rules
+
+## Next Steps
+
+- [Dependency Rule →](/docs/architecture/dependency-rule) - Dependency rule in detail
+- [Your First Use Case →](/docs/guides/first-use-case) - Use the 3 layers
+- [Testing →](/docs/guides/testing) - Test each layer

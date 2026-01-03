@@ -104,7 +104,7 @@ export function FinalCTASection() {
                 className="group relative overflow-hidden"
                 asChild
               >
-                <Link href="/docs/installation">
+                <Link href="/docs/getting-started">
                   <span className="relative z-10 flex items-center gap-2">
                     {t("button")}
                     <motion.div

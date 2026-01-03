@@ -1,0 +1,434 @@
+# Result Pattern
+
+Explicit error handling without exceptions.
+
+## What is Result?
+
+`Result<T, E>` is a type that represents either a **success** with a value of type `T`, or a **failure** with an error of type `E`.
+
+```typescript
+type Result<T, E = string> = Success<T> | Failure<E>
+```
+
+### Why Use Result?
+
+**Problem with exceptions:**
+
+```typescript
+// ❌ Exceptions - implicit behavior
+function parseAge(input: string): number {
+  const age = parseInt(input)
+  if (isNaN(age)) {
+    throw new Error('Invalid age')  // Can throw at any moment!
+  }
+  if (age < 0 || age > 150) {
+    throw new Error('Age out of range')
+  }
+  return age
+}
+
+// Dangerous usage
+const age = parseAge(userInput)  // ☠️ Can crash
+console.log(age + 10)
+```
+
+**Solution with Result:**
+
+```typescript
+// ✅ Result - explicit behavior
+function parseAge(input: string): Result<number> {
+  const age = parseInt(input)
+  if (isNaN(age)) {
+    return Result.fail('Invalid age')  // Explicit error
+  }
+  if (age < 0 || age > 150) {
+    return Result.fail('Age out of range')
+  }
+  return Result.ok(age)
+}
+
+// Safe usage
+const ageResult = parseAge(userInput)
+if (ageResult.isFailure) {
+  console.error(ageResult.error)  // Forced handling
+  return
+}
+const age = ageResult.value  // ✅ Type-safe
+console.log(age + 10)
+```
+
+## Creating Result
+
+### Result.ok() - Success
+
+```typescript
+const success = Result.ok(42)
+
+success.isSuccess  // true
+success.isFailure  // false
+success.value      // 42
+success.error      // undefined
+```
+
+### Result.fail() - Failure
+
+```typescript
+const failure = Result.fail('Something went wrong')
+
+failure.isSuccess  // false
+failure.isFailure  // true
+failure.value      // undefined
+failure.error      // 'Something went wrong'
+```
+
+### With Custom Types
+
+```typescript
+class EmailError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'EmailError'
+  }
+}
+
+function validateEmail(email: string): Result<string, EmailError> {
+  if (!email.includes('@')) {
+    return Result.fail(new EmailError('Missing @'))
+  }
+  return Result.ok(email.toLowerCase())
+}
+```
+
+## Usage
+
+### Basic Pattern
+
+```typescript
+function divide(a: number, b: number): Result<number> {
+  if (b === 0) {
+    return Result.fail('Division by zero')
+  }
+  return Result.ok(a / b)
+}
+
+const result = divide(10, 2)
+
+if (result.isFailure) {
+  console.error('Error:', result.error)
+  return
+}
+
+console.log('Result:', result.value)  // 5
+```
+
+### Chaining Operations
+
+```typescript
+async function createUser(data: CreateUserInput): Promise<Result<User>> {
+  // 1. Validate email
+  const emailOrError = Email.create(data.email)
+  if (emailOrError.isFailure) {
+    return Result.fail(emailOrError.error)
+  }
+
+  // 2. Validate name
+  const nameOrError = UserName.create(data.name)
+  if (nameOrError.isFailure) {
+    return Result.fail(nameOrError.error)
+  }
+
+  // 3. Create entity
+  const userOrError = User.create({
+    email: emailOrError.value,
+    name: nameOrError.value
+  })
+  if (userOrError.isFailure) {
+    return Result.fail(userOrError.error)
+  }
+
+  // 4. Persist
+  const savedOrError = await repo.create(userOrError.value)
+  if (savedOrError.isFailure) {
+    return Result.fail(savedOrError.error)
+  }
+
+  return Result.ok(savedOrError.value)
+}
+```
+
+## Combining Multiple Results
+
+### Result.combine()
+
+Combines multiple Results into one. Fails if any fails.
+
+```typescript
+const emailResult = Email.create(input.email)
+const nameResult = UserName.create(input.name)
+const ageResult = Age.create(input.age)
+
+const combined = Result.combine([emailResult, nameResult, ageResult])
+
+if (combined.isFailure) {
+  // One of the validations failed
+  return Result.fail(combined.error)
+}
+
+// ✅ All succeeded
+const [email, name, age] = [
+  emailResult.value,
+  nameResult.value,
+  ageResult.value
+]
+```
+
+### Composition Pattern
+
+```typescript
+class CreateUserUseCase {
+  async execute(input: CreateUserInput): Promise<Result<User>> {
+    // Validate all inputs
+    const emailOrError = Email.create(input.email)
+    const nameOrError = UserName.create(input.name)
+
+    const validationResult = Result.combine([emailOrError, nameOrError])
+    if (validationResult.isFailure) {
+      return Result.fail(validationResult.error)
+    }
+
+    // Continue with validated values
+    const user = User.create({
+      email: emailOrError.value,
+      name: nameOrError.value
+    })
+
+    return user
+  }
+}
+```
+
+## In Value Objects
+
+Value Objects always return `Result`:
+
+```typescript
+export class Email extends ValueObject<{ value: string }> {
+  private static readonly REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  private constructor(props: { value: string }) {
+    super(props)
+    Object.freeze(this)
+  }
+
+  get value(): string {
+    return this.props.value
+  }
+
+  static create(email: string): Result<Email> {
+    // Validation 1
+    if (!email || email.trim().length === 0) {
+      return Result.fail('Email is required')
+    }
+
+    // Validation 2
+    if (!Email.REGEX.test(email)) {
+      return Result.fail('Invalid email format')
+    }
+
+    // Validation 3
+    if (email.length > 255) {
+      return Result.fail('Email too long')
+    }
+
+    // ✅ All validations pass
+    return Result.ok(new Email({ value: email.toLowerCase().trim() }))
+  }
+}
+```
+
+## In Use Cases
+
+Use Cases always return `Promise<Result<T>>`:
+
+```typescript
+export class CreateOrderUseCase implements UseCase<CreateOrderInput, Order> {
+  constructor(
+    private readonly orderRepo: IOrderRepository,
+    private readonly userRepo: IUserRepository
+  ) {}
+
+  async execute(input: CreateOrderInput): Promise<Result<Order>> {
+    // 1. Find user
+    const userOrError = await this.userRepo.findById(input.userId)
+    if (userOrError.isFailure) {
+      return Result.fail(userOrError.error)
+    }
+
+    if (userOrError.value.isNone()) {
+      return Result.fail(new NotFoundException('User not found'))
+    }
+
+    const user = userOrError.value.value
+
+    // 2. Create order
+    const orderOrError = Order.create({
+      user,
+      items: input.items,
+      total: input.total
+    })
+    if (orderOrError.isFailure) {
+      return Result.fail(orderOrError.error)
+    }
+
+    // 3. Save
+    const savedOrError = await this.orderRepo.create(orderOrError.value)
+    if (savedOrError.isFailure) {
+      return Result.fail(savedOrError.error)
+    }
+
+    return Result.ok(savedOrError.value)
+  }
+}
+```
+
+## In Repositories
+
+Repositories return `Promise<Result<T>>` or `Promise<Result<Option<T>>>`:
+
+```typescript
+export class UserRepository implements IUserRepository {
+  async create(user: User): Promise<Result<User>> {
+    try {
+      const data = UserMapper.toPersistence(user)
+      const [row] = await db.insert(users).values(data).returning()
+
+      const userOrError = UserMapper.toDomain(row)
+      if (userOrError.isFailure) {
+        return Result.fail(userOrError.error)
+      }
+
+      return Result.ok(userOrError.value)
+    } catch (error) {
+      return Result.fail(new DatabaseOperationError('Failed to create user'))
+    }
+  }
+
+  async findById(id: UUID): Promise<Result<Option<User>>> {
+    try {
+      const row = await db.query.users.findFirst({
+        where: eq(users.id, id.value)
+      })
+
+      if (!row) {
+        return Result.ok(None())
+      }
+
+      const userOrError = UserMapper.toDomain(row)
+      if (userOrError.isFailure) {
+        return Result.fail(userOrError.error)
+      }
+
+      return Result.ok(Some(userOrError.value))
+    } catch (error) {
+      return Result.fail(new DatabaseOperationError('Failed to find user'))
+    }
+  }
+}
+```
+
+## In Controllers
+
+Controllers transform Results into HTTP responses:
+
+```typescript
+export async function POST(request: Request) {
+  const body = await request.json()
+
+  // Zod validation (adapter layer)
+  const validation = createUserSchema.safeParse(body)
+  if (!validation.success) {
+    return Response.json(
+      { error: 'Validation failed', details: validation.error },
+      { status: 400 }
+    )
+  }
+
+  // Execute use case
+  const useCase = getInjection('CreateUserUseCase')
+  const result = await useCase.execute(validation.data)
+
+  // Transform Result into HTTP response
+  if (result.isFailure) {
+    const error = result.error
+
+    // Different status based on error type
+    if (error instanceof NotFoundException) {
+      return Response.json({ error: error.message }, { status: 404 })
+    }
+    if (error instanceof ConflictException) {
+      return Response.json({ error: error.message }, { status: 409 })
+    }
+
+    return Response.json({ error: error.message }, { status: 400 })
+  }
+
+  // Success!
+  return Response.json(result.value, { status: 201 })
+}
+```
+
+## Best Practices
+
+### ✅ Do
+
+```typescript
+// Return Result in Domain and Application
+function create(data: Data): Result<Entity>
+async function execute(input: Input): Promise<Result<Output>>
+
+// Combine validations
+const combined = Result.combine([validation1, validation2, validation3])
+
+// Explicit check
+if (result.isFailure) {
+  return Result.fail(result.error)
+}
+
+// Custom types for errors
+return Result.fail(new ValidationError('Invalid input'))
+```
+
+### ❌ Avoid
+
+```typescript
+// ❌ DO NOT throw in Domain/Application
+throw new Error('Something went wrong')
+
+// ❌ DO NOT return null
+return null
+
+// ❌ DO NOT ignore errors
+const result = await someOperation()
+return result.value  // ☠️ Can be undefined!
+
+// ❌ DO NOT use try/catch for business logic
+try {
+  const user = User.create(data)
+} catch (error) {
+  // Bad pattern
+}
+```
+
+## Advantages
+
+1. **Safety** - Compiler forces error handling
+2. **Readability** - Error flow is explicit
+3. **Maintainability** - No hidden exceptions
+4. **Testability** - Easy to test error cases
+5. **Composition** - Easily combines multiple operations
+
+## Next Steps
+
+- [Option Pattern →](/docs/core-concepts/option) - Handle absence of value
+- [Value Objects →](/docs/core-concepts/value-objects) - Create Value Objects with validation
+- [Your First Use Case →](/docs/guides/first-use-case) - Complete example

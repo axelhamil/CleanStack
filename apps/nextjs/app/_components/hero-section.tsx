@@ -148,7 +148,7 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
             <BrutalistButton size="lg" className="relative group" asChild>
-              <Link href="/docs/installation">
+              <Link href="/docs/getting-started">
                 <span className="relative z-10">{t("cta_start")}</span>
                 <motion.div
                   className="absolute inset-0 bg-yellow-300 dark:bg-yellow-600 -z-10"

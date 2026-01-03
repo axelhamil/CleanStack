@@ -1,1212 +1,385 @@
-# Architecture
+# Clean Architecture
 
-**Understanding Clean Architecture and Domain-Driven Design in CleanStack**
+Understanding layer separation and the dependency rule.
 
-## Overview
+## Fundamental Principle
 
-CleanStack follows **Clean Architecture principles** combined with **Domain-Driven Design (DDD)** patterns. This approach ensures:
-
-- **Separation of concerns** - Each layer has a single responsibility
-- **Testability** - Business logic independent of frameworks
-- **Maintainability** - Clear boundaries and dependencies
-- **Scalability** - Easy to extend and modify
-
-## Core Principle: The Dependency Rule
-
-**All dependencies point INWARD toward the Domain.** The Domain is the core and has ZERO dependencies on outer layers.
+**All dependencies point inward.** The Domain is at the center and has ZERO external dependencies.
 
 ```
-Infrastructure → Application → Domain
-     ↓              ↓
-  Database      Use Cases    Core Business Logic
-  External                   (No dependencies)
-  APIs
+Adapters  ─────>  Application  ─────>  Domain
+    |                 |                   |
+ Database          Use Cases         Business Logic
+ External APIs     Ports             (Zero dependencies)
 ```
 
-## Layer Structure
+## The 3 Layers
 
+### 1. Domain (Core)
+
+**This is the core of your application.** Contains pure business logic.
+
+**Location:** `apps/nextjs/src/domain/`
+
+**Contains:**
+- **Entities** - Objects with unique identity (`User`, `Order`)
+- **Value Objects** - Concepts without identity (`Email`, `Money`)
+- **Aggregates** - Consistency boundaries (`UserAggregate`)
+- **Domain Events** - Business events (`UserCreatedEvent`)
+
+**Absolute rules:**
+- ❌ ZERO imports from Application or Adapters
+- ❌ ZERO imports from frameworks (Next.js, Drizzle, React)
+- ✅ ONLY `@packages/ddd-kit`
+- ✅ Business logic only
+
+**Example:**
+```typescript
+// ✅ CORRECT - Pure Domain
+import { Entity, Result, UUID } from '@packages/ddd-kit'
+
+export class User extends Entity<UserProps> {
+  get email(): Email {
+    return this.props.email
+  }
+
+  // Business logic
+  canPlaceOrder(): boolean {
+    return this.props.isActive && !this.props.isBanned
+  }
+}
 ```
-┌─────────────────────────────────────────┐
-│ Domain (Core)                           │
-│ - Entities                              │
-│ - Value Objects                         │
-│ - Aggregates                            │
-│ - Domain Events                         │
-│                                         │
-│ DEPENDS ON: NOTHING                     │
-└─────────────────────────────────────────┘
-               ▲
-               │
-               │ depends on
-               │
-┌─────────────────────────────────────────┐
-│ Application                             │
-│ - Use Cases                             │
-│ - Commands / Queries                    │
-│ - Application Services                  │
-│ - PORTS (interfaces):                   │
-│     • Repository interfaces             │
-│     • Gateway interfaces                │
-│                                         │
-│ DEPENDS ON: Domain only                 │
-└─────────────────────────────────────────┘
-               ▲
-               │
-               │ depends on
-               │
-┌─────────────────────────────────────────┐
-│ Interface Adapters                      │
-│ - Controllers                           │
-│ - Next.js Route Handlers                │
-│ - DTOs / Presenters                     │
-│ - Input validation (Zod)                │
-│                                         │
-│ DEPENDS ON: Application + Domain        │
-└─────────────────────────────────────────┘
-               ▲
-               │
-               │ depends on
-               │
-┌─────────────────────────────────────────┐
-│ Infrastructure (Outermost)              │
-│ - ORM (Drizzle)                         │
-│ - Database                              │
-│ - External APIs                         │
-│ - Repository IMPLEMENTATIONS            │
-│ - DI Container configuration            │
-│                                         │
-│ DEPENDS ON: Application ports           │
-└─────────────────────────────────────────┘
+
+```typescript
+// ❌ FORBIDDEN - External dependency
+import { db } from '@packages/drizzle'  // ❌
+import { NextRequest } from 'next/server'  // ❌
+```
+
+### 2. Application (Orchestration)
+
+**Coordinates business logic.** Implements use cases.
+
+**Location:** `apps/nextjs/src/application/`
+
+**Contains:**
+- **Use Cases** - Business scenarios (`CreateUserUseCase`)
+- **DTOs** - Transfer objects (`CreateUserInput`)
+- **Ports (interfaces)** - Contracts for adapters
+  - `IUserRepository` (interface)
+  - `IEmailService` (interface)
+  - `IPaymentGateway` (interface)
+
+**Rules:**
+- ✅ Can import from Domain
+- ✅ Defines INTERFACES (ports), not implementations
+- ❌ Does NOT import from Adapters
+- ❌ Knows NOTHING about Drizzle, Next.js, PostgreSQL
+
+**Example:**
+```typescript
+// ✅ CORRECT - Use Case
+import { Result, UseCase } from '@packages/ddd-kit'
+import { User } from '@/domain/user/User'
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+
+export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
+  constructor(
+    private readonly userRepo: IUserRepository  // ✅ Interface, not implementation
+  ) {}
+
+  async execute(input: CreateUserInput): Promise<Result<User>> {
+    // Logic orchestration
+    const emailOrError = Email.create(input.email)
+    if (emailOrError.isFailure) {
+      return Result.fail(emailOrError.error)
+    }
+
+    const userOrError = User.create({ email: emailOrError.value })
+    if (userOrError.isFailure) {
+      return Result.fail(userOrError.error)
+    }
+
+    return await this.userRepo.create(userOrError.value)
+  }
+}
+```
+
+### 3. Adapters (Implementations)
+
+**Connects to the outside world.** Implements ports defined by Application.
+
+**Location:** `apps/nextjs/src/adapters/`
+
+**Structure:**
+```
+adapters/
+├── in/           # Input adapters
+│   └── api/     # Next.js routes, Controllers
+└── out/          # Output adapters
+    ├── persistence/   # Repositories (Drizzle)
+    ├── email/         # Email services
+    └── payment/       # Payment services
+```
+
+**Contains:**
+- **In Adapters** - Controllers, Route Handlers, Zod Validators
+- **Out Adapters** - Repository implementations, API clients
+- **Mappers** - Domain ↔ Database/API conversion
+- **Database** - Drizzle ORM, PostgreSQL
+- **External APIs** - Stripe, SendGrid, etc.
+
+**Rules:**
+- ✅ Implements interfaces (ports) from Application
+- ✅ Can import from Application and Domain
+- ✅ Contains ALL external dependencies
+- ✅ Drizzle, PostgreSQL, Next.js live here
+
+**Example:**
+```typescript
+// adapters/out/persistence/DrizzleUserRepository.ts
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+import { db } from '@packages/drizzle'  // ✅ OK here
+import { users } from '@packages/drizzle/schema'
+
+export class DrizzleUserRepository implements IUserRepository {
+  async create(user: User): Promise<Result<User>> {
+    try {
+      const data = UserMapper.toPersistence(user)
+      await db.insert(users).values(data)
+      return Result.ok(user)
+    } catch (error) {
+      return Result.fail(new DatabaseOperationError('Failed to create'))
+    }
+  }
+}
+```
+
+```typescript
+// adapters/in/api/users/route.ts
+import { getInjection } from '@/common/di/container'
+import { z } from 'zod'
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string()
+})
+
+export async function POST(request: Request) {
+  // 1. Validation (adapter layer)
+  const body = await request.json()
+  const validation = schema.safeParse(body)
+
+  if (!validation.success) {
+    return Response.json({ error: validation.error }, { status: 400 })
+  }
+
+  // 2. Use Case (application layer)
+  const useCase = getInjection('CreateUserUseCase')
+  const result = await useCase.execute(validation.data)
+
+  // 3. Transform Result → HTTP Response
+  if (result.isFailure) {
+    return Response.json({ error: result.error }, { status: 400 })
+  }
+
+  return Response.json(result.value, { status: 201 })
+}
 ```
 
 ## Request Flow
 
 ```
-HTTP Request
-    ↓
-Route Handler (adapters/in/api/)
-    ↓
-Controller validates input & maps to DTO
-    ↓
-Use Case (application/) - orchestrates business logic
-    ↓
-Domain Logic (domain/) - enforces business rules
-    ↓
-Repository PORT (application/ports/) - interface
-    ↓
-Repository IMPL (adapters/out/) - concrete implementation
-    ↓
-Database
+[1] HTTP POST /api/users
+    { "email": "user@example.com", "name": "Alice" }
 
-Return: Database → Option&lt;T&gt; → Result&lt;T&gt; → DTO → JSON Response
+            |
+            v
+
+[2] Route Handler (adapters/in/api/)
+    • Validate input with Zod
+    • Parse JSON
+
+            |
+            v
+
+[3] Use Case (application/use-cases/)
+    • Create Value Objects (Email, UserName)
+    • Create Entity (User)
+    • Call IUserRepository.create()
+
+            |
+            v
+
+[4] Domain Logic (domain/)
+    • Email.create() validates format
+    • User.create() applies business rules
+    • Raise UserCreatedEvent
+
+            |
+            v
+
+[5] Repository Implementation (adapters/out/)
+    • DrizzleUserRepository.create()
+    • Map User → Database row
+    • INSERT into PostgreSQL
+
+            |
+            v
+
+[6] Return: Result<User>
+    • Success → JSON 201
+    • Failure → JSON 400
 ```
 
-## The Layers
+## The Dependency Rule
 
-### 1. Domain Layer (Core)
+### ✅ Allowed dependencies
 
-The heart of the application. Contains pure business logic with **zero external dependencies**.
+```
+Adapters  ────>  Application  ────>  Domain
+    |                 |                 |
+  DB/API          Use Cases        Entities
+                                   Value Objects
+```
 
-**Location:** `apps/nextjs/src/domain/`
+- Adapters can import Application and Domain
+- Application can import Domain
+- Domain imports NOTHING (except ddd-kit)
 
-**Contains:**
-- Entities
-- Value Objects
-- Aggregates
-- Domain Events
-
-**Example:**
+### ❌ Forbidden dependencies
 
 ```typescript
-export class Email extends ValueObject<EmailProps> {
-  protected validate(props: EmailProps): Result<EmailProps> {
-    if (!emailRegex.test(props.value)) {
-      return Result.fail("Invalid email");
-    }
-    return Result.ok(props);
+// ❌ Domain → Application
+// apps/nextjs/src/domain/user/User.ts
+import { CreateUserUseCase } from '@/application/...'  // FORBIDDEN!
+
+// ❌ Domain → Adapters
+import { DrizzleUserRepository } from '@/adapters/...'  // FORBIDDEN!
+
+// ❌ Domain → Framework
+import { NextRequest } from 'next/server'  // FORBIDDEN!
+
+// ❌ Application → Adapters
+// apps/nextjs/src/application/use-cases/CreateUserUseCase.ts
+import { DrizzleUserRepository } from '@/adapters/...'  // FORBIDDEN!
+```
+
+## Dependency Inversion
+
+Application defines the **interfaces** (ports). Adapters **implement** them.
+
+```typescript
+// ✅ Application defines the interface
+// application/ports/IUserRepository.ts
+import type { BaseRepository } from '@packages/ddd-kit'
+import type { User } from '@/domain/user/User'
+
+export interface IUserRepository extends BaseRepository<User> {
+  findByEmail(email: string): Promise<Result<Option<User>>>
+}
+```
+
+```typescript
+// ✅ Adapters implements the interface
+// adapters/out/persistence/DrizzleUserRepository.ts
+import type { IUserRepository } from '@/application/ports/IUserRepository'
+import { db } from '@packages/drizzle'
+
+export class DrizzleUserRepository implements IUserRepository {
+  async findByEmail(email: string): Promise<Result<Option<User>>> {
+    // Implementation with Drizzle
   }
 }
 ```
 
-**Critical Rules:**
-- NEVER import from Application, Adapters, or Infrastructure layers
-- Only import from `@packages/ddd-kit`
-- All business rules live here
-- Immutable by design (use `Object.freeze()`)
-
-### 2. Application Layer
-
-Orchestrates the flow of data. Contains **Use Cases** that implement business workflows.
-
-**Location:** `apps/nextjs/src/application/`
-
-**Contains:**
-- Use Cases
-- DTOs (Data Transfer Objects)
-- Application Services
-- Port interfaces (Repository, Gateway interfaces)
-
-**Example:**
-
 ```typescript
-export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
-  constructor(private readonly userRepo: IUserRepository) {}
+// ✅ Use Case depends on the INTERFACE
+// application/use-cases/CreateUserUseCase.ts
+import type { IUserRepository } from '@/application/ports/IUserRepository'
 
-  async execute(input: CreateUserInput): Promise<Result<User>> {
-    const emailOrError = Email.create(input.email);
-    if (emailOrError.isFailure) {
-      return Result.fail(emailOrError.error);
-    }
-
-    const userOrError = User.create({
-      email: emailOrError.value
-    });
-    if (userOrError.isFailure) {
-      return Result.fail(userOrError.error);
-    }
-
-    const savedOrError = await this.userRepo.create(userOrError.value);
-    return savedOrError;
-  }
-}
-```
-
-**Critical Rules:**
-- Depends ONLY on Domain layer
-- Defines interfaces (ports) for infrastructure
-- Never imports Infrastructure implementations
-- Always returns `Result&lt;T&gt;`
-
-### 3. Interface Adapters Layer
-
-Converts data between external formats and domain models.
-
-**Location:** `apps/nextjs/src/adapters/`
-
-**Contains:**
-- **In adapters:** Controllers, Route Handlers
-- **Out adapters:** Repository implementations, External API clients
-- Presenters (Response formatters)
-- Mappers (Domain ↔ Database)
-
-**Example:**
-
-```typescript
-// Route Handler (in adapter)
-export async function POST(request: Request) {
-  const useCase = getInjection('CreateUserUseCase');
-  const body = await request.json();
-
-  const result = await useCase.execute(body);
-
-  if (result.isFailure) {
-    return Response.json({ error: result.error }, { status: 400 });
-  }
-
-  return Response.json(result.value);
-}
-```
-
-**Critical Rules:**
-- Depends on Application and Domain
-- Implements port interfaces defined in Application
-- Validates HTTP input (Zod schemas)
-- Maps between domain and external representations
-
-### 4. Infrastructure Layer
-
-Manages external dependencies and technical implementations.
-
-**Location:** `apps/nextjs/src/infrastructure/`
-
-**Contains:**
-- Database connections
-- External API clients
-- File system operations
-- Email services
-- Cache implementations
-
-**Critical Rules:**
-- Implements interfaces from Application layer
-- Never imported by Domain or Application
-- All external dependencies live here
-
-## Core Patterns
-
-### Result&lt;T&gt; Pattern
-
-Type-safe error handling without exceptions. Forces explicit error handling.
-
-```typescript
-const result = Email.create("invalid@");
-
-if (result.isFailure) {
-  console.error(result.error); // Handle error explicitly
-  return;
-}
-
-const email = result.value; // Type-safe access
-```
-
-**Why?**
-- No silent failures
-- Compiler forces error handling
-- Errors are values, not exceptions
-- Better for domain logic
-
-### Option&lt;T&gt; Pattern
-
-Eliminates null/undefined with functional patterns. No more null pointer exceptions.
-
-```typescript
-const userOrNone = await userRepo.findById(id);
-
-userOrNone.match({
-  some: (user) => console.log(user.email),
-  none: () => console.log("User not found")
-});
-
-// Or with mapping
-const email = userOrNone
-  .map(user => user.email.value)
-  .unwrapOr("no-email@example.com");
-```
-
-**Why?**
-- Explicit absence of value
-- Chainable operations
-- No null reference errors
-
-### Domain Events Pattern
-
-Decouple side effects from business logic. Enable event-driven architecture.
-
-```typescript
-// 1. Define event
-export class UserCreatedEvent {
+export class CreateUserUseCase {
   constructor(
-    public readonly userId: UUID,
-    public readonly email: string,
-    public readonly occurredAt: Date = new Date()
+    private readonly userRepo: IUserRepository  // Interface!
   ) {}
 }
-
-// 2. Raise event in Aggregate
-export class User extends Aggregate<UserProps> {
-  static create(props: CreateUserProps): Result<User> {
-    const user = new User(props);
-    user.addEvent(new UserCreatedEvent(user.id, user.email.value));
-    return Result.ok(user);
-  }
-}
-
-// 3. Subscribe to events
-DomainEvents.subscribe(
-  UserCreatedEvent,
-  async (event: UserCreatedEvent) => {
-    await emailService.sendWelcomeEmail(event.email);
-  }
-);
-
-// 4. Dispatch after persistence
-const userOrError = await userRepo.create(user);
-if (userOrError.isSuccess) {
-  user.markEventsForDispatch();
-  DomainEvents.dispatch(user.id);
-}
 ```
 
-**Why?**
-- Loose coupling
-- Domain logic stays focused
-- Side effects are explicit
-- Easy to test
-
-## Key Principles
-
-### 1. The Dependency Rule
-
-**Dependencies only point inward.** Inner layers know nothing about outer layers.
-
-- ✅ Application can import Domain
-- ✅ Infrastructure can import Application interfaces
-- ❌ Domain CANNOT import Application
-- ❌ Application CANNOT import Infrastructure
-
-### 2. Domain Independence
-
-Business logic has **zero framework dependencies**.
-
-- No Next.js imports in Domain
-- No Drizzle ORM in Domain
-- No React in Domain
-- Only `@packages/ddd-kit` primitives
-
-### 3. Explicit over Implicit
-
-- Use `Result&lt;T&gt;` instead of throwing exceptions
-- Use `Option&lt;T&gt;` instead of null/undefined
-- Use interfaces instead of concrete types
-- Use dependency injection instead of direct instantiation
-
-### 4. Single Responsibility
-
-Each class, function, and module does **one thing well**.
-
-- One Use Case = One business operation
-- One Value Object = One business concept
-- One Entity = One business identity
-- One Repository = One aggregate root
-
-## Anti-Patterns to AVOID
-
-### ❌ Anemic Domain Model
+The DI container injects the implementation at runtime:
 
 ```typescript
-// WRONG: No business logic
-class User {
-  constructor(public email: string, public name: string) {}
-  setEmail(e: string) { this.email = e }
-}
+// common/di/modules/user.module.ts
+container.bind('IUserRepository').toClass(DrizzleUserRepository)
+container.bind('CreateUserUseCase').toClass(CreateUserUseCase)
 ```
 
-### ❌ Fat Controllers
+## Why This Architecture?
 
-```typescript
-// WRONG: Business logic in controller
-export async function POST(request: Request) {
-  const body = await request.json();
-  if (!body.email.includes('@')) {
-    return Response.json({ error: 'Invalid' });
-  }
-  const user = { id: crypto.randomUUID(), ...body };
-  await db.insert(users).values(user);
-}
-```
+### 1. Testability
 
-### ❌ Direct Database Access from Domain
-
-```typescript
-// WRONG: Domain importing database
-import { db } from '@packages/drizzle'  // ❌ in domain layer
-
-class User extends Entity<UserProps> {
-  async save() {
-    await db.insert(users).values(this.toObject())  // ❌❌❌
-  }
-}
-```
-
-### ❌ Null instead of Option
-
-```typescript
-// WRONG
-async findById(id: UUID): Promise<User | null> {
-  return await db.query.users.findFirst(...) ?? null;
-}
-
-// CORRECT
-async findById(id: UUID): Promise<Result<Option<User>>> {
-  const row = await db.query.users.findFirst(...);
-  if (!row) return Result.ok(None());
-  return Result.ok(Some(UserMapper.toDomain(row)));
-}
-```
-
-## Testing Strategy
-
-### Unit Tests - Domain Layer
-
-Test business logic in isolation:
-
-```typescript
-describe('Email Value Object', () => {
-  it('should create valid email', () => {
-    const result = Email.create('test@example.com');
-    expect(result.isSuccess).toBe(true);
-  });
-
-  it('should reject invalid email format', () => {
-    const result = Email.create('invalid');
-    expect(result.isFailure).toBe(true);
-  });
-});
-```
-
-### Integration Tests - Use Cases
-
-Test with real or mock repositories:
+Domain and Application are testable without a database:
 
 ```typescript
 describe('CreateUserUseCase', () => {
-  it('should create user successfully', async () => {
-    const mockRepo = createMockRepository();
-    const useCase = new CreateUserUseCase(mockRepo);
+  it('should create user', async () => {
+    const mockRepo = {
+      create: vi.fn().mockResolvedValue(Result.ok(user))
+    }
 
-    const result = await useCase.execute({
-      email: 'test@example.com',
-      name: 'Test User'
-    });
+    const useCase = new CreateUserUseCase(mockRepo)
+    const result = await useCase.execute(input)
 
-    expect(result.isSuccess).toBe(true);
-  });
-});
+    expect(result.isSuccess).toBe(true)
+  })
+})
 ```
 
----
+### 2. Easy Framework Changes
 
-## Complete Example: User Registration
-
-Let's walk through a complete implementation showing all layers working together.
-
-### Domain Layer - Value Objects
-
-**File:** `src/domain/user/value-objects/email.ts`
+Replace Drizzle with Prisma? Don't touch Domain/Application:
 
 ```typescript
-import { Result, ValueObject } from '@packages/ddd-kit';
-
-interface EmailProps {
-  value: string;
+// Just create a new adapter
+export class PrismaUserRepository implements IUserRepository {
+  // Same interface, different implementation
 }
 
-export class Email extends ValueObject<EmailProps> {
-  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  protected validate(props: EmailProps): Result<EmailProps> {
-    if (!props.value) {
-      return Result.fail('Email is required');
-    }
-
-    if (!Email.EMAIL_REGEX.test(props.value)) {
-      return Result.fail('Invalid email format');
-    }
-
-    if (props.value.length > 255) {
-      return Result.fail('Email too long');
-    }
-
-    return Result.ok(props);
-  }
-
-  get value(): string {
-    return this.props.value;
-  }
-
-  static create(email: string): Result<Email> {
-    return super.createInternal({ value: email.toLowerCase().trim() });
-  }
-}
+// Just change the DI binding
+container.bind('IUserRepository').toClass(PrismaUserRepository)
 ```
 
-**File:** `src/domain/user/value-objects/username.ts`
+### 3. Reusable Business Logic
 
-```typescript
-import { Result, ValueObject } from '@packages/ddd-kit';
+The Domain works everywhere (CLI, Lambda, API, GraphQL) because it has no dependencies.
 
-interface UsernameProps {
-  value: string;
-}
+### 4. AI-Friendly
 
-export class Username extends ValueObject<UsernameProps> {
-  private static readonly MIN_LENGTH = 3;
-  private static readonly MAX_LENGTH = 50;
-  private static readonly VALID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+The explicit architecture helps AI understand and generate code:
+- **Clear separation** - AI knows where to put each file
+- **Repeatable patterns** - Result, Option, UseCase are consistent
+- **Inline documentation** - TypeScript types document the code
+- **Strict rules** - AI cannot violate dependencies
 
-  protected validate(props: UsernameProps): Result<UsernameProps> {
-    if (!props.value) {
-      return Result.fail('Username is required');
-    }
+[Learn more about AI development →](/docs/claude-code)
 
-    if (props.value.length < Username.MIN_LENGTH) {
-      return Result.fail(`Username must be at least ${Username.MIN_LENGTH} characters`);
-    }
+## Architecture Checklist
 
-    if (props.value.length > Username.MAX_LENGTH) {
-      return Result.fail(`Username must be at most ${Username.MAX_LENGTH} characters`);
-    }
+Before committing, verify:
 
-    if (!Username.VALID_PATTERN.test(props.value)) {
-      return Result.fail('Username can only contain letters, numbers, underscores, and hyphens');
-    }
+- [ ] Domain imports nothing (except ddd-kit)
+- [ ] Application defines interfaces, not implementations
+- [ ] Adapters implements Application ports
+- [ ] Use Cases return `Result<T>`
+- [ ] Repositories return `Result<Option<T>>`
+- [ ] Value Objects are immutable (`Object.freeze`)
+- [ ] Dependencies via DI container
 
-    return Result.ok(props);
-  }
+## Next Steps
 
-  get value(): string {
-    return this.props.value;
-  }
+**Deep dive:**
+- [Dependency Rule →](/docs/architecture/dependency-rule) - Rule in detail
+- [Layers →](/docs/architecture/layers) - Each layer explained
 
-  static create(username: string): Result<Username> {
-    return super.createInternal({ value: username.trim() });
-  }
-}
-```
-
-### Domain Layer - Domain Events
-
-**File:** `src/domain/user/events/user-created.event.ts`
-
-```typescript
-import { UUID } from '@packages/ddd-kit';
-
-export class UserCreatedEvent {
-  public readonly eventName = 'UserCreated';
-  public readonly occurredAt: Date;
-
-  constructor(
-    public readonly userId: UUID,
-    public readonly email: string,
-    public readonly username: string,
-  ) {
-    this.occurredAt = new Date();
-  }
-}
-```
-
-### Domain Layer - Aggregate Root
-
-**File:** `src/domain/user/user.aggregate.ts`
-
-```typescript
-import { Aggregate, Result, UUID } from '@packages/ddd-kit';
-import { Email } from './value-objects/email';
-import { Username } from './value-objects/username';
-import { UserCreatedEvent } from './events/user-created.event';
-
-interface UserProps {
-  email: Email;
-  username: Username;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface CreateUserProps {
-  email: Email;
-  username: Username;
-}
-
-export class User extends Aggregate<UserProps> {
-  private constructor(props: UserProps, id?: UUID) {
-    super(props, id);
-  }
-
-  get email(): Email {
-    return this.props.email;
-  }
-
-  get username(): Username {
-    return this.props.username;
-  }
-
-  get createdAt(): Date {
-    return this.props.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this.props.updatedAt;
-  }
-
-  /**
-   * Factory method to create a new User aggregate
-   */
-  static create(props: CreateUserProps): Result<User> {
-    const now = new Date();
-
-    const user = new User(
-      {
-        email: props.email,
-        username: props.username,
-        createdAt: now,
-        updatedAt: now,
-      },
-      UUID.create()
-    );
-
-    // Raise domain event
-    user.addEvent(
-      new UserCreatedEvent(
-        user.id,
-        user.email.value,
-        user.username.value
-      )
-    );
-
-    return Result.ok(user);
-  }
-
-  /**
-   * Business logic: Update username
-   */
-  updateUsername(newUsername: Username): Result<void> {
-    // Business rule: username can only be changed if not changed in last 30 days
-    const daysSinceUpdate = Math.floor(
-      (Date.now() - this.props.updatedAt.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysSinceUpdate < 30) {
-      return Result.fail('Username can only be changed once every 30 days');
-    }
-
-    this.props.username = newUsername;
-    this.props.updatedAt = new Date();
-
-    return Result.ok();
-  }
-}
-```
-
-### Application Layer - Repository Interface (Port)
-
-**File:** `src/application/ports/user-repository.interface.ts`
-
-```typescript
-import { BaseRepository } from '@packages/ddd-kit';
-import { User } from '@/domain/user/user.aggregate';
-import { Email } from '@/domain/user/value-objects/email';
-import { Username } from '@/domain/user/value-objects/username';
-import type { Result, Option } from '@packages/ddd-kit';
-import type { Transaction } from 'drizzle-orm/node-postgres';
-
-export interface IUserRepository extends BaseRepository<User> {
-  /**
-   * Find user by email address
-   */
-  findByEmail(email: Email, trx?: Transaction): Promise<Result<Option<User>>>;
-
-  /**
-   * Find user by username
-   */
-  findByUsername(username: Username, trx?: Transaction): Promise<Result<Option<User>>>;
-
-  /**
-   * Check if email already exists
-   */
-  existsByEmail(email: Email, trx?: Transaction): Promise<Result<boolean>>;
-
-  /**
-   * Check if username already exists
-   */
-  existsByUsername(username: Username, trx?: Transaction): Promise<Result<boolean>>;
-}
-```
-
-### Application Layer - Use Case
-
-**File:** `src/application/use-cases/create-user/create-user.use-case.ts`
-
-```typescript
-import { Result, UseCase } from '@packages/ddd-kit';
-import type { Transaction } from 'drizzle-orm/node-postgres';
-import { User } from '@/domain/user/user.aggregate';
-import { Email } from '@/domain/user/value-objects/email';
-import { Username } from '@/domain/user/value-objects/username';
-import { IUserRepository } from '@/application/ports/user-repository.interface';
-
-export interface CreateUserInput {
-  email: string;
-  username: string;
-}
-
-export class CreateUserUseCase implements UseCase<CreateUserInput, User> {
-  constructor(private readonly userRepository: IUserRepository) {}
-
-  async execute(input: CreateUserInput, trx?: Transaction): Promise<Result<User>> {
-    // 1. Create Value Objects with validation
-    const emailOrError = Email.create(input.email);
-    if (emailOrError.isFailure) {
-      return Result.fail(emailOrError.error);
-    }
-
-    const usernameOrError = Username.create(input.username);
-    if (usernameOrError.isFailure) {
-      return Result.fail(usernameOrError.error);
-    }
-
-    const email = emailOrError.value;
-    const username = usernameOrError.value;
-
-    // 2. Check business rule: Email must be unique
-    const emailExistsOrError = await this.userRepository.existsByEmail(email, trx);
-    if (emailExistsOrError.isFailure) {
-      return Result.fail(emailExistsOrError.error);
-    }
-
-    if (emailExistsOrError.value) {
-      return Result.fail('Email already registered');
-    }
-
-    // 3. Check business rule: Username must be unique
-    const usernameExistsOrError = await this.userRepository.existsByUsername(username, trx);
-    if (usernameExistsOrError.isFailure) {
-      return Result.fail(usernameExistsOrError.error);
-    }
-
-    if (usernameExistsOrError.value) {
-      return Result.fail('Username already taken');
-    }
-
-    // 4. Create User aggregate (raises UserCreatedEvent)
-    const userOrError = User.create({ email, username });
-    if (userOrError.isFailure) {
-      return Result.fail(userOrError.error);
-    }
-
-    const user = userOrError.value;
-
-    // 5. Persist user
-    const savedUserOrError = await this.userRepository.create(user, trx);
-    if (savedUserOrError.isFailure) {
-      return Result.fail(savedUserOrError.error);
-    }
-
-    // 6. Mark events for dispatch (will happen after transaction commits)
-    user.markEventsForDispatch();
-
-    return Result.ok(savedUserOrError.value);
-  }
-}
-```
-
-### Infrastructure Layer - Repository Implementation
-
-**File:** `src/adapters/out/repositories/user.repository.ts`
-
-```typescript
-import { Result, Option, Some, None, UUID } from '@packages/ddd-kit';
-import type { Transaction } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
-import { db } from '@packages/drizzle';
-import { users } from '@packages/drizzle/schema';
-import { User } from '@/domain/user/user.aggregate';
-import { Email } from '@/domain/user/value-objects/email';
-import { Username } from '@/domain/user/value-objects/username';
-import { IUserRepository } from '@/application/ports/user-repository.interface';
-import { DatabaseOperationError } from '@packages/ddd-kit';
-
-export class UserRepository implements IUserRepository {
-  async create(user: User, trx?: Transaction): Promise<Result<User>> {
-    try {
-      const database = trx ?? db;
-
-      await database.insert(users).values({
-        id: user.id.value,
-        email: user.email.value,
-        username: user.username.value,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      });
-
-      return Result.ok(user);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to create user', { cause: error })
-      );
-    }
-  }
-
-  async update(user: User, trx?: Transaction): Promise<Result<User>> {
-    try {
-      const database = trx ?? db;
-
-      await database
-        .update(users)
-        .set({
-          email: user.email.value,
-          username: user.username.value,
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, user.id.value));
-
-      return Result.ok(user);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to update user', { cause: error })
-      );
-    }
-  }
-
-  async delete(id: UUID, trx?: Transaction): Promise<Result<void>> {
-    try {
-      const database = trx ?? db;
-      await database.delete(users).where(eq(users.id, id.value));
-      return Result.ok(undefined);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to delete user', { cause: error })
-      );
-    }
-  }
-
-  async findById(id: UUID, trx?: Transaction): Promise<Result<Option<User>>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.id, id.value),
-      });
-
-      if (!row) {
-        return Result.ok(None<User>());
-      }
-
-      const userOrError = this.toDomain(row);
-      if (userOrError.isFailure) {
-        return Result.fail(userOrError.error);
-      }
-
-      return Result.ok(Some(userOrError.value));
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to find user by id', { cause: error })
-      );
-    }
-  }
-
-  async findByEmail(email: Email, trx?: Transaction): Promise<Result<Option<User>>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.email, email.value),
-      });
-
-      if (!row) {
-        return Result.ok(None<User>());
-      }
-
-      const userOrError = this.toDomain(row);
-      if (userOrError.isFailure) {
-        return Result.fail(userOrError.error);
-      }
-
-      return Result.ok(Some(userOrError.value));
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to find user by email', { cause: error })
-      );
-    }
-  }
-
-  async findByUsername(username: Username, trx?: Transaction): Promise<Result<Option<User>>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.username, username.value),
-      });
-
-      if (!row) {
-        return Result.ok(None<User>());
-      }
-
-      const userOrError = this.toDomain(row);
-      if (userOrError.isFailure) {
-        return Result.fail(userOrError.error);
-      }
-
-      return Result.ok(Some(userOrError.value));
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to find user by username', { cause: error })
-      );
-    }
-  }
-
-  async existsByEmail(email: Email, trx?: Transaction): Promise<Result<boolean>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.email, email.value),
-        columns: { id: true },
-      });
-
-      return Result.ok(!!row);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to check email existence', { cause: error })
-      );
-    }
-  }
-
-  async existsByUsername(username: Username, trx?: Transaction): Promise<Result<boolean>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.username, username.value),
-        columns: { id: true },
-      });
-
-      return Result.ok(!!row);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to check username existence', { cause: error })
-      );
-    }
-  }
-
-  async findAll(trx?: Transaction): Promise<Result<User[]>> {
-    try {
-      const database = trx ?? db;
-      const rows = await database.query.users.findMany();
-
-      const users: User[] = [];
-      for (const row of rows) {
-        const userOrError = this.toDomain(row);
-        if (userOrError.isFailure) {
-          return Result.fail(userOrError.error);
-        }
-        users.push(userOrError.value);
-      }
-
-      return Result.ok(users);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to find all users', { cause: error })
-      );
-    }
-  }
-
-  async exists(id: UUID, trx?: Transaction): Promise<Result<boolean>> {
-    try {
-      const database = trx ?? db;
-      const row = await database.query.users.findFirst({
-        where: eq(users.id, id.value),
-        columns: { id: true },
-      });
-
-      return Result.ok(!!row);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to check user existence', { cause: error })
-      );
-    }
-  }
-
-  async count(trx?: Transaction): Promise<Result<number>> {
-    try {
-      const database = trx ?? db;
-      const rows = await database.query.users.findMany({ columns: { id: true } });
-      return Result.ok(rows.length);
-    } catch (error) {
-      return Result.fail(
-        new DatabaseOperationError('Failed to count users', { cause: error })
-      );
-    }
-  }
-
-  /**
-   * Map database row to domain model
-   */
-  private toDomain(row: any): Result<User> {
-    const emailOrError = Email.create(row.email);
-    if (emailOrError.isFailure) {
-      return Result.fail(emailOrError.error);
-    }
-
-    const usernameOrError = Username.create(row.username);
-    if (usernameOrError.isFailure) {
-      return Result.fail(usernameOrError.error);
-    }
-
-    // Reconstruct aggregate (without raising events)
-    return Result.ok(
-      Object.assign(
-        Object.create(User.prototype),
-        {
-          _id: UUID.createFrom(row.id),
-          props: {
-            email: emailOrError.value,
-            username: usernameOrError.value,
-            createdAt: row.createdAt,
-            updatedAt: row.updatedAt,
-          },
-        }
-      )
-    );
-  }
-}
-```
-
-### Adapters Layer - Route Handler & Controller
-
-**File:** `src/adapters/in/api/users/create/route.ts`
-
-```typescript
-import { z } from 'zod';
-import { getInjection } from '@/common/di/container';
-import { DomainEvents } from '@packages/ddd-kit';
-
-// Input validation schema
-const createUserSchema = z.object({
-  email: z.string().email(),
-  username: z.string().min(3).max(50),
-});
-
-export async function POST(request: Request) {
-  try {
-    // 1. Parse and validate input
-    const body = await request.json();
-    const validationResult = createUserSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return Response.json(
-        { error: 'Validation failed', details: validationResult.error.errors },
-        { status: 400 }
-      );
-    }
-
-    // 2. Get use case from DI container
-    const createUserUseCase = getInjection('CreateUserUseCase');
-    const transactionManager = getInjection('ITransactionManagerService');
-
-    // 3. Execute use case within transaction
-    const result = await transactionManager.execute(async (trx) => {
-      return await createUserUseCase.execute(validationResult.data, trx);
-    });
-
-    // 4. Handle result
-    if (result.isFailure) {
-      return Response.json(
-        { error: result.error },
-        { status: 400 }
-      );
-    }
-
-    const user = result.value;
-
-    // 5. Dispatch domain events (after successful transaction)
-    DomainEvents.dispatch(user.id);
-
-    // 6. Return response
-    return Response.json(
-      {
-        id: user.id.value,
-        email: user.email.value,
-        username: user.username.value,
-        createdAt: user.createdAt.toISOString(),
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Failed to create user:', error);
-    return Response.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Infrastructure - Dependency Injection Setup
-
-**File:** `src/common/di/modules/user.module.ts`
-
-```typescript
-import type { ApplicationContainer } from '../container';
-import { UserRepository } from '@/adapters/out/repositories/user.repository';
-import { CreateUserUseCase } from '@/application/use-cases/create-user/create-user.use-case';
-
-export function registerUserModule(container: ApplicationContainer) {
-  // Register repository
-  container.bind('IUserRepository').toClass(UserRepository, []);
-
-  // Register use cases
-  container.bind('CreateUserUseCase').toClass(CreateUserUseCase, ['IUserRepository']);
-}
-```
-
-**File:** `src/common/di/types.ts`
-
-```typescript
-import type { CreateUserUseCase } from '@/application/use-cases/create-user/create-user.use-case';
-import type { IUserRepository } from '@/application/ports/user-repository.interface';
-
-export const DI_TYPES = {
-  // Repositories
-  IUserRepository: Symbol.for('IUserRepository'),
-
-  // Use Cases
-  CreateUserUseCase: Symbol.for('CreateUserUseCase'),
-
-  // ... other types
-} as const;
-
-export interface DITokenMapping {
-  IUserRepository: IUserRepository;
-  CreateUserUseCase: CreateUserUseCase;
-  // ... other mappings
-}
-```
-
-### Domain Events - Event Handlers
-
-**File:** `src/application/event-handlers/user-created.handler.ts`
-
-```typescript
-import { DomainEvents } from '@packages/ddd-kit';
-import { UserCreatedEvent } from '@/domain/user/events/user-created.event';
-
-// Subscribe to UserCreatedEvent
-DomainEvents.subscribe(
-  UserCreatedEvent,
-  async (event: UserCreatedEvent) => {
-    console.log(`[UserCreatedEvent] User ${event.username} created with email ${event.email}`);
-
-    // Side effects:
-    // - Send welcome email
-    // - Create user profile
-    // - Log analytics event
-    // - etc.
-  }
-);
-```
-
-### Request Flow Summary
-
-Here's what happens when a client creates a user:
-
-```
-1. POST /api/users
-   ↓
-2. Route Handler validates input with Zod
-   ↓
-3. Get CreateUserUseCase & TransactionManager from DI container
-   ↓
-4. Execute use case within transaction:
-   ↓
-   4a. Create Email value object (validates format)
-   ↓
-   4b. Create Username value object (validates length/pattern)
-   ↓
-   4c. Check email uniqueness (business rule)
-   ↓
-   4d. Check username uniqueness (business rule)
-   ↓
-   4e. Create User aggregate (raises UserCreatedEvent)
-   ↓
-   4f. Persist via repository
-   ↓
-5. Transaction commits successfully
-   ↓
-6. Dispatch domain events (UserCreatedEvent)
-   ↓
-7. Event handlers run asynchronously (send email, etc.)
-   ↓
-8. Return JSON response to client
-```
-
-### Key Takeaways
-
-1. **Domain is pure:** No database, no HTTP, no frameworks - just business logic
-2. **Use Cases orchestrate:** They coordinate between domain and infrastructure
-3. **Repositories abstract data:** Domain doesn't know about Drizzle or PostgreSQL
-4. **Result&lt;T&gt; everywhere:** Explicit error handling, no exceptions
-5. **Option&lt;T&gt; for queries:** No null, explicit absence of value
-6. **Transaction at controller:** Compose multiple use cases in one transaction
-7. **Events for side effects:** Decouple email sending from user creation
-8. **DI for flexibility:** Easy to swap implementations, test in isolation
-
----
-
-**Next Steps:**
-- Read [CLAUDE.md](/CLAUDE.md) for complete implementation details
-- Explore `@packages/ddd-kit` for DDD primitives
-- Check example implementations in `src/domain/examples/`
+**Practice:**
+- [Your First Use Case →](/docs/guides/first-use-case) - Complete tutorial
+- [Testing →](/docs/guides/testing) - Test each layer
