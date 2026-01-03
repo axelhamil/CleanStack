@@ -94,10 +94,17 @@ export class Email extends ValueObject<string> {
 ## Monorepo
 
 - `apps/nextjs/` - Web + API (Clean Architecture in src/)
-- `apps/expo/` - Mobile (Expo Router + NativeWind)
+- `apps/expo/` - Mobile (Expo Router + NativeWind + React Query)
 - `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
 - `packages/drizzle/` - DB schema and ORM
-- `packages/ui/` - Shared components (shadcn + .web.tsx/.native.tsx)
+- `packages/ui/` - Shared components (`.web.tsx` / `.native.tsx`)
+
+## UI Components
+
+Create reusable components in `packages/ui/`:
+- `.web.tsx` - Next.js (auto-resolved)
+- `.native.tsx` - Expo (auto-resolved)
+- `.tsx` - Fallback
 
 ## Key Rules
 

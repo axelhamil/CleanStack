@@ -5,9 +5,10 @@
     "rootDir": "./src",
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
-    "outDir": "./dist",
-    "declaration": true,
-    "noEmit": false
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/__TESTS__"]

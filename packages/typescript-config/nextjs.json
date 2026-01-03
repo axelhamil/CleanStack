@@ -1,17 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Next.js",
   "extends": "./base.json",
   "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    },
-    "lib": ["dom", "dom.iterable", "esnext"]
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+    "plugins": [{ "name": "next" }]
+  }
 }

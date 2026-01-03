@@ -1,19 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node.js",
   "extends": "./base.json",
   "compilerOptions": {
+    "lib": ["ESNext"],
     "module": "ESNext",
     "moduleResolution": "nodenext",
-    "lib": ["ESNext"],
-    "outDir": "dist",
-    "baseUrl": ".",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "types": ["node"]
-  },
-  "include": ["src/**/*.ts", "src/**/*.json"],
-  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts", "**/*.test.ts"]
+  }
 }

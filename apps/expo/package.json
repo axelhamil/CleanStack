@@ -1,0 +1,33 @@
+{
+  "name": "expo",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "private": true,
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.67.3",
+    "expo": "~54.0.30",
+    "expo-constants": "~18.0.5",
+    "expo-linking": "~7.1.5",
+    "expo-router": "~5.1.0",
+    "expo-status-bar": "~3.0.9",
+    "nativewind": "^4.1.23",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@packages/ui": "workspace:*",
+    "@types/react": "~19.1.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.9.2"
+  }
+}

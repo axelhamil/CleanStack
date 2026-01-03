@@ -137,10 +137,27 @@ const useCase = getInjection('CreateUserUseCase')
 ## Monorepo
 
 - `apps/nextjs/` - Web + API (Clean Architecture in src/)
-- `apps/expo/` - Mobile (Expo Router + NativeWind)
+- `apps/expo/` - Mobile (Expo Router + NativeWind + React Query)
 - `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
 - `packages/drizzle/` - DB schema and ORM
 - `packages/ui/` - Shared components (shadcn + .web.tsx/.native.tsx)
+
+## UI Components
+
+Create reusable components in `packages/ui/`:
+
+```
+packages/ui/src/components/
+├── button.tsx          # Shared types/fallback
+├── button.web.tsx      # Web version (Next.js)
+├── button.native.tsx   # Native version (Expo)
+```
+
+- `.web.tsx` - Used by Next.js (auto-resolved by webpack)
+- `.native.tsx` - Used by Expo (auto-resolved by Metro)
+- `.tsx` - Fallback if no platform-specific file exists
+
+**Always prefer creating shared components** in `packages/ui/` over app-specific components.
 
 ## Environment
 

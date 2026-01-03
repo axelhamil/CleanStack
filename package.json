@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=nextjs",
+    "dev:expo": "turbo dev --filter=expo",
+    "dev:all": "turbo dev",
     "db": "docker compose up -d postgres",
     "db:migrate": "turbo db:migrate",
     "db:generate": "turbo db:generate",

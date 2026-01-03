@@ -25,7 +25,16 @@
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
+    "react-native": ">=0.70",
     "zod": "^4.2.1"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -44,6 +53,7 @@
     "@packages/typescript-config": "workspace:*",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/react-native": "^0.76.6",
     "typescript": "^5.9.3"
   }
 }
