@@ -10,6 +10,12 @@ const stats = [
 ];
 
 export function CTASection() {
+  const openDocs = () => {
+    Linking.openURL(
+      "https://github.com/axelhamil/nextjs-clean-architecture-starter#readme",
+    );
+  };
+
   const openGitHub = () => {
     Linking.openURL(
       "https://github.com/axelhamil/nextjs-clean-architecture-starter",
@@ -27,7 +33,9 @@ export function CTASection() {
       </Text>
 
       <View className="gap-3 mb-8 items-center">
-        <BrutalistButton size="lg">Get Started →</BrutalistButton>
+        <BrutalistButton size="lg" onPress={openDocs}>
+          Get Started →
+        </BrutalistButton>
         <BrutalistButton size="lg" variant="outline" onPress={openGitHub}>
           <View className="flex-row items-center gap-2">
             <Github size={16} color="#000" />

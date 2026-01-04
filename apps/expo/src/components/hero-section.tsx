@@ -7,6 +7,12 @@ import { TechBadge } from "./ui/tech-badge";
 const techStack = ["Next.js 16", "TypeScript", "DDD", "Drizzle", "AI-Ready"];
 
 export function HeroSection() {
+  const openDocs = () => {
+    Linking.openURL(
+      "https://github.com/axelhamil/nextjs-clean-architecture-starter#readme",
+    );
+  };
+
   const openGitHub = () => {
     Linking.openURL(
       "https://github.com/axelhamil/nextjs-clean-architecture-starter",
@@ -45,7 +51,7 @@ export function HeroSection() {
       </View>
 
       <View className="gap-3 mb-8 w-full max-w-xs">
-        <BrutalistButton size="lg" className="w-full">
+        <BrutalistButton size="lg" className="w-full" onPress={openDocs}>
           Get Started
         </BrutalistButton>
         <BrutalistButton size="lg" variant="outline" onPress={openGitHub}>
