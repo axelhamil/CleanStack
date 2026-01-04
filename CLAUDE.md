@@ -140,24 +140,52 @@ const useCase = getInjection('CreateUserUseCase')
 - `apps/expo/` - Mobile (Expo Router + NativeWind + React Query)
 - `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
 - `packages/drizzle/` - DB schema and ORM
-- `packages/ui/` - Shared components (shadcn + .web.tsx/.native.tsx)
+- `packages/ui/` - Web UI components (shadcn/ui + custom)
 
 ## UI Components
 
-Create reusable components in `packages/ui/`:
+### shadcn/ui First
+
+**Always use shadcn/ui components** as the foundation. Before creating custom components:
+
+1. Check if shadcn/ui has the component: `pnpm ui:add [component]`
+2. Extend/customize shadcn components rather than building from scratch
+3. Follow shadcn patterns (CVA variants, Radix primitives, cn() utility)
+
+```bash
+# Add shadcn component
+pnpm ui:add button dialog form input
+
+# Available components: https://ui.shadcn.com/docs/components
+```
+
+### Component Structure
 
 ```
 packages/ui/src/components/
-├── button.tsx          # Shared types/fallback
-├── button.web.tsx      # Web version (Next.js)
-├── button.native.tsx   # Native version (Expo)
+├── ui/                   # shadcn/ui only (auto-generated)
+│   ├── button.tsx
+│   ├── card.tsx
+│   └── ...
+├── brutalist-button.tsx  # Custom web components
+├── feature-card.tsx
+└── ...
+
+apps/expo/src/components/
+├── ui/                   # Native components (NativeWind)
+│   ├── brutalist-button.tsx
+│   └── ...
+└── hero-section.tsx      # App-specific sections
 ```
 
-- `.web.tsx` - Used by Next.js (auto-resolved by webpack)
-- `.native.tsx` - Used by Expo (auto-resolved by Metro)
-- `.tsx` - Fallback if no platform-specific file exists
+### Rules
 
-**Always prefer creating shared components** in `packages/ui/` over app-specific components.
+1. **Maximize shadcn/ui usage** - Don't reinvent existing components
+2. **Extend, don't replace** - Wrap shadcn components with project-specific variants
+3. **packages/ui = web only** - For Next.js, use `@packages/ui/components/...`
+4. **Expo = separate components** - Native components in `apps/expo/src/components/`
+5. **Use CVA** for variants (class-variance-authority)
+6. **Use cn()** for class merging
 
 ## Environment
 

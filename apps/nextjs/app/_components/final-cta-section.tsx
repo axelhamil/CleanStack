@@ -1,10 +1,17 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/ui/brutalist-button";
+import { BrutalistButton } from "@packages/ui/components/brutalist-button";
+import { StatCard } from "@packages/ui/components/stat-card";
 import { motion } from "framer-motion";
 import { ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+
+const stats = [
+  { label: "TypeScript", value: "100%" },
+  { label: "AI-Ready", value: "Yes" },
+  { label: "Production", value: "Ready" },
+];
 
 export function FinalCTASection() {
   const t = useTranslations("home.cta");
@@ -49,22 +56,13 @@ export function FinalCTASection() {
             </BrutalistButton>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-            {[
-              { label: "TypeScript", value: "100%" },
-              { label: "AI-Ready", value: "Yes" },
-              { label: "Production", value: "Ready" },
-            ].map((stat) => (
-              <div
+            {stats.map((stat) => (
+              <StatCard
                 key={stat.label}
-                className="border-2 border-black/20 dark:border-white/20 p-4"
-              >
-                <div className="text-xl font-black mb-1">{stat.value}</div>
-                <div className="text-xs font-medium uppercase text-gray-500">
-                  {stat.label}
-                </div>
-              </div>
+                value={stat.value}
+                label={stat.label}
+              />
             ))}
           </div>
         </motion.div>

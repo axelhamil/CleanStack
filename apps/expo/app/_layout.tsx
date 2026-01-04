@@ -7,9 +7,9 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <Stack>
-        <Stack.Screen name="index" options={{ title: "CleanStack" }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </QueryProvider>
   );
 }

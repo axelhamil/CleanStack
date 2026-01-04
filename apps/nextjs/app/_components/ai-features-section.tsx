@@ -1,6 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { CodeBlock } from "@packages/ui/components/code-block";
+import { FeatureCard } from "@packages/ui/components/feature-card";
+import { Section } from "@packages/ui/components/section";
+import { SectionHeader } from "@packages/ui/components/section-header";
 import { Bot, Brain, FileCode2, Sparkles, Zap } from "lucide-react";
 
 const aiFeatures = [
@@ -30,85 +33,7 @@ const aiFeatures = [
   },
 ];
 
-export function AIFeaturesSection() {
-  return (
-    <section className="py-24 bg-white dark:bg-black">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 border-2 border-black dark:border-white bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50">
-            <Zap className="w-4 h-4" />
-            <span className="font-bold uppercase text-xs tracking-wide">
-              AI-First Development
-            </span>
-          </div>
-
-          <h2 className="text-3xl md:text-5xl font-black uppercase mb-6">
-            Built for{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-              AI Assistants
-            </span>
-          </h2>
-
-          <p className="text-lg max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
-            Every architectural decision is documented and optimized for AI
-            comprehension.
-          </p>
-        </motion.div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-16">
-          {aiFeatures.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="p-6 border-2 border-black dark:border-white bg-gray-50 dark:bg-gray-900 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.5)] transition-shadow"
-            >
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-black dark:bg-white rounded-sm shrink-0">
-                  <feature.icon className="w-5 h-5 text-white dark:text-black" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold uppercase mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Code Example */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="max-w-3xl mx-auto"
-        >
-          <div className="border-2 border-black dark:border-white bg-gray-900 dark:bg-gray-950 p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)]">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-              <span className="ml-3 text-green-400 font-mono text-xs">
-                CLAUDE.md
-              </span>
-            </div>
-            <pre className="text-green-400 font-mono text-xs leading-relaxed overflow-x-auto">
-              <code>{`# AI Development Guidelines
+const codeExample = `# AI Development Guidelines
 
 ## Mandatory Rules
 
@@ -123,11 +48,40 @@ Use Result<T> pattern:
 const result = Email.create(input.email)
 if (result.isFailure) {
   return Result.fail(result.error)
-}`}</code>
-            </pre>
-          </div>
-        </motion.div>
+}`;
+
+export function AIFeaturesSection() {
+  return (
+    <Section>
+      <SectionHeader
+        badge={{ icon: Zap, text: "AI-First Development" }}
+        title={
+          <>
+            Built for{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+              AI Assistants
+            </span>
+          </>
+        }
+        subtitle="Every architectural decision is documented and optimized for AI comprehension."
+      />
+
+      <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-16">
+        {aiFeatures.map((feature, index) => (
+          <FeatureCard
+            key={feature.title}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+            index={index}
+            variant="compact"
+          />
+        ))}
       </div>
-    </section>
+
+      <div className="max-w-3xl mx-auto">
+        <CodeBlock code={codeExample} title="CLAUDE.md" variant="terminal" />
+      </div>
+    </Section>
   );
 }

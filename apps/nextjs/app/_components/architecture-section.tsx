@@ -1,37 +1,49 @@
 "use client";
 
+import { GridBackground } from "@packages/ui/components/grid-background";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+
+const architectureDiagram = `┌─ CLEANSTACK ARCHITECTURE ────────────────────┐
+│                                               │
+│   HTTP Request                                │
+│        ↓                                      │
+│   ┌──────────────────────────────────────┐   │
+│   │  [Adapters]                          │   │
+│   │  Controllers & Presenters            │   │
+│   └──────────────────────────────────────┘   │
+│        ↓                                      │
+│   ┌──────────────────────────────────────┐   │
+│   │  [Application]                       │   │
+│   │  Use Cases & Business Logic          │   │
+│   └──────────────────────────────────────┘   │
+│        ↓                                      │
+│   ┌──────────────────────────────────────┐   │
+│   │  [Domain]                            │   │
+│   │  Entities & Value Objects            │   │
+│   │  Aggregates & Domain Events          │   │
+│   └──────────────────────────────────────┘   │
+│        ↓                                      │
+│   ┌──────────────────────────────────────┐   │
+│   │  [Infrastructure]                    │   │
+│   │  Database & External APIs            │   │
+│   └──────────────────────────────────────┘   │
+│                                               │
+└───────────────────────────────────────────────┘`;
+
+const layers = [
+  { key: "layer_1", delay: 0 },
+  { key: "layer_2", delay: 0.1 },
+  { key: "layer_3", delay: 0.2 },
+  { key: "layer_4", delay: 0.3 },
+];
 
 export function ArchitectureSection() {
   const t = useTranslations("home.architecture");
 
-  const layers = [
-    { key: "layer_1", delay: 0 },
-    { key: "layer_2", delay: 0.1 },
-    { key: "layer_3", delay: 0.2 },
-    { key: "layer_4", delay: 0.3 },
-  ];
-
   return (
     <section className="py-24 bg-black dark:bg-white relative overflow-hidden">
-      {/* Animated grid background */}
-      <motion.div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-        animate={{
-          backgroundPosition: ["0px 0px", "40px 40px"],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "linear",
-        }}
-      />
+      <GridBackground animated size={40} />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.h2
@@ -58,32 +70,7 @@ export function ArchitectureSection() {
             transition={{ duration: 1, delay: 0.3 }}
             className="text-green-400 dark:text-green-600 font-mono text-xs md:text-sm leading-relaxed overflow-x-auto"
           >
-            {`┌─ CLEANSTACK ARCHITECTURE ────────────────────┐
-│                                               │
-│   HTTP Request                                │
-│        ↓                                      │
-│   ┌──────────────────────────────────────┐   │
-│   │  [Adapters]                          │   │
-│   │  Controllers & Presenters            │   │
-│   └──────────────────────────────────────┘   │
-│        ↓                                      │
-│   ┌──────────────────────────────────────┐   │
-│   │  [Application]                       │   │
-│   │  Use Cases & Business Logic          │   │
-│   └──────────────────────────────────────┘   │
-│        ↓                                      │
-│   ┌──────────────────────────────────────┐   │
-│   │  [Domain]                            │   │
-│   │  Entities & Value Objects            │   │
-│   │  Aggregates & Domain Events          │   │
-│   └──────────────────────────────────────┘   │
-│        ↓                                      │
-│   ┌──────────────────────────────────────┐   │
-│   │  [Infrastructure]                    │   │
-│   │  Database & External APIs            │   │
-│   └──────────────────────────────────────┘   │
-│                                               │
-└───────────────────────────────────────────────┘`}
+            {architectureDiagram}
           </motion.pre>
 
           <motion.div
