@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## Prerequisites
+
+**Before working on this codebase, read and memorize:**
+- `packages/ddd-kit/src/` - All DDD primitives (Result, Option, Entity, etc.)
+- `packages/test/` - Vitest configuration
+
 ## Project Overview
 
 Production-ready monorepo boilerplate, optimized for AI and human development through Clean Architecture and DDD. Explicit structure, consistent patterns, self-documenting code.
@@ -48,69 +54,98 @@ apps/nextjs/src/
 
 ## Core Patterns (ddd-kit)
 
-### Result<T> - Never throw exceptions
+### Result<T,E> - Never throw exceptions
 
 ```typescript
-// Use cases and repositories return Result<T>
-async execute(input): Promise<Result<User>> {
-  const emailOrError = Email.create(input.email)
-  if (emailOrError.isFailure) return Result.fail(emailOrError.error)
-  return Result.ok(user)
-}
+// Creation
+Result.ok(value)              // Success
+Result.fail(error)            // Failure
+Result.combine([r1, r2, r3])  // First failure or ok()
+
+// Usage
+result.isSuccess / result.isFailure
+result.getValue()  // throws if failure
+result.getError()  // throws if success
 ```
 
 ### Option<T> - No null/undefined
 
 ```typescript
-// Repositories return Result<Option<T>> for single items
-async findById(id): Promise<Result<Option<User>>> {
-  if (!row) return Result.ok(None())
-  return Result.ok(Some(user))
-}
+// Creation
+Option.some(value)            // Some<T>
+Option.none()                 // None<T>
+Option.fromNullable(value)    // Some if value, None if null/undefined
+
+// Usage
+option.isSome() / option.isNone()
+option.unwrap()               // throws if None
+option.unwrapOr(defaultValue)
+option.map(fn)                // Option<U>
+option.flatMap(fn)            // Option<U>
+match(option, { Some: v => ..., None: () => ... })
 ```
 
-### ValueObject<T> - Zod validation
+### ValueObject<T>
 
 ```typescript
 export class Email extends ValueObject<string> {
+  // validate() called automatically by create()
   protected validate(value: string): Result<string> {
-    const result = z.email().safeParse(value)
-    if (!result.success) return Result.fail(result.error.issues[0]?.message)
-    return Result.ok(result.data)
+    if (!value.includes('@')) return Result.fail('Invalid email')
+    return Result.ok(value)
   }
 }
-// Usage: Email.create("test@example.com") → Result<Email>
+
+// Usage
+const result = Email.create('test@example.com')  // Result<Email>
+if (result.isSuccess) {
+  const email = result.getValue()
+  email.value  // 'test@example.com'
+}
 ```
 
-### Entity/Aggregate - Typed IDs
+### Entity & Aggregate
 
 ```typescript
 export class UserId extends UUID<string> {
-  static create(id: UUID<string>): UserId { return new UserId(id) }
+  static create(id: UUID<string>): UserId { return new UserId(id.value) }
 }
 
 export class User extends Aggregate<IUserProps> {
   get id(): UserId { return UserId.create(this._id as UUID<string>) }
 
   static create(props, id?): Result<User> {
-    return Result.ok(new User({ ...props, createdAt: new Date() }, id))
+    return Result.ok(new User(props, id))
   }
 }
+
+// Entity methods
+entity._id                    // UUID
+entity._props                 // T
+entity.get('propName')        // Access prop (throws if missing)
+entity.getProps()             // Shallow copy of props
+entity.toObject()             // Plain object (resolves VOs, entities)
+entity.clone({ ...overrides }) // New instance, same ID
+
+// Aggregate methods (extends Entity)
+aggregate.domainEvents        // DomainEvent[]
+aggregate.addEvent(event)     // Register event
+aggregate.markEventsForDispatch()
+aggregate.clearEvents()
 ```
 
-### Repository Pattern
+### BaseRepository<T>
 
 ```typescript
-// Port (application/ports/)
-export interface IUserRepository extends BaseRepository<User> {
-  findByEmail(email: string): Promise<Result<Option<User>>>
-}
-
-// Implementation (adapters/out/persistence/)
-export class DrizzleUserRepository implements IUserRepository {
-  async findById(id, trx?): Promise<Result<Option<User>>> {
-    // Always support optional transaction parameter
-  }
+interface BaseRepository<T extends IEntity<unknown>> {
+  create(entity: T, trx?): Promise<Result<T>>
+  update(entity: T, trx?): Promise<Result<T>>
+  delete(id: T['_id'], trx?): Promise<Result<T['_id']>>
+  findById(id: T['_id']): Promise<Result<Option<T>>>
+  findAll(): Promise<Result<T[]>>
+  findBy(props: Partial<T['_props']>): Promise<Result<Option<T>>>
+  exists(id: T['_id']): Promise<Result<boolean>>
+  count(): Promise<Result<number>>
 }
 ```
 
@@ -173,7 +208,7 @@ describe('CreateUserUseCase', () => {
 
   it('should create user when email is unique', async () => {
     // Given
-    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(None()))
+    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Option.none()))
     mockUserRepo.create.mockResolvedValue(Result.ok(mockUser))
 
     // When
@@ -187,14 +222,14 @@ describe('CreateUserUseCase', () => {
 
   it('should fail when email already exists', async () => {
     // Given
-    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Some(existingUser)))
+    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Option.some(existingUser)))
 
     // When
     const result = await useCase.execute({ email: 'taken@test.com', name: 'Test' })
 
     // Then
     expect(result.isFailure).toBe(true)
-    expect(result.error).toContain('email')
+    expect(result.getError()).toContain('email')
     expect(mockUserRepo.create).not.toHaveBeenCalled()
   })
 })
@@ -204,9 +239,10 @@ describe('CreateUserUseCase', () => {
 
 1. **One test file per Use Case** - Tests mirror behaviors
 2. **Mock at repository level** - Never mock domain objects
-3. **Test Result/Option states** - `isSuccess`, `isFailure`, `isSome`, `isNone`
+3. **Test Result/Option states** - `isSuccess`, `isFailure`, `isSome()`, `isNone()`
 4. **Name tests as behaviors** - "should [action] when [condition]"
 5. **No implementation details** - Test what, not how
+6. **Use getValue()/getError()** - Not `.value`/`.error`
 
 ## Monorepo
 
