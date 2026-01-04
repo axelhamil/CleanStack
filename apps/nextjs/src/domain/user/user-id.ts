@@ -1,11 +1,13 @@
 import { UUID } from "@packages/ddd-kit";
 
-export class UserId extends UUID<string> {
-  static create(id: UUID<string>): UserId {
-    return new UserId(id.value);
+export class UserId extends UUID<string | number> {
+  protected [Symbol.toStringTag] = "UserId";
+
+  private constructor(id: UUID<string | number>) {
+    super(id ? id.value : new UUID<string | number>().value);
   }
 
-  static fromString(id: string): UserId {
+  static create(id: UUID<string | number>): UserId {
     return new UserId(id);
   }
 }

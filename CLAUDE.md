@@ -118,9 +118,17 @@ if (result.isSuccess) {
 ### Entity & Aggregate
 
 ```typescript
-// ID class (typed UUID wrapper)
-export class UserId extends UUID<string> {
-  static create(id: UUID<string>): UserId { return new UserId(id.value) }
+// ID class (typed UUID wrapper with Symbol tag for type safety)
+export class UserId extends UUID<string | number> {
+  protected [Symbol.toStringTag] = "UserId";
+
+  private constructor(id: UUID<string | number>) {
+    super(id ? id.value : new UUID<string | number>().value);
+  }
+
+  static create(id: UUID<string | number>): UserId {
+    return new UserId(id);
+  }
 }
 
 // Entity/Aggregate definition
