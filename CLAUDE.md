@@ -63,6 +63,49 @@ apps/nextjs/src/
 
 Use `queries/` for read-only operations that don't need domain logic (lists, filters, reports).
 
+### Guards
+
+Guards handle authentication and authorization before reaching controllers/use cases.
+
+```typescript
+// adapters/guards/auth.guard.ts
+export async function authGuard(request: Request): Promise<Result<Session>> {
+  const session = await auth.api.getSession({ headers: request.headers })
+  if (!session) return Result.fail('Unauthorized')
+  return Result.ok(session)
+}
+
+// adapters/guards/role.guard.ts
+export function roleGuard(session: Session, roles: Role[]): Result<void> {
+  if (!roles.includes(session.user.role)) return Result.fail('Forbidden')
+  return Result.ok()
+}
+```
+
+**Usage in Route Handler:**
+```typescript
+export async function POST(request: Request) {
+  // 1. Auth guard
+  const sessionResult = await authGuard(request)
+  if (sessionResult.isFailure) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // 2. Role guard (optional)
+  const roleResult = roleGuard(sessionResult.getValue(), ['admin'])
+  if (roleResult.isFailure) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+  // 3. Controller/Use Case
+  const useCase = getInjection('CreateUserUseCase')
+  const result = await useCase.execute(input)
+  // ...
+}
+```
+
+**Types of Guards:**
+- `authGuard` - Validates session exists (BetterAuth)
+- `roleGuard` - Checks user role (admin, user, etc.)
+- `ownerGuard` - Checks resource ownership (user can only edit own data)
+- `permissionGuard` - Fine-grained permissions
+
 ## Core Patterns (ddd-kit)
 
 ### Result<T,E> - Never throw exceptions
