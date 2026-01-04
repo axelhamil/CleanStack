@@ -3,7 +3,7 @@
 ## Prerequisites
 
 **Before working on this codebase, read and memorize:**
-- `packages/ddd-kit/src/` - All DDD primitives (Result, Option, Entity, etc.)
+- `packages/ddd-kit/` - All DDD primitives (Result, Option, Entity, etc.)
 - `packages/test/` - Vitest configuration
 
 ## Project Overview
@@ -47,8 +47,10 @@ apps/nextjs/src/
 ├── domain/             # Entities, Value Objects, Events
 ├── application/
 │   ├── use-cases/      # Business logic orchestration
-│   └── ports/          # Repository interfaces (IXxxRepository)
+│   ├── ports/          # Repository & service interfaces (IXxxRepository, IXxxProvider)
+│   └── dto/            # Input/Output DTOs with Zod schemas
 └── adapters/
+    ├── auth/           # Auth provider implementations
     ├── controllers/    # HTTP → Use Case (input)
     ├── guards/         # Auth middleware (input)
     ├── repositories/   # Use Case → DB via Domain (output)
@@ -196,15 +198,147 @@ interface BaseRepository<T extends IEntity<unknown>> {
 }
 ```
 
+### Use Cases
+
+Use Cases orchestrate business logic. They are **rich**, not anemic - they validate inputs, check business rules, and coordinate domain objects.
+
+```typescript
+export class SignInUseCase implements UseCase<SignInInputDto, SignInOutputDto> {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly authProvider: IAuthProvider,
+  ) {}
+
+  async execute(input: SignInInputDto): Promise<Result<SignInOutputDto>> {
+    const emailResult = Email.create(input.email);
+    const passwordResult = Password.create(input.password);
+
+    // Use Result.combine when multiple Results follow each other
+    const combined = Result.combine([emailResult, passwordResult]);
+    if (combined.isFailure) return Result.fail(combined.getError());
+
+    const userResult = await this.checkUserExists(emailResult.getValue());
+    if (userResult.isFailure) return Result.fail(userResult.getError());
+
+    const authResult = await this.authProvider.signIn(
+      userResult.getValue(),
+      passwordResult.getValue(),
+    );
+    if (authResult.isFailure) return Result.fail(authResult.getError());
+
+    return Result.ok({ user: userResult.getValue(), session: authResult.getValue() });
+  }
+
+  // Use match() to handle Option<T> - cleaner than isSome()/isNone()
+  private async checkUserExists(email: Email): Promise<Result<User>> {
+    const userOption = await this.userRepo.findByEmail(email.value);
+    if (userOption.isFailure) return Result.fail(userOption.getError());
+
+    return match<User, Result<User>>(userOption.getValue(), {
+      Some: (user) => Result.ok(user),
+      None: () => Result.fail("Email not found"),
+    });
+  }
+}
+```
+
+### DTOs (Data Transfer Objects)
+
+DTOs define input/output contracts with Zod schemas for validation. Use `I` prefix on inferred types. Both input and output DTOs use Zod schemas.
+
+**Common reusable schemas** go in `dto/common.dto.ts`:
+
+```typescript
+import z from "zod";
+
+export const userDtoSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string(),
+  emailVerified: z.boolean(),
+  image: z.string().nullable(),
+});
+
+export const sessionDtoSchema = z.object({
+  id: z.string(),
+  token: z.string(),
+  expiresAt: z.date(),
+});
+
+export type IUserDto = z.infer<typeof userDtoSchema>;
+export type ISessionDto = z.infer<typeof sessionDtoSchema>;
+```
+
+**Feature-specific DTOs** import and compose common schemas:
+
+```typescript
+import z from "zod";
+import { sessionDtoSchema, userDtoSchema } from "@/application/dto/common.dto";
+
+export const signInInputDtoSchema = z.object({
+  email: z.email(),
+  password: z.string().min(8),
+  rememberMe: z.boolean().optional(),
+});
+
+export const signInOutputDtoSchema = z.object({
+  user: userDtoSchema,
+  session: sessionDtoSchema,
+});
+
+export type ISignInInputDto = z.infer<typeof signInInputDtoSchema>;
+export type ISignInOutputDto = z.infer<typeof signInOutputDtoSchema>;
+```
+
+**Use Cases transform domain objects to DTOs** with a `toDto()` method:
+
+```typescript
+private toDto(user: User, session: Session): ISignInOutputDto {
+  return {
+    user: {
+      id: String(user.id.value),
+      email: user.get("email").value,
+      name: user.get("name").value,
+      emailVerified: user.get("emailVerified"),
+      image: user.get("image").toNull(),
+    },
+    session: {
+      id: session.id,
+      token: session.token,
+      expiresAt: session.expiresAt,
+    },
+  };
+}
+```
+
+### Ports (Interfaces)
+
+Ports define contracts that adapters must implement. Use `I` prefix for interfaces.
+
+```typescript
+// application/ports/auth.provider.port.ts
+export interface IAuthProvider {
+  signIn(user: User, password: Password): Promise<Result<Session>>;
+  signUp(user: User, password: Password): Promise<Result<{ user: User; session: Session }>>;
+  signOut(sessionToken: string): Promise<Result<void>>;
+}
+
+// application/ports/user.repository.port.ts
+export interface IUserRepository extends BaseRepository<User> {
+  findByEmail(email: string): Promise<Result<Option<User>>>;
+}
+```
+
 ### Dependency Injection
 
 ```typescript
 // Register in common/di/modules/
 container.bind('IUserRepository').toClass(DrizzleUserRepository)
-container.bind('CreateUserUseCase').toClass(CreateUserUseCase)
+container.bind('IAuthProvider').toClass(BetterAuthProvider)
+container.bind('SignInUseCase').toClass(SignInUseCase)
 
 // Use in route handlers
-const useCase = getInjection('CreateUserUseCase')
+const useCase = getInjection('SignInUseCase')
 ```
 
 ## Key Rules
@@ -215,6 +349,8 @@ const useCase = getInjection('CreateUserUseCase')
 4. **Value Objects use Zod** for validation (pragmatic choice: Zod is stable, well-tested, and provides excellent type inference - rewriting validation logic would be error-prone and wasteful)
 5. **Transactions managed in controllers**, passed to use cases as optional param
 6. **All dependencies injected** via DI container
+7. **No index.ts barrel files** - import directly from the file (e.g., `import { User } from "@/domain/user/user.aggregate"`)
+8. **No comments in code** - code should be self-documenting. Only add comments for non-obvious formats (dates, storage units, etc.)
 
 ## Testing: BDD with TDD
 

@@ -1,17 +1,6 @@
 import type { Option, Result } from "@packages/ddd-kit";
-import type { User } from "@/domain/user";
-
-export interface SignUpInput {
-  email: string;
-  password: string;
-  name: string;
-  image?: string;
-}
-
-export interface SignInInput {
-  email: string;
-  password: string;
-}
+import type { User } from "@/domain/user/user.aggregate";
+import type { Password } from "@/domain/user/value-objects/password.vo";
 
 export interface Session {
   id: string;
@@ -20,15 +9,23 @@ export interface Session {
   expiresAt: Date;
 }
 
-export interface AuthSession {
-  user: User;
-  session: Session;
-}
+export interface IAuthProvider {
+  signUp(
+    user: User,
+    password: Password,
+  ): Promise<Result<{ user: User; session: Session }>>;
 
-export interface IAuthService {
-  signUp(input: SignUpInput): Promise<Result<AuthSession>>;
-  signIn(input: SignInInput): Promise<Result<AuthSession>>;
+  signIn(
+    user: User,
+    password: Password,
+    rememberMe?: boolean,
+  ): Promise<Result<Session>>;
+
   signOut(sessionToken: string): Promise<Result<void>>;
-  getSession(sessionToken: string): Promise<Result<Option<AuthSession>>>;
+
+  getSession(
+    sessionToken: string,
+  ): Promise<Result<Option<{ user: User; session: Session }>>>;
+
   verifyEmail(userId: string): Promise<Result<void>>;
 }

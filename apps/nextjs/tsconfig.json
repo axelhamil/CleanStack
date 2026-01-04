@@ -12,7 +12,8 @@
       "@/domain/*": ["./src/domain/*"],
       "@/application/*": ["./src/application/*"],
       "@/adapters/*": ["./src/adapters/*"],
-      "@/shared/*": ["./src/shared/*"]
+      "@/shared/*": ["./src/shared/*"],
+      "@/common/*": ["./src/common/*"]
     }
   },
   "include": [

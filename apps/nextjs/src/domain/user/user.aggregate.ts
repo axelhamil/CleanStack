@@ -41,7 +41,7 @@ export class User extends Aggregate<IUserProps> {
     if (!id) {
       user.addEvent(
         new UserCreatedEvent(
-          String(user.id.value),
+          user.id.value.toString(),
           props.email.value,
           props.name.value,
         ),
@@ -62,7 +62,7 @@ export class User extends Aggregate<IUserProps> {
 
     this._props.emailVerified = true;
     this._props.updatedAt = new Date();
-    this.addEvent(new UserVerifiedEvent(String(this.id.value)));
+    this.addEvent(new UserVerifiedEvent(this.id.value.toString()));
   }
 
   updateName(name: Name): void {

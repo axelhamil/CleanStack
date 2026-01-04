@@ -1,14 +1,11 @@
 import type { Result, UseCase } from "@packages/ddd-kit";
-import type { IAuthService } from "@/application/ports";
+import type { ISignOutInputDto } from "@/application/dto/sign-out.dto";
+import type { IAuthProvider } from "@/application/ports/auth.service.port";
 
-interface SignOutInput {
-  sessionToken: string;
-}
+export class SignOutUseCase implements UseCase<ISignOutInputDto, void> {
+  constructor(private readonly authProvider: IAuthProvider) {}
 
-export class SignOutUseCase implements UseCase<SignOutInput, void> {
-  constructor(private readonly authService: IAuthService) {}
-
-  async execute(input: SignOutInput): Promise<Result<void>> {
-    return this.authService.signOut(input.sessionToken);
+  async execute(input: ISignOutInputDto): Promise<Result<void>> {
+    return this.authProvider.signOut(input.sessionToken);
   }
 }
