@@ -43,19 +43,30 @@ Infrastructure          → Database, External APIs, DI config
 ### File Structure
 
 ```
-apps/nextjs/src/
-├── domain/             # Entities, Value Objects, Events
-├── application/
-│   ├── use-cases/      # Business logic orchestration
-│   ├── ports/          # Repository & service interfaces (IXxxRepository, IXxxProvider)
-│   └── dto/            # Input/Output DTOs with Zod schemas
-└── adapters/
-    ├── auth/           # Auth provider implementations
-    ├── controllers/    # HTTP → Use Case (input)
-    ├── guards/         # Auth middleware (input)
-    ├── repositories/   # Use Case → DB via Domain (output)
-    ├── mappers/        # Domain ↔ DB conversion
-    └── queries/        # Direct ORM read (CQRS)
+apps/nextjs/
+├── src/
+│   ├── domain/             # Entities, Value Objects, Events
+│   ├── application/
+│   │   ├── use-cases/      # Business logic orchestration
+│   │   ├── ports/          # Repository & service interfaces (IXxxRepository, IXxxProvider)
+│   │   └── dto/            # Input/Output DTOs with Zod schemas
+│   └── adapters/
+│       ├── auth/           # Auth provider implementations
+│       ├── actions/        # Server actions (Next.js)
+│       ├── controllers/    # HTTP → Use Case (input)
+│       ├── guards/         # Auth middleware (input)
+│       ├── repositories/   # Use Case → DB via Domain (output)
+│       ├── mappers/        # Domain ↔ DB conversion
+│       └── queries/        # Direct ORM read (CQRS)
+├── common/
+│   ├── auth.ts             # BetterAuth configuration
+│   └── di/
+│       ├── container.ts    # DI container setup
+│       ├── types.ts        # DI symbols and return types
+│       └── modules/        # DI modules by context (auth, user, etc.)
+└── app/
+    └── api/
+        └── auth/[...all]/  # BetterAuth catch-all route
 ```
 
 ### CQRS Pattern
@@ -331,14 +342,110 @@ export interface IUserRepository extends BaseRepository<User> {
 
 ### Dependency Injection
 
-```typescript
-// Register in common/di/modules/
-container.bind('IUserRepository').toClass(DrizzleUserRepository)
-container.bind('IAuthProvider').toClass(BetterAuthProvider)
-container.bind('SignInUseCase').toClass(SignInUseCase)
+DI is organized in modules under `common/di/modules/`. Each module groups related dependencies.
 
-// Use in route handlers
-const useCase = getInjection('SignInUseCase')
+```typescript
+// common/di/modules/auth.module.ts
+import { createModule } from "@evyweb/ioctopus";
+import { DI_SYMBOLS } from "../types";
+
+export const createAuthModule = () => {
+  const authModule = createModule();
+
+  authModule.bind(DI_SYMBOLS.IUserRepository).toClass(DrizzleUserRepository);
+  authModule.bind(DI_SYMBOLS.IAuthProvider).toClass(BetterAuthService);
+
+  authModule.bind(DI_SYMBOLS.SignInUseCase).toClass(SignInUseCase, [
+    DI_SYMBOLS.IUserRepository,
+    DI_SYMBOLS.IAuthProvider,
+  ]);
+
+  authModule.bind(DI_SYMBOLS.SignUpUseCase).toClass(SignUpUseCase, [
+    DI_SYMBOLS.IUserRepository,
+    DI_SYMBOLS.IAuthProvider,
+  ]);
+
+  return authModule;
+};
+
+// common/di/container.ts
+import { createContainer } from "@evyweb/ioctopus";
+import { createAuthModule } from "./modules/auth.module";
+
+const ApplicationContainer = createContainer();
+ApplicationContainer.load(Symbol("AuthModule"), createAuthModule());
+
+export function getInjection<K extends keyof typeof DI_SYMBOLS>(
+  symbol: K,
+): DI_RETURN_TYPES[K] {
+  return ApplicationContainer.get(DI_SYMBOLS[symbol]);
+}
+
+// common/di/types.ts - Define symbols and return types
+export const DI_SYMBOLS = {
+  IUserRepository: Symbol.for("IUserRepository"),
+  IAuthProvider: Symbol.for("IAuthProvider"),
+  SignInUseCase: Symbol.for("SignInUseCase"),
+};
+
+export interface DI_RETURN_TYPES {
+  IUserRepository: IUserRepository;
+  IAuthProvider: IAuthProvider;
+  SignInUseCase: SignInUseCase;
+}
+
+// Use in route handlers, controllers, or server actions
+const useCase = getInjection("SignInUseCase");
+```
+
+### Guards
+
+Guards protect routes by verifying authentication. They use the GetSessionUseCase internally, following Clean Architecture.
+
+```typescript
+// adapters/guards/auth.guard.ts
+import { match } from "@packages/ddd-kit";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { getInjection } from "@/common/di/container";
+import type { IGetSessionOutputDto } from "@/application/dto/get-session.dto";
+
+type GuardResult =
+  | { authenticated: true; session: IGetSessionOutputDto }
+  | { authenticated: false };
+
+export async function authGuard(): Promise<GuardResult> {
+  const headersList = await headers();
+  const useCase = getInjection("GetSessionUseCase");
+  const result = await useCase.execute(headersList);
+
+  if (result.isFailure) {
+    return { authenticated: false };
+  }
+
+  return match<IGetSessionOutputDto, GuardResult>(result.getValue(), {
+    Some: (session) => ({ authenticated: true, session }),
+    None: () => ({ authenticated: false }),
+  });
+}
+
+export async function requireAuth(
+  redirectTo = "/login",
+): Promise<IGetSessionOutputDto> {
+  const guardResult = await authGuard();
+
+  if (!guardResult.authenticated) {
+    redirect(redirectTo);
+  }
+
+  return guardResult.session;
+}
+
+// Usage in page.tsx (Server Component)
+export default async function ProtectedPage() {
+  const session = await requireAuth();
+  return <div>Welcome, {session.user.name}</div>;
+}
 ```
 
 ## Key Rules
@@ -434,6 +541,69 @@ describe('CreateUserUseCase', () => {
 - `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
 - `packages/drizzle/` - DB schema and ORM
 - `packages/ui/` - Web UI components (shadcn/ui + custom)
+
+## Page Structure
+
+Pages are **orchestration only** - they compose components and fetch data, but contain no business logic or UI implementation.
+
+### Pattern
+
+```
+app/
+├── (auth)/
+│   ├── layout.tsx              # Auth layout (centered, minimal)
+│   ├── login/
+│   │   ├── page.tsx            # Orchestrates LoginForm
+│   │   └── _components/
+│   │       └── login-form.tsx  # Client component with form logic
+│   └── register/
+│       ├── page.tsx            # Orchestrates RegisterForm
+│       └── _components/
+│           └── register-form.tsx
+└── (protected)/
+    ├── layout.tsx              # Protected layout with header, uses requireAuth()
+    ├── _components/
+    │   └── protected-header.tsx
+    └── dashboard/
+        ├── page.tsx            # Orchestrates dashboard components
+        └── _components/
+            ├── profile-card.tsx
+            ├── session-card.tsx
+            └── stats-card.tsx
+```
+
+### Rules
+
+1. **Pages are orchestration only** - Import and compose components, pass props
+2. **No UI logic in pages** - Forms, handlers, state go in `_components/`
+3. **Server components by default** - Pages fetch data (e.g., `requireAuth()`)
+4. **Client components in `_components/`** - Interactive forms, buttons with handlers
+5. **Route groups for layouts** - `(auth)` for auth pages, `(protected)` for authenticated pages
+6. **Guards in layouts** - Use `requireAuth()` in protected layouts, not in each page
+
+### Example: Page as Orchestration
+
+```typescript
+// app/(protected)/dashboard/page.tsx - Server Component
+import { requireAuth } from "@/adapters/guards/auth.guard";
+import { DashboardHeader } from "./_components/dashboard-header";
+import { ProfileCard } from "./_components/profile-card";
+import { StatsCard } from "./_components/stats-card";
+
+export default async function DashboardPage() {
+  const session = await requireAuth();
+
+  return (
+    <div className="space-y-8">
+      <DashboardHeader userName={session.user.name} />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ProfileCard user={session.user} />
+        <StatsCard stats={[{ value: 42, label: "Projects" }]} />
+      </div>
+    </div>
+  );
+}
+```
 
 ## UI Components
 

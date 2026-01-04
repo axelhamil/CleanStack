@@ -19,11 +19,10 @@ export class VerifyEmailUseCase implements UseCase<IVerifyEmailInputDto, void> {
 
     const user = userResult.getValue();
 
-    if (user.get("emailVerified")) {
-      return Result.fail("Email already verified");
+    const verifyResult = user.verify();
+    if (verifyResult.isFailure) {
+      return Result.fail(verifyResult.getError());
     }
-
-    user.verify();
 
     const updateResult = await this.userRepo.update(user);
     if (updateResult.isFailure) return Result.fail(updateResult.getError());

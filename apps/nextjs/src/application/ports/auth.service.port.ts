@@ -4,28 +4,32 @@ import type { Password } from "@/domain/user/value-objects/password.vo";
 
 export interface Session {
   id: string;
-  userId: string;
   token: string;
   expiresAt: Date;
 }
 
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface AuthSession {
+  user: User;
+  session: Session;
+}
+
 export interface IAuthProvider {
-  signUp(
-    user: User,
-    password: Password,
-  ): Promise<Result<{ user: User; session: Session }>>;
+  signUp(user: User, password: Password): Promise<Result<AuthResponse>>;
 
   signIn(
     user: User,
     password: Password,
     rememberMe?: boolean,
-  ): Promise<Result<Session>>;
+  ): Promise<Result<AuthResponse>>;
 
-  signOut(sessionToken: string): Promise<Result<void>>;
+  signOut(headers: Headers): Promise<Result<void>>;
 
-  getSession(
-    sessionToken: string,
-  ): Promise<Result<Option<{ user: User; session: Session }>>>;
+  getSession(headers: Headers): Promise<Result<Option<AuthSession>>>;
 
   verifyEmail(userId: string): Promise<Result<void>>;
 }

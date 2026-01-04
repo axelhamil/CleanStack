@@ -1,26 +1,25 @@
 import { Option, Result, UUID } from "@packages/ddd-kit";
 import type {
+  AuthResponse,
+  AuthSession,
   IAuthProvider,
   Session,
 } from "@/application/ports/auth.service.port";
-import type { auth } from "@/common/auth";
+import {
+  auth,
+  type BetterAuthSessionData,
+  type BetterAuthUser,
+} from "@/common/auth";
 import { User } from "@/domain/user/user.aggregate";
 import { UserId } from "@/domain/user/user-id";
 import { Email } from "@/domain/user/value-objects/email.vo";
 import { Name } from "@/domain/user/value-objects/name.vo";
 import type { Password } from "@/domain/user/value-objects/password.vo";
 
-type BetterAuth = typeof auth;
-
 export class BetterAuthService implements IAuthProvider {
-  constructor(private readonly auth: BetterAuth) {}
-
-  async signUp(
-    user: User,
-    password: Password,
-  ): Promise<Result<{ user: User; session: Session }>> {
+  async signUp(user: User, password: Password): Promise<Result<AuthResponse>> {
     try {
-      const result = await this.auth.api.signUpEmail({
+      const response = await auth.api.signUpEmail({
         body: {
           email: user.get("email").value,
           password: password.value,
@@ -29,19 +28,16 @@ export class BetterAuthService implements IAuthProvider {
         },
       });
 
-      if (!result.user || !result.token) {
-        return Result.fail("Sign up failed");
+      if (!response.user || !response.token) {
+        return Result.fail("Sign up failed: No user or token returned");
       }
 
-      const createdUser = this.mapUserToDomain(result.user);
-      const session: Session = {
-        id: crypto.randomUUID(),
-        userId: result.user.id,
-        token: result.token,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      };
+      const userResult = this.mapUserToDomain(response.user);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
 
-      return Result.ok({ user: createdUser, session });
+      return Result.ok({ user: userResult.getValue(), token: response.token });
     } catch (error) {
       return Result.fail(`Sign up failed: ${error}`);
     }
@@ -51,75 +47,62 @@ export class BetterAuthService implements IAuthProvider {
     user: User,
     password: Password,
     rememberMe?: boolean,
-  ): Promise<Result<Session>> {
+  ): Promise<Result<AuthResponse>> {
     try {
-      const result = await this.auth.api.signInEmail({
+      const response = await auth.api.signInEmail({
         body: {
           email: user.get("email").value,
           password: password.value,
-          rememberMe: rememberMe ?? false,
+          rememberMe: rememberMe ?? true,
         },
       });
 
-      if (!result.token) {
+      if (!response.user || !response.token) {
         return Result.fail("Invalid credentials");
       }
 
-      const session: Session = {
-        id: crypto.randomUUID(),
-        userId: result.user.id,
-        token: result.token,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      };
+      const userResult = this.mapUserToDomain(response.user);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
 
-      return Result.ok(session);
+      return Result.ok({ user: userResult.getValue(), token: response.token });
     } catch (error) {
       return Result.fail(`Sign in failed: ${error}`);
     }
   }
 
-  async signOut(sessionToken: string): Promise<Result<void>> {
+  async signOut(headers: Headers): Promise<Result<void>> {
     try {
-      await this.auth.api.signOut({
-        headers: {
-          authorization: `Bearer ${sessionToken}`,
-        },
-      });
+      await auth.api.signOut({ headers });
       return Result.ok();
     } catch (error) {
       return Result.fail(`Sign out failed: ${error}`);
     }
   }
 
-  async getSession(
-    sessionToken: string,
-  ): Promise<Result<Option<{ user: User; session: Session }>>> {
+  async getSession(headers: Headers): Promise<Result<Option<AuthSession>>> {
     try {
-      const result = await this.auth.api.getSession({
-        headers: {
-          authorization: `Bearer ${sessionToken}`,
-        },
-      });
+      const response = await auth.api.getSession({ headers });
 
-      if (!result || !result.user || !result.session) {
+      if (!response || !response.user || !response.session) {
         return Result.ok(Option.none());
       }
 
-      const user = this.mapUserToDomain(result.user);
-      const session: Session = {
-        id: result.session.id,
-        userId: result.session.userId,
-        token: result.session.token,
-        expiresAt: result.session.expiresAt,
-      };
+      const userResult = this.mapUserToDomain(response.user);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
 
-      return Result.ok(Option.some({ user, session }));
+      const session = this.mapSession(response.session);
+
+      return Result.ok(Option.some({ user: userResult.getValue(), session }));
     } catch (error) {
       return Result.fail(`Get session failed: ${error}`);
     }
   }
 
-  async verifyEmail(userId: string): Promise<Result<void>> {
+  async verifyEmail(_userId: string): Promise<Result<void>> {
     try {
       return Result.ok();
     } catch (error) {
@@ -127,35 +110,35 @@ export class BetterAuthService implements IAuthProvider {
     }
   }
 
-  private mapUserToDomain(betterAuthUser: {
-    id: string;
-    email: string;
-    name: string;
-    emailVerified: boolean;
-    image?: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): User {
+  private mapUserToDomain(betterAuthUser: BetterAuthUser): Result<User> {
     const emailResult = Email.create(betterAuthUser.email);
-    if (emailResult.isFailure) {
-      throw new Error(`Invalid email: ${emailResult.getError()}`);
-    }
-
     const nameResult = Name.create(betterAuthUser.name);
-    if (nameResult.isFailure) {
-      throw new Error(`Invalid name: ${nameResult.getError()}`);
+
+    const combined = Result.combine([emailResult, nameResult]);
+    if (combined.isFailure) {
+      return Result.fail(`Invalid user data: ${combined.getError()}`);
     }
 
-    return User.reconstitute(
-      {
-        email: emailResult.getValue(),
-        name: nameResult.getValue(),
-        emailVerified: betterAuthUser.emailVerified,
-        image: Option.fromNullable(betterAuthUser.image),
-        createdAt: betterAuthUser.createdAt,
-        updatedAt: betterAuthUser.updatedAt,
-      },
-      UserId.create(new UUID(betterAuthUser.id)),
+    return Result.ok(
+      User.reconstitute(
+        {
+          email: emailResult.getValue(),
+          name: nameResult.getValue(),
+          emailVerified: betterAuthUser.emailVerified,
+          image: Option.fromNullable(betterAuthUser.image),
+          createdAt: betterAuthUser.createdAt,
+          updatedAt: betterAuthUser.updatedAt,
+        },
+        UserId.create(new UUID(betterAuthUser.id)),
+      ),
     );
+  }
+
+  private mapSession(betterAuthSession: BetterAuthSessionData): Session {
+    return {
+      id: betterAuthSession.id,
+      token: betterAuthSession.token,
+      expiresAt: betterAuthSession.expiresAt,
+    };
   }
 }

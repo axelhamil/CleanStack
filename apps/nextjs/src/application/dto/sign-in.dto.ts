@@ -1,5 +1,5 @@
 import z from "zod";
-import { sessionDtoSchema, userDtoSchema } from "@/application/dto/common.dto";
+import { userDtoSchema } from "@/application/dto/common.dto";
 
 export const signInInputDtoSchema = z.object({
   email: z.email(),
@@ -9,7 +9,7 @@ export const signInInputDtoSchema = z.object({
 
 export const signInOutputDtoSchema = z.object({
   user: userDtoSchema,
-  session: sessionDtoSchema,
+  token: z.string(),
 });
 
 export type ISignInInputDto = z.infer<typeof signInInputDtoSchema>;

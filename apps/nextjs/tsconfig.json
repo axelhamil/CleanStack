@@ -13,7 +13,7 @@
       "@/application/*": ["./src/application/*"],
       "@/adapters/*": ["./src/adapters/*"],
       "@/shared/*": ["./src/shared/*"],
-      "@/common/*": ["./src/common/*"]
+      "@/common/*": ["./common/*"]
     }
   },
   "include": [

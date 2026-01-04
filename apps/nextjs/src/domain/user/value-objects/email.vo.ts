@@ -2,9 +2,8 @@ import { Result, ValueObject } from "@packages/ddd-kit";
 import { z } from "zod";
 
 const emailSchema = z
-  .string()
-  .min(1, "Email is required")
   .email("Invalid email format")
+  .min(1, "Email is required")
   .max(255, "Email must be less than 255 characters")
   .transform((v) => v.toLowerCase().trim());
 

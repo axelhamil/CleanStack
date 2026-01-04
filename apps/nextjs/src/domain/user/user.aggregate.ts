@@ -1,4 +1,4 @@
-import { Aggregate, type Option, UUID } from "@packages/ddd-kit";
+import { Aggregate, type Option, Result, UUID } from "@packages/ddd-kit";
 import { UserCreatedEvent } from "./events/user-created.event";
 import { UserVerifiedEvent } from "./events/user-verified.event";
 import { UserId } from "./user-id";
@@ -55,14 +55,15 @@ export class User extends Aggregate<IUserProps> {
     return new User(props, id);
   }
 
-  verify(): void {
+  verify(): Result<void> {
     if (this.get("emailVerified")) {
-      throw new Error("User is already verified");
+      return Result.fail("User is already verified");
     }
 
     this._props.emailVerified = true;
     this._props.updatedAt = new Date();
     this.addEvent(new UserVerifiedEvent(this.id.value.toString()));
+    return Result.ok();
   }
 
   updateName(name: Name): void {

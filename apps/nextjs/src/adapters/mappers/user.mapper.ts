@@ -1,4 +1,4 @@
-import { Option, UUID } from "@packages/ddd-kit";
+import { Option, Result, UUID } from "@packages/ddd-kit";
 import type { user as userTable } from "@packages/drizzle/schema";
 import { User } from "@/domain/user/user.aggregate";
 import { UserId } from "@/domain/user/user-id";
@@ -7,19 +7,22 @@ import { Name } from "@/domain/user/value-objects/name.vo";
 
 type UserRecord = typeof userTable.$inferSelect;
 
-export class UserMapper {
-  static toDomain(record: UserRecord): User {
-    const emailResult = Email.create(record.email);
-    if (emailResult.isFailure) {
-      throw new Error(`Invalid email in database: ${emailResult.getError()}`);
-    }
+type UserPersistence = Omit<UserRecord, "createdAt" | "updatedAt"> & {
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
-    const nameResult = Name.create(record.name);
-    if (nameResult.isFailure) {
-      throw new Error(`Invalid name in database: ${nameResult.getError()}`);
-    }
+export function userToDomain(record: UserRecord): Result<User> {
+  const emailResult = Email.create(record.email);
+  const nameResult = Name.create(record.name);
 
-    return User.reconstitute(
+  const combined = Result.combine([emailResult, nameResult]);
+  if (combined.isFailure) {
+    return Result.fail(`Invalid user data: ${combined.getError()}`);
+  }
+
+  return Result.ok(
+    User.reconstitute(
       {
         email: emailResult.getValue(),
         name: nameResult.getValue(),
@@ -29,24 +32,18 @@ export class UserMapper {
         updatedAt: record.updatedAt,
       },
       UserId.create(new UUID(record.id)),
-    );
-  }
+    ),
+  );
+}
 
-  static toPersistence(user: User): Omit<
-    UserRecord,
-    "createdAt" | "updatedAt"
-  > & {
-    createdAt?: Date;
-    updatedAt?: Date;
-  } {
-    return {
-      id: String(user.id.value),
-      email: user.get("email").value,
-      name: user.get("name").value,
-      emailVerified: user.get("emailVerified"),
-      image: user.get("image").toNull(),
-      createdAt: user.get("createdAt"),
-      updatedAt: user.get("updatedAt"),
-    };
-  }
+export function userToPersistence(user: User): UserPersistence {
+  return {
+    id: String(user.id.value),
+    email: user.get("email").value,
+    name: user.get("name").value,
+    emailVerified: user.get("emailVerified"),
+    image: user.get("image").toNull(),
+    createdAt: user.get("createdAt"),
+    updatedAt: user.get("updatedAt"),
+  };
 }

@@ -1,7 +1,10 @@
 import { Option, Result } from "@packages/ddd-kit";
 import { type DbClient, db, eq, type Transaction } from "@packages/drizzle";
 import { user as userTable } from "@packages/drizzle/schema";
-import { UserMapper } from "@/adapters/mappers/user.mapper";
+import {
+  userToDomain,
+  userToPersistence,
+} from "@/adapters/mappers/user.mapper";
 import type { IUserRepository } from "@/application/ports/user.repository.port";
 import type { User } from "@/domain/user/user.aggregate";
 import type { UserId } from "@/domain/user/user-id";
@@ -13,7 +16,7 @@ export class DrizzleUserRepository implements IUserRepository {
 
   async create(entity: User, trx?: Transaction): Promise<Result<User>> {
     try {
-      const data = UserMapper.toPersistence(entity);
+      const data = userToPersistence(entity);
       await this.getDb(trx)
         .insert(userTable)
         .values({
@@ -29,7 +32,7 @@ export class DrizzleUserRepository implements IUserRepository {
 
   async update(entity: User, trx?: Transaction): Promise<Result<User>> {
     try {
-      const data = UserMapper.toPersistence(entity);
+      const data = userToPersistence(entity);
       await this.getDb(trx)
         .update(userTable)
         .set({
@@ -67,7 +70,12 @@ export class DrizzleUserRepository implements IUserRepository {
         return Result.ok(Option.none());
       }
 
-      return Result.ok(Option.some(UserMapper.toDomain(record)));
+      const userResult = userToDomain(record);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
+
+      return Result.ok(Option.some(userResult.getValue()));
     } catch (error) {
       return Result.fail(`Failed to find user by id: ${error}`);
     }
@@ -86,7 +94,12 @@ export class DrizzleUserRepository implements IUserRepository {
         return Result.ok(Option.none());
       }
 
-      return Result.ok(Option.some(UserMapper.toDomain(record)));
+      const userResult = userToDomain(record);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
+
+      return Result.ok(Option.some(userResult.getValue()));
     } catch (error) {
       return Result.fail(`Failed to find user by email: ${error}`);
     }
@@ -94,8 +107,18 @@ export class DrizzleUserRepository implements IUserRepository {
 
   async findAll(): Promise<Result<User[]>> {
     try {
-      const result = await db.select().from(userTable);
-      return Result.ok(result.map(UserMapper.toDomain));
+      const records = await db.select().from(userTable);
+      const users: User[] = [];
+
+      for (const record of records) {
+        const userResult = userToDomain(record);
+        if (userResult.isFailure) {
+          return Result.fail(userResult.getError());
+        }
+        users.push(userResult.getValue());
+      }
+
+      return Result.ok(users);
     } catch (error) {
       return Result.fail(`Failed to find all users: ${error}`);
     }

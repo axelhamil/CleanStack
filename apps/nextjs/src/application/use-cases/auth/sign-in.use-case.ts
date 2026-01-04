@@ -4,8 +4,8 @@ import type {
   ISignInOutputDto,
 } from "@/application/dto/sign-in.dto";
 import type {
+  AuthResponse,
   IAuthProvider,
-  Session,
 } from "@/application/ports/auth.service.port";
 import type { IUserRepository } from "@/application/ports/user.repository.port";
 import type { User } from "@/domain/user/user.aggregate";
@@ -39,7 +39,7 @@ export class SignInUseCase
     );
     if (authResult.isFailure) return Result.fail(authResult.getError());
 
-    return Result.ok(this.toDto(user, authResult.getValue()));
+    return Result.ok(this.toDto(authResult.getValue()));
   }
 
   private async checkUserExists(email: Email): Promise<Result<User>> {
@@ -53,7 +53,8 @@ export class SignInUseCase
     });
   }
 
-  private toDto(user: User, session: Session): ISignInOutputDto {
+  private toDto(authResponse: AuthResponse): ISignInOutputDto {
+    const { user, token } = authResponse;
     return {
       user: {
         id: String(user.id.value),
@@ -62,11 +63,7 @@ export class SignInUseCase
         emailVerified: user.get("emailVerified"),
         image: user.get("image").toNull(),
       },
-      session: {
-        id: session.id,
-        token: session.token,
-        expiresAt: session.expiresAt,
-      },
+      token,
     };
   }
 }
