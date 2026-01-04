@@ -12,6 +12,23 @@ Production-ready monorepo boilerplate, optimized for AI and human development th
 
 **Stack**: Next.js 16 (App Router) • Expo (React Native) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Cloudflare R2 • shadcn/ui • Tailwind CSS 4
 
+### Complete Auth Implementation Example
+
+This codebase includes a **complete authentication implementation** with BetterAuth, following Clean Architecture and DDD patterns. 100% generated with Claude Code.
+
+**Features**: Sign up, Sign in, Sign out, Session management, Email verification, Protected routes
+
+**Files to study**:
+- `src/domain/user/` - User aggregate, value objects (Email, Name, Password), domain events
+- `src/application/use-cases/auth/` - SignIn, SignUp, SignOut, GetSession, VerifyEmail use cases
+- `src/application/ports/` - IAuthProvider, IUserRepository interfaces
+- `src/adapters/auth/` - BetterAuth service implementation
+- `src/adapters/guards/` - Auth guard with requireAuth()
+- `src/adapters/actions/` - Server actions for auth
+- `common/auth.ts` - BetterAuth configuration
+- `app/(auth)/` - Login, Register pages
+- `app/(protected)/` - Dashboard with session display
+
 ## Commands
 
 ```bash
