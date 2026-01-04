@@ -8,6 +8,26 @@ Production-ready monorepo boilerplate, optimized for AI and human development th
 
 > **Reference Implementation**: Complete BetterAuth authentication (sign up/in/out, sessions, protected routes) following Clean Architecture + DDD. 100% generated with [Claude Code](https://claude.ai/code). See [Auth Guide](/docs/guides/authentication).
 
+## Why Clean Architecture + DDD with AI?
+
+**This is not a religion. It's a survival kit.**
+
+We're in an era where entire apps are "vibe-coded" - generated end-to-end by AI. It works... until it doesn't. Until the AI hallucinates, introduces a subtle bug, or simply can't figure out why your feature broke. Then you're left staring at spaghetti code that neither you nor another AI can untangle.
+
+**Clean Architecture + DDD solves this:**
+
+- **AI follows patterns beautifully.** These patterns are extensively documented, battle-tested for decades. LLMs have seen thousands of examples. When you say "create a use case", the AI knows exactly what structure to produce.
+
+- **Humans can step in anytime.** When the AI fails (and it will), anyone with basic SOLID knowledge can open `src/domain/`, understand the business logic, trace through `application/use-cases/`, and fix the issue. No archaeology required.
+
+- **From MVP to production.** This isn't prototype code that needs rewriting. The same structure scales from your first feature to your hundredth. Add complexity without adding chaos.
+
+- **Debuggable by design.** `Result<T>` means errors are explicit. `Option<T>` means no null surprises. Each layer has one job. When something breaks, you know exactly where to look.
+
+**Other patterns exist.** Hexagonal, Onion, simple MVC - all valid. But Clean Architecture + DDD hits a sweet spot: structured enough for AI to follow, documented enough for humans to learn, flexible enough for real apps.
+
+The goal isn't architectural purity. It's building software that **both AI and humans can maintain** - because you'll need both.
+
 ## Quick Start
 
 ```bash

@@ -2,6 +2,61 @@
 
 Next.js 16 monorepo with Clean Architecture + DDD, optimized for AI-assisted development.
 
+## Why This Matters
+
+### The Vibe-Coding Problem
+
+We're in an era where entire applications are generated end-to-end by AI. You describe what you want, the AI writes it, and it works. Until it doesn't.
+
+Until the AI hallucinates a non-existent API. Until it introduces a subtle bug in business logic. Until it can't figure out why your payment flow broke at 2am. Then you're left staring at thousands of lines of code that neither you nor another AI can untangle.
+
+**This is the reality of "vibe-coded" apps**: fast to build, impossible to maintain.
+
+### Clean Architecture + DDD: Not a Religion, a Survival Kit
+
+Let's be clear: **this is not about architectural purity**. It's about building software that both AI and humans can maintain together.
+
+**Why AI follows these patterns so well:**
+
+- Clean Architecture and DDD are **extensively documented**. Books, articles, conference talks, open-source projects - LLMs have trained on thousands of examples.
+- The patterns are **explicit and consistent**. "Create a use case" means the same thing every time. The AI knows exactly what structure to produce.
+- **Separation of concerns** means the AI can focus on one layer at a time. It's not trying to hold your entire app in context.
+
+**Why humans can step in when AI fails:**
+
+- Anyone with basic SOLID knowledge can open `src/domain/` and understand the business rules. No archaeology required.
+- The flow is predictable: Controller → Use Case → Domain → Repository. When something breaks, you know where to look.
+- `Result<T>` makes errors explicit. `Option<T>` eliminates null surprises. The code tells you what can go wrong.
+
+**Why this scales from MVP to production:**
+
+- The same structure works for your first feature and your hundredth.
+- Add complexity without adding chaos. New features slot into existing patterns.
+- No "rewrite when we get serious" - you're already serious.
+
+### Other Patterns Exist
+
+Hexagonal Architecture, Onion Architecture, simple MVC, feature-based folders - all valid approaches. We're not saying Clean Architecture + DDD is the only way.
+
+But it hits a sweet spot:
+- **Structured enough** for AI to follow consistently
+- **Documented enough** for any developer to learn
+- **Flexible enough** for real-world applications
+- **Proven enough** to trust with production systems
+
+### The Bottom Line
+
+The goal isn't to write "perfect" architecture. It's to write code that:
+
+1. **AI can generate correctly** because the patterns are well-known
+2. **Humans can debug** when AI hallucinates or gets stuck
+3. **Scales predictably** from prototype to production
+4. **Any developer can understand** with basic architecture knowledge
+
+You'll use AI to build. You'll need humans to fix. This architecture supports both.
+
+---
+
 ## Quick Start
 
 ```bash
@@ -9,23 +64,6 @@ pnpm install && cp .env.example .env
 pnpm db && pnpm db:push
 pnpm dev
 ```
-
-## Core Concepts
-
-### Clean Architecture
-
-```
-Adapters → Application → Domain (zero deps)
-```
-
-Dependencies point **inward**. Domain has no external imports.
-
-### DDD Patterns
-
-- **Value Objects** - Immutable, validated (`Email`, `Money`)
-- **Entities** - Identity-based (`User`, `Order`)
-- **Result** - No exceptions, explicit errors
-- **Option** - No null, explicit absence
 
 ## Structure
 
