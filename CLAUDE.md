@@ -118,21 +118,49 @@ if (result.isSuccess) {
 ### Entity & Aggregate
 
 ```typescript
+// ID class (typed UUID wrapper)
 export class UserId extends UUID<string> {
   static create(id: UUID<string>): UserId { return new UserId(id.value) }
 }
 
-export class User extends Aggregate<IUserProps> {
-  get id(): UserId { return UserId.create(this._id as UUID<string>) }
+// Entity/Aggregate definition
+interface IUserProps {
+  email: Email;
+  name: Name;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-  static create(props, id?): Result<User> {
-    return Result.ok(new User(props, id))
+export class User extends Entity<IUserProps> {
+  private constructor(props: IUserProps, id?: UUID<string>) {
+    super(props, id);
+  }
+
+  get id(): UserId { return UserId.create(this._id) }
+
+  // Factory method - returns entity directly, no Result wrapper
+  static create(props: IUserProps, id?: UUID<string>): User {
+    const newId = id ?? new UUID<string>();
+    return new User(
+      {
+        ...props,
+        createdAt: props.createdAt ?? new Date(),
+        updatedAt: props.updatedAt ?? new Date(),
+      },
+      newId,
+    );
+  }
+
+  // Mutation methods modify _props directly
+  updateName(name: Name): void {
+    this._props.name = name;
+    this._props.updatedAt = new Date();
   }
 }
 
 // Entity methods
 entity._id                    // UUID
-entity._props                 // T
+entity._props                 // T (mutable internally)
 entity.get('propName')        // Access prop (throws if missing)
 entity.getProps()             // Shallow copy of props
 entity.toObject()             // Plain object (resolves VOs, entities)
@@ -173,10 +201,10 @@ const useCase = getInjection('CreateUserUseCase')
 
 ## Key Rules
 
-1. **Domain layer has ZERO external imports** (only ddd-kit)
+1. **Domain layer has ZERO external imports** (only ddd-kit + Zod)
 2. **Never throw in Domain/Application** - use Result<T>
 3. **Never use null** - use Option<T>
-4. **Value Objects use Zod** for validation
+4. **Value Objects use Zod** for validation (pragmatic choice: Zod is stable, well-tested, and provides excellent type inference - rewriting validation logic would be error-prone and wasteful)
 5. **Transactions managed in controllers**, passed to use cases as optional param
 6. **All dependencies injected** via DI container
 

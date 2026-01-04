@@ -1,4 +1,4 @@
-import type { Result } from "@/core/Result";
+import type { Result } from "../core/Result";
 
 /**
  * Interface for application use cases in Domain-Driven Design.
