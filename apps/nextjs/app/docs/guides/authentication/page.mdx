@@ -1,0 +1,305 @@
+# Authentication Guide
+
+Complete BetterAuth implementation with Clean Architecture + DDD. **100% generated with Claude Code**.
+
+## Overview
+
+This guide walks through the auth implementation as a reference for building features with Clean Architecture.
+
+**Features**: Sign up, Sign in, Sign out, Session management, Email verification, Protected routes
+
+## Architecture
+
+```
+Domain          → User aggregate, Value Objects (Email, Name, Password), Events
+Application     → Use Cases (SignIn, SignUp, SignOut, GetSession, VerifyEmail)
+Adapters        → BetterAuthService, Guards, Server Actions, Controllers
+Infrastructure  → BetterAuth config, DI module
+```
+
+## 1. Domain Layer
+
+### Value Objects
+
+```typescript
+// domain/user/value-objects/email.vo.ts
+export class Email extends ValueObject<string> {
+  protected validate(value: string): Result<string> {
+    const result = z.email().safeParse(value);
+    if (!result.success) return Result.fail(result.error.issues[0]?.message);
+    return Result.ok(result.data);
+  }
+}
+```
+
+### Aggregate
+
+```typescript
+// domain/user/user.aggregate.ts
+export class User extends Aggregate<IUserProps> {
+  get id(): UserId { return UserId.create(this._id); }
+
+  static create(props, id?): User {
+    const user = new User({ ...props, emailVerified: false }, id ?? new UUID());
+    if (!id) user.addEvent(new UserCreatedEvent(user.id.value.toString()));
+    return user;
+  }
+
+  verify(): Result<void> {
+    if (this.get("emailVerified")) return Result.fail("Already verified");
+    this._props.emailVerified = true;
+    this.addEvent(new UserVerifiedEvent(this.id.value.toString()));
+    return Result.ok();
+  }
+}
+```
+
+## 2. Application Layer
+
+### Ports
+
+```typescript
+// application/ports/auth.service.port.ts
+export interface IAuthProvider {
+  signUp(user: User, password: Password): Promise<Result<AuthResponse>>;
+  signIn(user: User, password: Password, rememberMe?: boolean): Promise<Result<AuthResponse>>;
+  signOut(headers: Headers): Promise<Result<void>>;
+  getSession(headers: Headers): Promise<Result<Option<AuthSession>>>;
+}
+```
+
+### Use Cases
+
+```typescript
+// application/use-cases/auth/sign-in.use-case.ts
+export class SignInUseCase implements UseCase<ISignInInputDto, ISignInOutputDto> {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly authProvider: IAuthProvider,
+  ) {}
+
+  async execute(input: ISignInInputDto): Promise<Result<ISignInOutputDto>> {
+    const emailResult = Email.create(input.email);
+    const passwordResult = Password.create(input.password);
+
+    const combined = Result.combine([emailResult, passwordResult]);
+    if (combined.isFailure) return Result.fail(combined.getError());
+
+    const userResult = await this.checkUserExists(emailResult.getValue());
+    if (userResult.isFailure) return Result.fail(userResult.getError());
+
+    const authResult = await this.authProvider.signIn(
+      userResult.getValue(),
+      passwordResult.getValue(),
+    );
+    if (authResult.isFailure) return Result.fail(authResult.getError());
+
+    return Result.ok(this.toDto(authResult.getValue()));
+  }
+
+  private async checkUserExists(email: Email): Promise<Result<User>> {
+    const result = await this.userRepo.findByEmail(email.value);
+    if (result.isFailure) return Result.fail(result.getError());
+
+    return match<User, Result<User>>(result.getValue(), {
+      Some: (user) => Result.ok(user),
+      None: () => Result.fail("Email not found"),
+    });
+  }
+}
+```
+
+## 3. Adapters Layer
+
+### Auth Service
+
+```typescript
+// adapters/auth/better-auth.service.ts
+export class BetterAuthService implements IAuthProvider {
+  async signIn(user: User, password: Password, rememberMe?: boolean): Promise<Result<AuthResponse>> {
+    try {
+      const response = await auth.api.signInEmail({
+        body: { email: user.get("email").value, password: password.value, rememberMe },
+      });
+
+      if (!response.user || !response.token) return Result.fail("Invalid credentials");
+
+      const userResult = this.mapUserToDomain(response.user);
+      if (userResult.isFailure) return Result.fail(userResult.getError());
+
+      return Result.ok({ user: userResult.getValue(), token: response.token });
+    } catch (error) {
+      return Result.fail(`Sign in failed: ${error}`);
+    }
+  }
+
+  private mapUserToDomain(betterAuthUser): Result<User> {
+    const emailResult = Email.create(betterAuthUser.email);
+    const nameResult = Name.create(betterAuthUser.name);
+
+    const combined = Result.combine([emailResult, nameResult]);
+    if (combined.isFailure) return Result.fail(combined.getError());
+
+    return Result.ok(User.reconstitute({
+      email: emailResult.getValue(),
+      name: nameResult.getValue(),
+      emailVerified: betterAuthUser.emailVerified,
+      image: Option.fromNullable(betterAuthUser.image),
+    }, UserId.create(new UUID(betterAuthUser.id))));
+  }
+}
+```
+
+### Guards
+
+```typescript
+// adapters/guards/auth.guard.ts
+export async function requireAuth(redirectTo = "/login"): Promise<IGetSessionOutputDto> {
+  const headersList = await headers();
+  const useCase = getInjection("GetSessionUseCase");
+  const result = await useCase.execute(headersList);
+
+  if (result.isFailure) redirect(redirectTo);
+
+  return match<IGetSessionOutputDto, IGetSessionOutputDto>(result.getValue(), {
+    Some: (session) => session,
+    None: () => redirect(redirectTo),
+  });
+}
+```
+
+### Server Actions
+
+```typescript
+// adapters/actions/auth.actions.ts
+"use server";
+
+export async function signInAction(input: unknown): Promise<ActionResult<ISignInOutputDto>> {
+  const parsed = signInInputDtoSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
+
+  const useCase = getInjection("SignInUseCase");
+  const result = await useCase.execute(parsed.data);
+
+  if (result.isFailure) return { success: false, error: result.getError() };
+  return { success: true, data: result.getValue() };
+}
+```
+
+## 4. Infrastructure
+
+### BetterAuth Config
+
+```typescript
+// common/auth.ts
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: "pg", schema }),
+  emailAndPassword: { enabled: true, minPasswordLength: 8 },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    cookieCache: { enabled: true, maxAge: 5 * 60 },
+  },
+  plugins: [nextCookies()],
+});
+```
+
+### DI Module
+
+```typescript
+// common/di/modules/auth.module.ts
+export const createAuthModule = () => {
+  const authModule = createModule();
+
+  authModule.bind(DI_SYMBOLS.IUserRepository).toClass(DrizzleUserRepository);
+  authModule.bind(DI_SYMBOLS.IAuthProvider).toClass(BetterAuthService);
+
+  authModule.bind(DI_SYMBOLS.SignInUseCase).toClass(SignInUseCase, [
+    DI_SYMBOLS.IUserRepository, DI_SYMBOLS.IAuthProvider,
+  ]);
+  // ... other use cases
+
+  return authModule;
+};
+```
+
+## 5. Pages
+
+### Login Page
+
+```typescript
+// app/(auth)/login/page.tsx
+export default function LoginPage() {
+  return (
+    <div className="space-y-6">
+      <h1>Sign In</h1>
+      <LoginForm />
+    </div>
+  );
+}
+```
+
+### Protected Dashboard
+
+```typescript
+// app/(protected)/dashboard/page.tsx
+export default async function DashboardPage() {
+  const session = await requireAuth();
+
+  return (
+    <div className="space-y-8">
+      <DashboardHeader userName={session.user.name} />
+      <ProfileCard user={session.user} />
+    </div>
+  );
+}
+```
+
+## File Structure
+
+```
+src/
+├── domain/user/
+│   ├── user.aggregate.ts
+│   ├── user-id.ts
+│   ├── value-objects/
+│   │   ├── email.vo.ts
+│   │   ├── name.vo.ts
+│   │   └── password.vo.ts
+│   └── events/
+│       ├── user-created.event.ts
+│       └── user-verified.event.ts
+├── application/
+│   ├── use-cases/auth/
+│   │   ├── sign-in.use-case.ts
+│   │   ├── sign-up.use-case.ts
+│   │   ├── sign-out.use-case.ts
+│   │   ├── get-session.use-case.ts
+│   │   └── verify-email.use-case.ts
+│   ├── ports/
+│   │   ├── auth.service.port.ts
+│   │   └── user.repository.port.ts
+│   └── dto/
+│       ├── common.dto.ts
+│       ├── sign-in.dto.ts
+│       └── ...
+└── adapters/
+    ├── auth/better-auth.service.ts
+    ├── guards/auth.guard.ts
+    ├── actions/auth.actions.ts
+    ├── repositories/user.repository.ts
+    └── mappers/user.mapper.ts
+```
+
+## Key Patterns
+
+1. **Never throw** - All methods return `Result<T>`
+2. **Option for nullable** - `getSession` returns `Option<AuthSession>`
+3. **match() for Option** - Extract values safely
+4. **Mappers return Result** - `mapUserToDomain(): Result<User>`
+5. **Guards use Use Cases** - Not direct auth provider calls
+6. **Server Actions validate** - Zod schemas before use case
+
+## Next Steps
+
+- [First Use Case](/docs/guides/first-use-case) - Build another feature
+- [Testing](/docs/guides/testing) - Test your use cases

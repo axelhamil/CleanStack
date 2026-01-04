@@ -2,127 +2,105 @@
 
 ## Prerequisites
 
-**Before working on this codebase, read and memorize:**
-- `packages/ddd-kit/` - All DDD primitives (Result, Option, Entity, etc.)
-- `packages/test/` - Vitest configuration
+**Read first:** `packages/ddd-kit/src/` (Result, Option, Entity) • `packages/test/`
 
 ## Project Overview
 
-Production-ready monorepo boilerplate, optimized for AI and human development through Clean Architecture and DDD. Explicit structure, consistent patterns, self-documenting code.
+Production-ready monorepo: Clean Architecture + DDD. Optimized for AI development.
 
-**Stack**: Next.js 16 (App Router) • Expo (React Native) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Cloudflare R2 • shadcn/ui • Tailwind CSS 4
+**Stack**: Next.js 16 • Expo • TypeScript • Drizzle • PostgreSQL • BetterAuth • shadcn/ui • Tailwind 4
 
-### Complete Auth Implementation Example
+### Reference Implementation
 
-This codebase includes a **complete authentication implementation** with BetterAuth, following Clean Architecture and DDD patterns. 100% generated with Claude Code.
+**Complete auth example** (100% Claude Code): Sign up/in/out, sessions, email verification, protected routes.
 
-**Features**: Sign up, Sign in, Sign out, Session management, Email verification, Protected routes
-
-**Files to study**:
-- `src/domain/user/` - User aggregate, value objects (Email, Name, Password), domain events
-- `src/application/use-cases/auth/` - SignIn, SignUp, SignOut, GetSession, VerifyEmail use cases
-- `src/application/ports/` - IAuthProvider, IUserRepository interfaces
-- `src/adapters/auth/` - BetterAuth service implementation
-- `src/adapters/guards/` - Auth guard with requireAuth()
-- `src/adapters/actions/` - Server actions for auth
-- `common/auth.ts` - BetterAuth configuration
-- `app/(auth)/` - Login, Register pages
-- `app/(protected)/` - Dashboard with session display
+Study these files:
+- `src/domain/user/` - Aggregate, VOs, events
+- `src/application/use-cases/auth/` - All auth use cases
+- `src/application/ports/` - IAuthProvider, IUserRepository
+- `src/adapters/auth/` - BetterAuth service
+- `src/adapters/guards/` - requireAuth()
+- `app/(auth)/` + `app/(protected)/` - Pages
 
 ## Commands
 
 ```bash
-pnpm dev              # Start dev (runs db:generate first)
-pnpm build            # Build all
-pnpm type-check       # Type check
-pnpm fix              # Auto-fix lint/format
-pnpm db               # Start PostgreSQL
-pnpm db:push          # Push schema (dev)
-pnpm db:generate      # Generate migrations
-pnpm test             # Run tests
-pnpm ui:add           # Add shadcn component
+pnpm dev          # Dev (runs db:generate)
+pnpm build        # Build all
+pnpm type-check   # Type check
+pnpm fix          # Lint/format
+pnpm db           # Start PostgreSQL
+pnpm db:push      # Push schema
+pnpm test         # Run tests
+pnpm ui:add       # Add shadcn component
 ```
 
 ## Architecture
 
-**Clean Architecture with DDD**. All dependencies point INWARD toward Domain.
-
 ```
-Domain (Core)           → Entities, Value Objects, Aggregates, Events
+Domain (Core)     → Entities, VOs, Aggregates, Events
     ↑
-Application             → Use Cases, Ports (interfaces)
+Application       → Use Cases, Ports
     ↑
-Adapters                → API Routes, Controllers, Repository implementations
+Adapters          → Controllers, Repositories, Guards
     ↑
-Infrastructure          → Database, External APIs, DI config
+Infrastructure    → DB, DI config
 ```
 
-### File Structure
+### Structure
 
 ```
 apps/nextjs/
 ├── src/
-│   ├── domain/             # Entities, Value Objects, Events
+│   ├── domain/           # Entities, VOs, Events
 │   ├── application/
-│   │   ├── use-cases/      # Business logic orchestration
-│   │   ├── ports/          # Repository & service interfaces (IXxxRepository, IXxxProvider)
-│   │   └── dto/            # Input/Output DTOs with Zod schemas
+│   │   ├── use-cases/    # Business logic
+│   │   ├── ports/        # Interfaces (IXxxRepository, IXxxProvider)
+│   │   └── dto/          # Zod schemas
 │   └── adapters/
-│       ├── auth/           # Auth provider implementations
-│       ├── actions/        # Server actions (Next.js)
-│       ├── controllers/    # HTTP → Use Case (input)
-│       ├── guards/         # Auth middleware (input)
-│       ├── repositories/   # Use Case → DB via Domain (output)
-│       ├── mappers/        # Domain ↔ DB conversion
-│       └── queries/        # Direct ORM read (CQRS)
+│       ├── auth/         # Auth provider impl
+│       ├── actions/      # Server actions
+│       ├── controllers/  # HTTP handlers
+│       ├── guards/       # Auth middleware
+│       ├── repositories/ # DB impl
+│       ├── mappers/      # Domain ↔ DB
+│       └── queries/      # CQRS reads
 ├── common/
-│   ├── auth.ts             # BetterAuth configuration
-│   └── di/
-│       ├── container.ts    # DI container setup
-│       ├── types.ts        # DI symbols and return types
-│       └── modules/        # DI modules by context (auth, user, etc.)
-└── app/
-    └── api/
-        └── auth/[...all]/  # BetterAuth catch-all route
+│   ├── auth.ts           # BetterAuth config
+│   └── di/               # DI container + modules
+└── app/api/auth/[...all]/ # BetterAuth route
 ```
 
-### CQRS Pattern
+### CQRS
 
-- **Commands** (write): Controller → Use Case → Domain → Repository
-- **Queries** (read): Controller → Query (direct ORM, bypass domain)
-
-Use `queries/` for read-only operations that don't need domain logic (lists, filters, reports).
+- **Commands**: Controller → Use Case → Domain → Repository
+- **Queries**: Controller → Query (direct ORM)
 
 ## Core Patterns (ddd-kit)
 
-### Result<T,E> - Never throw exceptions
+### Result<T,E>
 
 ```typescript
-// Creation
 Result.ok(value)              // Success
 Result.fail(error)            // Failure
 Result.combine([r1, r2, r3])  // First failure or ok()
 
-// Usage
 result.isSuccess / result.isFailure
 result.getValue()  // throws if failure
 result.getError()  // throws if success
 ```
 
-### Option<T> - No null/undefined
+### Option<T>
 
 ```typescript
-// Creation
 Option.some(value)            // Some<T>
 Option.none()                 // None<T>
-Option.fromNullable(value)    // Some if value, None if null/undefined
+Option.fromNullable(value)    // Some if value, None if null
 
-// Usage
 option.isSome() / option.isNone()
 option.unwrap()               // throws if None
-option.unwrapOr(defaultValue)
-option.map(fn)                // Option<U>
-option.flatMap(fn)            // Option<U>
+option.unwrapOr(default)
+option.map(fn) / option.flatMap(fn)
 match(option, { Some: v => ..., None: () => ... })
 ```
 
@@ -130,544 +108,231 @@ match(option, { Some: v => ..., None: () => ... })
 
 ```typescript
 export class Email extends ValueObject<string> {
-  // validate() called automatically by create()
   protected validate(value: string): Result<string> {
     if (!value.includes('@')) return Result.fail('Invalid email')
     return Result.ok(value)
   }
 }
 
-// Usage
 const result = Email.create('test@example.com')  // Result<Email>
-if (result.isSuccess) {
-  const email = result.getValue()
-  email.value  // 'test@example.com'
-}
+email.value  // 'test@example.com'
 ```
 
 ### Entity & Aggregate
 
 ```typescript
-// ID class (typed UUID wrapper with Symbol tag for type safety)
 export class UserId extends UUID<string | number> {
   protected [Symbol.toStringTag] = "UserId";
-
-  private constructor(id: UUID<string | number>) {
-    super(id ? id.value : new UUID<string | number>().value);
-  }
-
-  static create(id: UUID<string | number>): UserId {
-    return new UserId(id);
-  }
+  static create(id: UUID<string | number>): UserId { return new UserId(id.value); }
 }
 
-// Entity/Aggregate definition
-interface IUserProps {
-  email: Email;
-  name: Name;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export class User extends Entity<IUserProps> {
-  private constructor(props: IUserProps, id?: UUID<string>) {
-    super(props, id);
-  }
-
+export class User extends Aggregate<IUserProps> {
   get id(): UserId { return UserId.create(this._id) }
 
-  // Factory method - returns entity directly, no Result wrapper
-  static create(props: IUserProps, id?: UUID<string>): User {
-    const newId = id ?? new UUID<string>();
-    return new User(
-      {
-        ...props,
-        createdAt: props.createdAt ?? new Date(),
-        updatedAt: props.updatedAt ?? new Date(),
-      },
-      newId,
-    );
+  static create(props, id?): User {
+    return new User({ ...props, createdAt: new Date() }, id ?? new UUID());
   }
 
-  // Mutation methods modify _props directly
   updateName(name: Name): void {
     this._props.name = name;
     this._props.updatedAt = new Date();
   }
 }
 
-// Entity methods
-entity._id                    // UUID
-entity._props                 // T (mutable internally)
-entity.get('propName')        // Access prop (throws if missing)
-entity.getProps()             // Shallow copy of props
-entity.toObject()             // Plain object (resolves VOs, entities)
-entity.clone({ ...overrides }) // New instance, same ID
+// Entity API
+entity._id / entity._props / entity.get('prop')
+entity.getProps() / entity.toObject() / entity.clone({...})
 
-// Aggregate methods (extends Entity)
-aggregate.domainEvents        // DomainEvent[]
-aggregate.addEvent(event)     // Register event
-aggregate.markEventsForDispatch()
-aggregate.clearEvents()
+// Aggregate API
+aggregate.domainEvents / aggregate.addEvent(e) / aggregate.clearEvents()
 ```
 
 ### BaseRepository<T>
 
 ```typescript
-interface BaseRepository<T extends IEntity<unknown>> {
-  create(entity: T, trx?): Promise<Result<T>>
-  update(entity: T, trx?): Promise<Result<T>>
-  delete(id: T['_id'], trx?): Promise<Result<T['_id']>>
-  findById(id: T['_id']): Promise<Result<Option<T>>>
+interface BaseRepository<T> {
+  create(entity, trx?): Promise<Result<T>>
+  update(entity, trx?): Promise<Result<T>>
+  delete(id, trx?): Promise<Result<id>>
+  findById(id): Promise<Result<Option<T>>>
   findAll(): Promise<Result<T[]>>
-  findBy(props: Partial<T['_props']>): Promise<Result<Option<T>>>
-  exists(id: T['_id']): Promise<Result<boolean>>
+  findBy(props): Promise<Result<Option<T>>>
+  exists(id): Promise<Result<boolean>>
   count(): Promise<Result<number>>
 }
 ```
 
 ### Use Cases
 
-Use Cases orchestrate business logic. They are **rich**, not anemic - they validate inputs, check business rules, and coordinate domain objects.
-
 ```typescript
-export class SignInUseCase implements UseCase<SignInInputDto, SignInOutputDto> {
+export class SignInUseCase implements UseCase<Input, Output> {
   constructor(
     private readonly userRepo: IUserRepository,
     private readonly authProvider: IAuthProvider,
   ) {}
 
-  async execute(input: SignInInputDto): Promise<Result<SignInOutputDto>> {
+  async execute(input): Promise<Result<Output>> {
     const emailResult = Email.create(input.email);
     const passwordResult = Password.create(input.password);
-
-    // Use Result.combine when multiple Results follow each other
     const combined = Result.combine([emailResult, passwordResult]);
     if (combined.isFailure) return Result.fail(combined.getError());
 
     const userResult = await this.checkUserExists(emailResult.getValue());
     if (userResult.isFailure) return Result.fail(userResult.getError());
 
-    const authResult = await this.authProvider.signIn(
-      userResult.getValue(),
-      passwordResult.getValue(),
-    );
+    const authResult = await this.authProvider.signIn(userResult.getValue(), passwordResult.getValue());
     if (authResult.isFailure) return Result.fail(authResult.getError());
 
-    return Result.ok({ user: userResult.getValue(), session: authResult.getValue() });
+    return Result.ok(this.toDto(authResult.getValue()));
   }
 
-  // Use match() to handle Option<T> - cleaner than isSome()/isNone()
   private async checkUserExists(email: Email): Promise<Result<User>> {
-    const userOption = await this.userRepo.findByEmail(email.value);
-    if (userOption.isFailure) return Result.fail(userOption.getError());
+    const result = await this.userRepo.findByEmail(email.value);
+    if (result.isFailure) return Result.fail(result.getError());
 
-    return match<User, Result<User>>(userOption.getValue(), {
+    return match<User, Result<User>>(result.getValue(), {
       Some: (user) => Result.ok(user),
       None: () => Result.fail("Email not found"),
     });
   }
+
+  private toDto(response): Output { /* map to DTO */ }
 }
 ```
 
-### DTOs (Data Transfer Objects)
+### DTOs
 
-DTOs define input/output contracts with Zod schemas for validation. Use `I` prefix on inferred types. Both input and output DTOs use Zod schemas.
-
-**Common reusable schemas** go in `dto/common.dto.ts`:
+Common schemas in `dto/common.dto.ts`, feature DTOs compose them:
 
 ```typescript
-import z from "zod";
+// common.dto.ts
+export const userDtoSchema = z.object({ id: z.string(), email: z.string(), name: z.string() });
 
-export const userDtoSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  name: z.string(),
-  emailVerified: z.boolean(),
-  image: z.string().nullable(),
-});
-
-export const sessionDtoSchema = z.object({
-  id: z.string(),
-  token: z.string(),
-  expiresAt: z.date(),
-});
-
-export type IUserDto = z.infer<typeof userDtoSchema>;
-export type ISessionDto = z.infer<typeof sessionDtoSchema>;
-```
-
-**Feature-specific DTOs** import and compose common schemas:
-
-```typescript
-import z from "zod";
-import { sessionDtoSchema, userDtoSchema } from "@/application/dto/common.dto";
-
-export const signInInputDtoSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-  rememberMe: z.boolean().optional(),
-});
-
-export const signInOutputDtoSchema = z.object({
-  user: userDtoSchema,
-  session: sessionDtoSchema,
-});
-
+// sign-in.dto.ts
+export const signInInputDtoSchema = z.object({ email: z.email(), password: z.string().min(8) });
+export const signInOutputDtoSchema = z.object({ user: userDtoSchema, token: z.string() });
 export type ISignInInputDto = z.infer<typeof signInInputDtoSchema>;
-export type ISignInOutputDto = z.infer<typeof signInOutputDtoSchema>;
 ```
 
-**Use Cases transform domain objects to DTOs** with a `toDto()` method:
+### Ports
 
 ```typescript
-private toDto(user: User, session: Session): ISignInOutputDto {
-  return {
-    user: {
-      id: String(user.id.value),
-      email: user.get("email").value,
-      name: user.get("name").value,
-      emailVerified: user.get("emailVerified"),
-      image: user.get("image").toNull(),
-    },
-    session: {
-      id: session.id,
-      token: session.token,
-      expiresAt: session.expiresAt,
-    },
-  };
-}
-```
-
-### Ports (Interfaces)
-
-Ports define contracts that adapters must implement. Use `I` prefix for interfaces.
-
-```typescript
-// application/ports/auth.provider.port.ts
 export interface IAuthProvider {
-  signIn(user: User, password: Password): Promise<Result<Session>>;
-  signUp(user: User, password: Password): Promise<Result<{ user: User; session: Session }>>;
-  signOut(sessionToken: string): Promise<Result<void>>;
-}
-
-// application/ports/user.repository.port.ts
-export interface IUserRepository extends BaseRepository<User> {
-  findByEmail(email: string): Promise<Result<Option<User>>>;
+  signIn(user: User, password: Password): Promise<Result<AuthResponse>>;
+  signUp(user: User, password: Password): Promise<Result<AuthResponse>>;
+  signOut(headers: Headers): Promise<Result<void>>;
+  getSession(headers: Headers): Promise<Result<Option<AuthSession>>>;
 }
 ```
 
-### Dependency Injection
-
-DI is organized in modules under `common/di/modules/`. Each module groups related dependencies.
+### DI
 
 ```typescript
-// common/di/modules/auth.module.ts
-import { createModule } from "@evyweb/ioctopus";
-import { DI_SYMBOLS } from "../types";
-
+// modules/auth.module.ts
 export const createAuthModule = () => {
-  const authModule = createModule();
-
-  authModule.bind(DI_SYMBOLS.IUserRepository).toClass(DrizzleUserRepository);
-  authModule.bind(DI_SYMBOLS.IAuthProvider).toClass(BetterAuthService);
-
-  authModule.bind(DI_SYMBOLS.SignInUseCase).toClass(SignInUseCase, [
-    DI_SYMBOLS.IUserRepository,
-    DI_SYMBOLS.IAuthProvider,
-  ]);
-
-  authModule.bind(DI_SYMBOLS.SignUpUseCase).toClass(SignUpUseCase, [
-    DI_SYMBOLS.IUserRepository,
-    DI_SYMBOLS.IAuthProvider,
-  ]);
-
-  return authModule;
+  const m = createModule();
+  m.bind(DI_SYMBOLS.IUserRepository).toClass(DrizzleUserRepository);
+  m.bind(DI_SYMBOLS.SignInUseCase).toClass(SignInUseCase, [DI_SYMBOLS.IUserRepository, DI_SYMBOLS.IAuthProvider]);
+  return m;
 };
 
-// common/di/container.ts
-import { createContainer } from "@evyweb/ioctopus";
-import { createAuthModule } from "./modules/auth.module";
-
-const ApplicationContainer = createContainer();
-ApplicationContainer.load(Symbol("AuthModule"), createAuthModule());
-
-export function getInjection<K extends keyof typeof DI_SYMBOLS>(
-  symbol: K,
-): DI_RETURN_TYPES[K] {
-  return ApplicationContainer.get(DI_SYMBOLS[symbol]);
-}
-
-// common/di/types.ts - Define symbols and return types
-export const DI_SYMBOLS = {
-  IUserRepository: Symbol.for("IUserRepository"),
-  IAuthProvider: Symbol.for("IAuthProvider"),
-  SignInUseCase: Symbol.for("SignInUseCase"),
-};
-
-export interface DI_RETURN_TYPES {
-  IUserRepository: IUserRepository;
-  IAuthProvider: IAuthProvider;
-  SignInUseCase: SignInUseCase;
-}
-
-// Use in route handlers, controllers, or server actions
+// Usage
 const useCase = getInjection("SignInUseCase");
 ```
 
 ### Guards
 
-Guards protect routes by verifying authentication. They use the GetSessionUseCase internally, following Clean Architecture.
-
 ```typescript
-// adapters/guards/auth.guard.ts
-import { match } from "@packages/ddd-kit";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { getInjection } from "@/common/di/container";
-import type { IGetSessionOutputDto } from "@/application/dto/get-session.dto";
-
-type GuardResult =
-  | { authenticated: true; session: IGetSessionOutputDto }
-  | { authenticated: false };
-
-export async function authGuard(): Promise<GuardResult> {
+export async function requireAuth(redirectTo = "/login"): Promise<IGetSessionOutputDto> {
   const headersList = await headers();
   const useCase = getInjection("GetSessionUseCase");
   const result = await useCase.execute(headersList);
 
-  if (result.isFailure) {
-    return { authenticated: false };
-  }
+  if (result.isFailure) redirect(redirectTo);
 
-  return match<IGetSessionOutputDto, GuardResult>(result.getValue(), {
-    Some: (session) => ({ authenticated: true, session }),
-    None: () => ({ authenticated: false }),
+  return match<IGetSessionOutputDto, IGetSessionOutputDto>(result.getValue(), {
+    Some: (session) => session,
+    None: () => redirect(redirectTo),
   });
-}
-
-export async function requireAuth(
-  redirectTo = "/login",
-): Promise<IGetSessionOutputDto> {
-  const guardResult = await authGuard();
-
-  if (!guardResult.authenticated) {
-    redirect(redirectTo);
-  }
-
-  return guardResult.session;
-}
-
-// Usage in page.tsx (Server Component)
-export default async function ProtectedPage() {
-  const session = await requireAuth();
-  return <div>Welcome, {session.user.name}</div>;
 }
 ```
 
 ## Key Rules
 
-1. **Domain layer has ZERO external imports** (only ddd-kit + Zod)
-2. **Never throw in Domain/Application** - use Result<T>
-3. **Never use null** - use Option<T>
-4. **Value Objects use Zod** for validation (pragmatic choice: Zod is stable, well-tested, and provides excellent type inference - rewriting validation logic would be error-prone and wasteful)
-5. **Transactions managed in controllers**, passed to use cases as optional param
-6. **All dependencies injected** via DI container
-7. **No index.ts barrel files** - import directly from the file (e.g., `import { User } from "@/domain/user/user.aggregate"`)
-8. **No comments in code** - code should be self-documenting. Only add comments for non-obvious formats (dates, storage units, etc.)
+1. **Domain = zero external imports** (only ddd-kit + Zod)
+2. **Never throw** in Domain/Application → use Result<T>
+3. **Never null** → use Option<T>
+4. **VOs use Zod** for validation
+5. **Transactions** managed in controllers, passed to use cases
+6. **All deps injected** via DI
+7. **No index.ts barrels** → import directly
+8. **No comments** → self-documenting code
 
-## Testing: BDD with TDD
+## Testing: BDD
 
-**Behavior-Driven Development only**. No unit tests. Test behaviors through Use Cases.
-
-### Why BDD fits Clean Architecture
-
-- Use Cases ARE behaviors (single responsibility)
-- DI allows mocking repositories without touching infrastructure
-- Result<T>/Option<T> make assertions explicit
-- Tests document business requirements
-
-### Structure
-
-```
-apps/nextjs/src/__TESTS__/
-├── create-user.test.ts      # One file per Use Case behavior
-├── update-user-email.test.ts
-└── delete-user.test.ts
-```
-
-### Pattern: Given-When-Then
+Test behaviors via Use Cases, not units.
 
 ```typescript
 describe('CreateUserUseCase', () => {
-  // Mock repository via DI
-  const mockUserRepo: IUserRepository = {
-    create: vi.fn(),
-    findByEmail: vi.fn(),
-    // ... other methods return Result.ok(None()) by default
-  }
+  const mockUserRepo: IUserRepository = { create: vi.fn(), findByEmail: vi.fn() }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    // Register mock in DI container
-    container.bind('IUserRepository').toConstant(mockUserRepo)
+    vi.clearAllMocks();
+    container.bind('IUserRepository').toConstant(mockUserRepo);
   })
 
   it('should create user when email is unique', async () => {
-    // Given
-    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Option.none()))
-    mockUserRepo.create.mockResolvedValue(Result.ok(mockUser))
+    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Option.none()));
+    mockUserRepo.create.mockResolvedValue(Result.ok(mockUser));
 
-    // When
-    const useCase = getInjection('CreateUserUseCase')
-    const result = await useCase.execute({ email: 'new@test.com', name: 'Test' })
+    const result = await getInjection('CreateUserUseCase').execute({ email: 'new@test.com' });
 
-    // Then
-    expect(result.isSuccess).toBe(true)
-    expect(mockUserRepo.create).toHaveBeenCalledOnce()
-  })
-
-  it('should fail when email already exists', async () => {
-    // Given
-    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Option.some(existingUser)))
-
-    // When
-    const result = await useCase.execute({ email: 'taken@test.com', name: 'Test' })
-
-    // Then
-    expect(result.isFailure).toBe(true)
-    expect(result.getError()).toContain('email')
-    expect(mockUserRepo.create).not.toHaveBeenCalled()
+    expect(result.isSuccess).toBe(true);
+    expect(mockUserRepo.create).toHaveBeenCalledOnce();
   })
 })
 ```
 
-### Rules
-
-1. **One test file per Use Case** - Tests mirror behaviors
-2. **Mock at repository level** - Never mock domain objects
-3. **Test Result/Option states** - `isSuccess`, `isFailure`, `isSome()`, `isNone()`
-4. **Name tests as behaviors** - "should [action] when [condition]"
-5. **No implementation details** - Test what, not how
-6. **Use getValue()/getError()** - Not `.value`/`.error`
-
-## Monorepo
-
-- `apps/nextjs/` - Web + API (Clean Architecture in src/)
-- `apps/expo/` - Mobile (Expo Router + NativeWind + React Query)
-- `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
-- `packages/drizzle/` - DB schema and ORM
-- `packages/ui/` - Web UI components (shadcn/ui + custom)
+**Rules**: One file per Use Case • Mock at repository level • Test Result/Option states • Name as behaviors
 
 ## Page Structure
 
-Pages are **orchestration only** - they compose components and fetch data, but contain no business logic or UI implementation.
-
-### Pattern
+Pages = orchestration only. Logic in `_components/`.
 
 ```
-app/
-├── (auth)/
-│   ├── layout.tsx              # Auth layout (centered, minimal)
-│   ├── login/
-│   │   ├── page.tsx            # Orchestrates LoginForm
-│   │   └── _components/
-│   │       └── login-form.tsx  # Client component with form logic
-│   └── register/
-│       ├── page.tsx            # Orchestrates RegisterForm
-│       └── _components/
-│           └── register-form.tsx
-└── (protected)/
-    ├── layout.tsx              # Protected layout with header, uses requireAuth()
-    ├── _components/
-    │   └── protected-header.tsx
-    └── dashboard/
-        ├── page.tsx            # Orchestrates dashboard components
-        └── _components/
-            ├── profile-card.tsx
-            ├── session-card.tsx
-            └── stats-card.tsx
+app/(auth)/login/
+├── page.tsx              # Composes LoginForm
+└── _components/
+    └── login-form.tsx    # Client component with logic
 ```
-
-### Rules
-
-1. **Pages are orchestration only** - Import and compose components, pass props
-2. **No UI logic in pages** - Forms, handlers, state go in `_components/`
-3. **Server components by default** - Pages fetch data (e.g., `requireAuth()`)
-4. **Client components in `_components/`** - Interactive forms, buttons with handlers
-5. **Route groups for layouts** - `(auth)` for auth pages, `(protected)` for authenticated pages
-6. **Guards in layouts** - Use `requireAuth()` in protected layouts, not in each page
-
-### Example: Page as Orchestration
 
 ```typescript
-// app/(protected)/dashboard/page.tsx - Server Component
-import { requireAuth } from "@/adapters/guards/auth.guard";
-import { DashboardHeader } from "./_components/dashboard-header";
-import { ProfileCard } from "./_components/profile-card";
-import { StatsCard } from "./_components/stats-card";
-
+// page.tsx - Server Component
 export default async function DashboardPage() {
   const session = await requireAuth();
-
-  return (
-    <div className="space-y-8">
-      <DashboardHeader userName={session.user.name} />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <ProfileCard user={session.user} />
-        <StatsCard stats={[{ value: 42, label: "Projects" }]} />
-      </div>
-    </div>
-  );
+  return <ProfileCard user={session.user} />;
 }
 ```
 
-## UI Components
+**Rules**: Pages compose • Logic in _components • Server by default • Guards in layouts
 
-### shadcn/ui First
+## UI
 
-**Always use shadcn/ui components** as the foundation. Before creating custom components:
-
-1. Check if shadcn/ui has the component: `pnpm ui:add [component]`
-2. Extend/customize shadcn components rather than building from scratch
-3. Follow shadcn patterns (CVA variants, Radix primitives, cn() utility)
-
-```bash
-# Add shadcn component
-pnpm ui:add button dialog form input
-
-# Available components: https://ui.shadcn.com/docs/components
-```
-
-### Component Structure
+**shadcn/ui first**: `pnpm ui:add button form input`
 
 ```
-packages/ui/src/components/
-├── ui/                   # shadcn/ui only (auto-generated)
-│   ├── button.tsx
-│   ├── card.tsx
-│   └── ...
-├── brutalist-button.tsx  # Custom web components
-├── feature-card.tsx
-└── ...
-
-apps/expo/src/components/
-├── ui/                   # Native components (NativeWind)
-│   ├── brutalist-button.tsx
-│   └── ...
-└── hero-section.tsx      # App-specific sections
+packages/ui/src/components/ui/  # shadcn (auto-generated)
+apps/expo/src/components/       # Native (NativeWind)
 ```
 
-### Rules
+## Monorepo
 
-1. **Maximize shadcn/ui usage** - Don't reinvent existing components
-2. **Extend, don't replace** - Wrap shadcn components with project-specific variants
-3. **packages/ui = web only** - For Next.js, use `@packages/ui/components/...`
-4. **Expo = separate components** - Native components in `apps/expo/src/components/`
-5. **Use CVA** for variants (class-variance-authority)
-6. **Use cn()** for class merging
+- `apps/nextjs/` - Web + API
+- `apps/expo/` - Mobile
+- `packages/ddd-kit/` - DDD primitives
+- `packages/drizzle/` - DB schema
+- `packages/ui/` - Web components
 
 ## Environment
 
-Required in `.env`:
-- `DATABASE_URL` - PostgreSQL connection
+`.env`: `DATABASE_URL` - PostgreSQL connection

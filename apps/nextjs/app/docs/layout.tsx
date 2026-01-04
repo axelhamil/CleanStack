@@ -88,6 +88,10 @@ const navSections = [
     title: "Guides",
     items: [
       {
+        href: "/docs/guides/authentication",
+        label: "Authentication",
+      },
+      {
         href: "/docs/guides/first-use-case",
         label: "Your First Use Case",
       },

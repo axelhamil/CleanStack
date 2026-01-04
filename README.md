@@ -6,6 +6,8 @@ Production-ready monorepo boilerplate, optimized for AI and human development th
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)](https://typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
 
+> **Reference Implementation**: Complete BetterAuth authentication (sign up/in/out, sessions, protected routes) following Clean Architecture + DDD. 100% generated with [Claude Code](https://claude.ai/code). See [Auth Guide](/docs/guides/authentication).
+
 ## Quick Start
 
 ```bash
