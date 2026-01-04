@@ -134,6 +134,80 @@ const useCase = getInjection('CreateUserUseCase')
 5. **Transactions managed in controllers**, passed to use cases as optional param
 6. **All dependencies injected** via DI container
 
+## Testing: BDD with TDD
+
+**Behavior-Driven Development only**. No unit tests. Test behaviors through Use Cases.
+
+### Why BDD fits Clean Architecture
+
+- Use Cases ARE behaviors (single responsibility)
+- DI allows mocking repositories without touching infrastructure
+- Result<T>/Option<T> make assertions explicit
+- Tests document business requirements
+
+### Structure
+
+```
+apps/nextjs/src/__TESTS__/
+├── create-user.test.ts      # One file per Use Case behavior
+├── update-user-email.test.ts
+└── delete-user.test.ts
+```
+
+### Pattern: Given-When-Then
+
+```typescript
+describe('CreateUserUseCase', () => {
+  // Mock repository via DI
+  const mockUserRepo: IUserRepository = {
+    create: vi.fn(),
+    findByEmail: vi.fn(),
+    // ... other methods return Result.ok(None()) by default
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Register mock in DI container
+    container.bind('IUserRepository').toConstant(mockUserRepo)
+  })
+
+  it('should create user when email is unique', async () => {
+    // Given
+    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(None()))
+    mockUserRepo.create.mockResolvedValue(Result.ok(mockUser))
+
+    // When
+    const useCase = getInjection('CreateUserUseCase')
+    const result = await useCase.execute({ email: 'new@test.com', name: 'Test' })
+
+    // Then
+    expect(result.isSuccess).toBe(true)
+    expect(mockUserRepo.create).toHaveBeenCalledOnce()
+  })
+
+  it('should fail when email already exists', async () => {
+    // Given
+    mockUserRepo.findByEmail.mockResolvedValue(Result.ok(Some(existingUser)))
+
+    // When
+    const result = await useCase.execute({ email: 'taken@test.com', name: 'Test' })
+
+    // Then
+    expect(result.isFailure).toBe(true)
+    expect(result.error).toContain('email')
+    expect(mockUserRepo.create).not.toHaveBeenCalled()
+  })
+})
+```
+
+### Rules
+
+1. **One test file per Use Case** - Tests mirror behaviors
+2. **Mock at repository level** - Never mock domain objects
+3. **Test Result/Option states** - `isSuccess`, `isFailure`, `isSome`, `isNone`
+4. **Name tests as behaviors** - "should [action] when [condition]"
+5. **No implementation details** - Test what, not how
+
 ## Monorepo
 
 - `apps/nextjs/` - Web + API (Clean Architecture in src/)
