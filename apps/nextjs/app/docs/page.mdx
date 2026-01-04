@@ -126,6 +126,33 @@ But it hits a unique sweet spot for AI-assisted development:
 - When you get stuck, AI can help with context
 - Neither of you is flying blind
 
+### "But Isn't This Over-Engineering?"
+
+No. And here's why.
+
+The mental model is wrong. People imagine Clean Architecture as *extra work on top of* writing code. Layers to maintain, abstractions to juggle, more files to create. It sounds exhausting.
+
+But that's not how it works in practice. **You're writing the same amount of code.** You're just putting it in different places.
+
+Think about it: whether you use Clean Architecture or not, you still need to:
+- Validate user input
+- Execute business logic
+- Save data to a database
+- Handle errors
+- Return a response
+
+The difference is *where* that code lives. In a vibe-coded app, it's all mixed together in one file - validation next to database queries next to error handling. In Clean Architecture, each concern has a home.
+
+**Same code. Same effort. Different organization.**
+
+The "extra" files aren't busywork - they're boundaries. And boundaries are what make code navigable. When everything is in one place, you have to understand everything to change anything. When concerns are separated, you only touch what you need.
+
+Here's the irony: Clean Architecture feels like more work *at the start*, but it's actually less work *over time*. The vibe-coded app is fast to write and slow to maintain. The structured app is the same speed to write and fast to maintain.
+
+And with AI? The difference is even starker. AI generates Clean Architecture code just as fast as spaghetti code. But when that AI-generated code needs debugging, one is archaeology and the other is a clear path.
+
+**This isn't enterprise overhead for your side project. It's the same effort with 10x better outcomes.**
+
 ### The Bottom Line
 
 The question isn't "should I use AI to write code?" You already are, or you will be.
