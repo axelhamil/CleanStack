@@ -2,58 +2,145 @@
 
 Next.js 16 monorepo with Clean Architecture + DDD, optimized for AI-assisted development.
 
-## Why This Matters
+## Why This Exists
 
-### The Vibe-Coding Problem
+### The Problem No One Talks About
 
-We're in an era where entire applications are generated end-to-end by AI. You describe what you want, the AI writes it, and it works. Until it doesn't.
+We're living through a revolution. AI can now write entire applications. You describe what you want, hit enter, and watch thousands of lines of code appear. Features that took weeks now take hours. It feels like magic.
 
-Until the AI hallucinates a non-existent API. Until it introduces a subtle bug in business logic. Until it can't figure out why your payment flow broke at 2am. Then you're left staring at thousands of lines of code that neither you nor another AI can untangle.
+**Until it breaks.**
 
-**This is the reality of "vibe-coded" apps**: fast to build, impossible to maintain.
+Until the AI hallucinates an API that doesn't exist. Until it introduces a subtle bug in your payment logic that only surfaces in production. Until you ask it to fix something and it makes it worse. Until you're staring at 50 files of interconnected code at 2am, and you realize: *you have no idea how any of this works*.
 
-### Clean Architecture + DDD: Not a Religion, a Survival Kit
+This is the dirty secret of "vibe-coded" apps. They're fast to build and nearly impossible to maintain. The AI that wrote the code can't reliably debug it. Another AI will struggle to understand it. And you? You're left doing archaeology in your own codebase.
 
-Let's be clear: **this is not about architectural purity**. It's about building software that both AI and humans can maintain together.
+**This is not sustainable.** Not for side projects, not for startups, definitely not for production software.
 
-**Why AI follows these patterns so well:**
+### Why Humans Still Matter
 
-- Clean Architecture and DDD are **extensively documented**. Books, articles, conference talks, open-source projects - LLMs have trained on thousands of examples.
-- The patterns are **explicit and consistent**. "Create a use case" means the same thing every time. The AI knows exactly what structure to produce.
-- **Separation of concerns** means the AI can focus on one layer at a time. It's not trying to hold your entire app in context.
+Here's an uncomfortable truth: **AI is not replacing developers. It's amplifying them.**
 
-**Why humans can step in when AI fails:**
+The developers who thrive aren't the ones who let AI do everything. They're the ones who know when to trust it and when to step in. They're the ones who can read the code, understand the intent, and fix what's broken.
 
-- Anyone with basic SOLID knowledge can open `src/domain/` and understand the business rules. No archaeology required.
-- The flow is predictable: Controller → Use Case → Domain → Repository. When something breaks, you know where to look.
-- `Result<T>` makes errors explicit. `Option<T>` eliminates null surprises. The code tells you what can go wrong.
+But you can only do that if the code is *readable*. If there's a structure you can follow. If the patterns are familiar enough that you can trace a bug from symptom to cause without spending three hours just figuring out where to look.
 
-**Why this scales from MVP to production:**
+**The human is the safety net.** When AI hallucinates, when it gets stuck in a loop, when it confidently produces nonsense - you need someone who can step in, understand the code, and fix it. That requires code that's designed to be understood.
 
-- The same structure works for your first feature and your hundredth.
-- Add complexity without adding chaos. New features slot into existing patterns.
-- No "rewrite when we get serious" - you're already serious.
+### Why Clean Architecture + DDD?
 
-### Other Patterns Exist
+Not because it's trendy. Not because Uncle Bob said so. Because it solves real problems:
 
-Hexagonal Architecture, Onion Architecture, simple MVC, feature-based folders - all valid approaches. We're not saying Clean Architecture + DDD is the only way.
+#### 1. AI follows these patterns perfectly
 
-But it hits a sweet spot:
-- **Structured enough** for AI to follow consistently
-- **Documented enough** for any developer to learn
-- **Flexible enough** for real-world applications
-- **Proven enough** to trust with production systems
+Clean Architecture and DDD are among the most documented patterns in software engineering. Books, courses, conference talks, thousands of open-source implementations. LLMs have trained on all of it.
+
+When you say "create a SignInUseCase", the AI doesn't guess. It knows: constructor injection, execute method, Result return type, validation first, then business logic. Every time. Consistently.
+
+The patterns are so well-defined that AI rarely deviates. And when you establish conventions in your codebase, it follows them religiously. This is the opposite of vibe-coding - it's *structured generation*.
+
+#### 2. Humans can debug without archaeology
+
+Open `src/domain/user/`. There's your business logic. No frameworks, no database code, no HTTP concerns. Just pure TypeScript describing what a User is and what it can do.
+
+Open `src/application/use-cases/auth/`. There's your features. Each file is one action: SignIn, SignUp, SignOut. You can read the execute() method and understand the entire flow in 30 seconds.
+
+Something broke? The flow is always the same:
+
+```
+Controller → Use Case → Domain → Repository
+```
+
+You know exactly where to look. You don't need to understand the whole system. You just need to follow the layers.
+
+Anyone with basic SOLID knowledge can do this. Junior devs, contractors, future you who forgot how this worked - they can all navigate this codebase.
+
+#### 3. Errors are explicit, not surprises
+
+`Result<T>` means every operation that can fail *tells you it can fail*. No hidden exceptions. No try-catch archaeology. The type system shows you every failure path.
+
+```typescript
+const result = await useCase.execute(input);
+if (result.isFailure) {
+  // You MUST handle this. The compiler ensures it.
+  return Result.fail(result.getError());
+}
+```
+
+`Option<T>` means no null pointer exceptions. Ever. If something might not exist, the type says so. You handle it explicitly or the compiler complains.
+
+```typescript
+return match(userOption, {
+  Some: (user) => Result.ok(user),
+  None: () => Result.fail("User not found"),
+});
+```
+
+When production breaks at 3am, you're not guessing what went wrong. The error handling is built into the architecture.
+
+#### 4. From MVP to V1 to scale - same code
+
+This isn't prototype code that you'll "clean up later" (you won't). This isn't over-engineering for a side project. This is the exact structure that scales.
+
+Your first feature follows the same pattern as your fiftieth. Add a new domain? Same structure. New use case? Same pattern. New adapter for a different database? Swap the implementation, keep the interface.
+
+No rewrites. No "we need to refactor before we can add this feature". The architecture grows with you.
+
+### This Is Not The Only Way
+
+Let's be honest: other patterns exist and work fine.
+
+- **Hexagonal Architecture** - same principles, different names
+- **Onion Architecture** - layers pointing inward, very similar
+- **Feature-based folders** - simpler, works for smaller apps
+- **Plain MVC** - battle-tested, just less explicit
+
+We're not saying Clean Architecture + DDD is the only valid approach.
+
+But it hits a unique sweet spot for AI-assisted development:
+
+| Criteria | Clean Architecture + DDD |
+|----------|-------------------------|
+| AI can follow it | Extensively documented, consistent patterns |
+| Humans can learn it | Clear layers, predictable flow |
+| Scales to production | Same structure from MVP to enterprise |
+| Debuggable | Explicit errors, isolated concerns |
+| Flexible | Swap implementations without touching business logic |
+
+### What This Boilerplate Offers
+
+**A starting point that doesn't need to be thrown away.**
+
+- Complete authentication already implemented (100% AI-generated, 100% debuggable)
+- Patterns established and documented in CLAUDE.md
+- Every layer demonstrated with real code
+- Type-safe from domain to API
+- Production-ready from day one
+
+**A collaboration model between AI and human.**
+
+- AI generates features following established patterns
+- Humans review, debug, and course-correct when needed
+- The architecture makes both jobs easier
+
+**An escape hatch from vibe-coding chaos.**
+
+- When AI gets stuck, you can step in
+- When you get stuck, AI can help with context
+- Neither of you is flying blind
 
 ### The Bottom Line
 
-The goal isn't to write "perfect" architecture. It's to write code that:
+The question isn't "should I use AI to write code?" You already are, or you will be.
 
-1. **AI can generate correctly** because the patterns are well-known
-2. **Humans can debug** when AI hallucinates or gets stuck
-3. **Scales predictably** from prototype to production
-4. **Any developer can understand** with basic architecture knowledge
+The question is: **when AI fails, can you fix it?**
 
-You'll use AI to build. You'll need humans to fix. This architecture supports both.
+If your codebase is a maze of generated spaghetti, the answer is no. You'll either waste hours understanding it or ask AI to fix it (and watch it make things worse).
+
+If your codebase follows clear patterns with explicit error handling and separated concerns, the answer is yes. You can trace the bug, understand the context, and fix it - with or without AI assistance.
+
+**This boilerplate is a bet on that future.** A future where AI writes most of the code, but humans remain essential for understanding, debugging, and decision-making. A future where the best developers aren't the fastest typists, but the ones who can navigate complexity and fix what's broken.
+
+Clean Architecture + DDD isn't about writing perfect code. It's about writing code that survives contact with reality - including the reality that AI isn't perfect and neither are we.
 
 ---
 
@@ -69,11 +156,11 @@ pnpm dev
 
 ```
 apps/nextjs/src/
-├── domain/       # Business logic (zero deps)
+├── domain/       # Business logic (zero external deps)
 ├── application/  # Use Cases + Ports (interfaces)
-└── adapters/     # Controllers + Implementations
+└── adapters/     # Controllers + Repository implementations
 packages/
-├── ddd-kit/      # DDD primitives
+├── ddd-kit/      # DDD primitives (Result, Option, Entity)
 ├── drizzle/      # Database schema
 └── ui/           # shadcn/ui components
 ```
@@ -81,21 +168,21 @@ packages/
 ## Navigation
 
 **Start Here**
-- [Getting Started](/docs/getting-started) - Installation
-- [Core Concepts](/docs/core-concepts) - DDD patterns
-- [Architecture](/docs/architecture) - Clean Architecture
+- [Getting Started](/docs/getting-started) - Installation and setup
+- [Core Concepts](/docs/core-concepts) - DDD patterns explained
+- [Architecture](/docs/architecture) - Clean Architecture layers
 
 **Guides**
 - [Authentication](/docs/guides/authentication) - Complete auth example (100% Claude Code)
-- [First Use Case](/docs/guides/first-use-case) - Create a feature
-- [Transactions](/docs/guides/transactions) - Multi-step ops
-- [Testing](/docs/guides/testing) - Test strategy
+- [First Use Case](/docs/guides/first-use-case) - Build your first feature
+- [Transactions](/docs/guides/transactions) - Multi-step operations
+- [Testing](/docs/guides/testing) - BDD test strategy
 
 **AI Development**
-- [AI Overview](/docs/ai) - Why CleanStack + AI
-- [Claude Code](/docs/ai/claude-code) - Recommended tool
+- [AI Overview](/docs/ai) - Why CleanStack + AI works
+- [Claude Code](/docs/ai/claude-code) - Recommended AI tool
 - [Prompts](/docs/ai/prompts) - Ready-to-use prompts
 
 ## Tech Stack
 
-Next.js 16 • TypeScript 5.9 • Drizzle ORM • PostgreSQL • Turborepo • Tailwind CSS 4 • Biome • Vitest
+Next.js 16 • TypeScript 5.9 • Drizzle ORM • PostgreSQL • BetterAuth • Turborepo • Tailwind CSS 4 • shadcn/ui • Biome • Vitest
