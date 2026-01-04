@@ -49,8 +49,19 @@ apps/nextjs/src/
 │   ├── use-cases/      # Business logic orchestration
 │   └── ports/          # Repository interfaces (IXxxRepository)
 └── adapters/
-    └── out/persistence/ # DrizzleXxxRepository, Mappers
+    ├── controllers/    # HTTP → Use Case (input)
+    ├── guards/         # Auth middleware (input)
+    ├── repositories/   # Use Case → DB via Domain (output)
+    ├── mappers/        # Domain ↔ DB conversion
+    └── queries/        # Direct ORM read (CQRS)
 ```
+
+### CQRS Pattern
+
+- **Commands** (write): Controller → Use Case → Domain → Repository
+- **Queries** (read): Controller → Query (direct ORM, bypass domain)
+
+Use `queries/` for read-only operations that don't need domain logic (lists, filters, reports).
 
 ## Core Patterns (ddd-kit)
 
