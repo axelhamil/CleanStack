@@ -1,4 +1,11 @@
-import { Option, Result } from "@packages/ddd-kit";
+import {
+  createPaginatedResult,
+  DEFAULT_PAGINATION,
+  Option,
+  type PaginatedResult,
+  type PaginationParams,
+  Result,
+} from "@packages/ddd-kit";
 import { type DbClient, db, eq, type Transaction } from "@packages/drizzle";
 import { user as userTable } from "@packages/drizzle/schema";
 import {
@@ -105,11 +112,22 @@ export class DrizzleUserRepository implements IUserRepository {
     }
   }
 
-  async findAll(): Promise<Result<User[]>> {
+  async findAll(
+    pagination: PaginationParams = DEFAULT_PAGINATION,
+  ): Promise<Result<PaginatedResult<User>>> {
     try {
-      const records = await db.select().from(userTable);
-      const users: User[] = [];
+      const offset = (pagination.page - 1) * pagination.limit;
 
+      const [records, countResult] = await Promise.all([
+        db.select().from(userTable).limit(pagination.limit).offset(offset),
+        this.count(),
+      ]);
+
+      if (countResult.isFailure) {
+        return Result.fail(countResult.getError());
+      }
+
+      const users: User[] = [];
       for (const record of records) {
         const userResult = userToDomain(record);
         if (userResult.isFailure) {
@@ -118,9 +136,45 @@ export class DrizzleUserRepository implements IUserRepository {
         users.push(userResult.getValue());
       }
 
-      return Result.ok(users);
+      return Result.ok(
+        createPaginatedResult(users, pagination, countResult.getValue()),
+      );
     } catch (error) {
       return Result.fail(`Failed to find all users: ${error}`);
+    }
+  }
+
+  async findMany(
+    props: Partial<User["_props"]>,
+    pagination: PaginationParams = DEFAULT_PAGINATION,
+  ): Promise<Result<PaginatedResult<User>>> {
+    try {
+      const email = props.email?.value;
+      if (!email) {
+        return this.findAll(pagination);
+      }
+
+      const offset = (pagination.page - 1) * pagination.limit;
+
+      const records = await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, email))
+        .limit(pagination.limit)
+        .offset(offset);
+
+      const users: User[] = [];
+      for (const record of records) {
+        const userResult = userToDomain(record);
+        if (userResult.isFailure) {
+          return Result.fail(userResult.getError());
+        }
+        users.push(userResult.getValue());
+      }
+
+      return Result.ok(createPaginatedResult(users, pagination, users.length));
+    } catch (error) {
+      return Result.fail(`Failed to find users: ${error}`);
     }
   }
 

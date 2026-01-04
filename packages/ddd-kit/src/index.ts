@@ -13,5 +13,6 @@ export * from "./exceptions/DomainException";
 
 // Types
 export * from "./types/BaseRepository";
+export * from "./types/Pagination";
 export * from "./types/QueryHandler";
 export * from "./types/UseCase";

@@ -155,11 +155,21 @@ interface BaseRepository<T> {
   update(entity, trx?): Promise<Result<T>>
   delete(id, trx?): Promise<Result<id>>
   findById(id): Promise<Result<Option<T>>>
-  findAll(): Promise<Result<T[]>>
+  findAll(pagination?): Promise<Result<PaginatedResult<T>>>
+  findMany(props, pagination?): Promise<Result<PaginatedResult<T>>>
   findBy(props): Promise<Result<Option<T>>>
   exists(id): Promise<Result<boolean>>
   count(): Promise<Result<number>>
 }
+
+// Pagination
+interface PaginationParams { page: number; limit: number }
+interface PaginatedResult<T> {
+  data: T[];
+  pagination: { page, limit, total, totalPages, hasNextPage, hasPreviousPage }
+}
+const DEFAULT_PAGINATION = { page: 1, limit: 20 }
+createPaginatedResult(data, params, total)  // Helper
 ```
 
 ### Use Cases
