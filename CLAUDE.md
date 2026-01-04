@@ -63,48 +63,96 @@ apps/nextjs/src/
 
 Use `queries/` for read-only operations that don't need domain logic (lists, filters, reports).
 
-### Guards
+### Guards (Clean Architecture)
 
-Guards handle authentication and authorization before reaching controllers/use cases.
+Guards follow the Ports & Adapters pattern for reusability across contexts (HTTP, CLI, queues, Expo).
 
+```
+application/
+└── ports/
+    └── IAuthService.ts       # Interface (port)
+
+adapters/
+└── guards/
+    └── BetterAuthService.ts  # Implementation (adapter)
+```
+
+**Port (Application layer):**
 ```typescript
-// adapters/guards/auth.guard.ts
-export async function authGuard(request: Request): Promise<Result<Session>> {
-  const session = await auth.api.getSession({ headers: request.headers })
-  if (!session) return Result.fail('Unauthorized')
-  return Result.ok(session)
-}
-
-// adapters/guards/role.guard.ts
-export function roleGuard(session: Session, roles: Role[]): Result<void> {
-  if (!roles.includes(session.user.role)) return Result.fail('Forbidden')
-  return Result.ok()
+// application/ports/IAuthService.ts
+export interface IAuthService {
+  validateSession(token: string): Promise<Result<Session>>
+  hasRole(session: Session, roles: Role[]): Result<void>
+  isOwner(session: Session, resourceOwnerId: string): Result<void>
 }
 ```
 
-**Usage in Route Handler:**
+**Adapter (Infrastructure):**
 ```typescript
-export async function POST(request: Request) {
-  // 1. Auth guard
-  const sessionResult = await authGuard(request)
-  if (sessionResult.isFailure) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+// adapters/guards/BetterAuthService.ts
+export class BetterAuthService implements IAuthService {
+  async validateSession(token: string): Promise<Result<Session>> {
+    const session = await auth.api.getSession({ headers: { authorization: token } })
+    if (!session) return Result.fail('Unauthorized')
+    return Result.ok(session)
+  }
 
-  // 2. Role guard (optional)
-  const roleResult = roleGuard(sessionResult.getValue(), ['admin'])
-  if (roleResult.isFailure) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  hasRole(session: Session, roles: Role[]): Result<void> {
+    if (!roles.includes(session.user.role)) return Result.fail('Forbidden')
+    return Result.ok()
+  }
 
-  // 3. Controller/Use Case
-  const useCase = getInjection('CreateUserUseCase')
-  const result = await useCase.execute(input)
-  // ...
+  isOwner(session: Session, resourceOwnerId: string): Result<void> {
+    if (session.user.id !== resourceOwnerId) return Result.fail('Forbidden')
+    return Result.ok()
+  }
 }
 ```
 
-**Types of Guards:**
-- `authGuard` - Validates session exists (BetterAuth)
-- `roleGuard` - Checks user role (admin, user, etc.)
-- `ownerGuard` - Checks resource ownership (user can only edit own data)
-- `permissionGuard` - Fine-grained permissions
+**DI Registration:**
+```typescript
+container.bind('IAuthService').toClass(BetterAuthService)
+```
+
+**Usage in Use Case (reusable):**
+```typescript
+export class UpdateUserUseCase implements UseCase<Input, User> {
+  constructor(
+    private authService: IAuthService,
+    private userRepo: IUserRepository
+  ) {}
+
+  async execute(input: Input, token: string): Promise<Result<User>> {
+    // Auth check (works everywhere: HTTP, CLI, queue, Expo)
+    const sessionResult = await this.authService.validateSession(token)
+    if (sessionResult.isFailure) return Result.fail(sessionResult.getError())
+
+    // Owner check
+    const ownerResult = this.authService.isOwner(sessionResult.getValue(), input.userId)
+    if (ownerResult.isFailure) return Result.fail(ownerResult.getError())
+
+    // Business logic...
+  }
+}
+```
+
+**Usage in Route Handler (thin):**
+```typescript
+export async function PUT(request: Request) {
+  const token = request.headers.get('authorization') ?? ''
+  const input = await request.json()
+
+  const useCase = getInjection('UpdateUserUseCase')
+  const result = await useCase.execute(input, token)
+
+  if (result.isFailure) {
+    const status = result.getError() === 'Unauthorized' ? 401 : 403
+    return Response.json({ error: result.getError() }, { status })
+  }
+
+  return Response.json(result.getValue())
+}
+```
 
 ## Core Patterns (ddd-kit)
 
