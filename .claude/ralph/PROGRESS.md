@@ -21,7 +21,7 @@
 | E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
-| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 11/17 |
+| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 12/17 |
 | E6 | Docs & Release | REL-001 to REL-006 | 🔴 0/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | 🔴 0/5 |
 
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E8 - Starter Features
-**Story**: FTR-011 - Dashboard Layout
-**File**: `.claude/ralph/prd/stories/FTR-011-dashboard-layout.md`
+**Story**: FTR-012 - Landing Page
+**File**: `.claude/ralph/prd/stories/FTR-012-landing-page.md`
 
 ---
 
@@ -109,6 +109,7 @@
 - [x] FTR-008 - Customer Portal (CreatePortalSessionUseCase, portal API, settings page, 9 tests) - e8ea83e
 - [x] FTR-009 - Pricing Components (BrutalistPricingCard, Toggle, Table) - 8bc4f04
 - [x] FTR-010 - Pricing Page (/pricing with checkout integration) - 81521a8
+- [x] FTR-011 - Dashboard Layout (Sidebar, Header, UserMenu, MobileNav) - 7fc029d
 
 ---
 
@@ -132,6 +133,7 @@
 - `e8ea83e` - feat(billing): add customer portal for subscription management
 - `8bc4f04` - feat(ui): add brutalist pricing components
 - `81521a8` - feat(pricing): add pricing page with checkout integration
+- `7fc029d` - feat(dashboard): add sidebar layout with navigation
 
 ---
 
