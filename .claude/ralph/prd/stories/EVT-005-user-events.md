@@ -8,11 +8,11 @@
 
 ## Acceptance Criteria
 
-- [ ] `UserCreatedEvent` - emitted on sign up
-- [ ] `UserEmailVerifiedEvent` - emitted on email verification
-- [ ] `UserSignedInEvent` - emitted on sign in (optional, for audit)
-- [ ] Events contain necessary payload
-- [ ] Events emitted in aggregate methods
+- [x] `UserCreatedEvent` - emitted on sign up (payload: userId, email, name)
+- [x] `UserEmailVerifiedEvent` - emitted on email verification (payload: userId, email, verifiedAt)
+- [x] `UserSignedInEvent` - emitted on sign in (optional, for audit) (payload: userId, email, signedInAt)
+- [x] Events contain necessary payload
+- [x] Events emitted in aggregate methods
 
 ## Technical Notes
 
@@ -86,6 +86,6 @@ export class User extends Aggregate<IUserProps> {
 
 ## Definition of Done
 
-- [ ] Events created
-- [ ] Emitted in aggregate
-- [ ] Handler examples documented
+- [x] Events created (UserCreatedEvent, UserEmailVerifiedEvent, UserSignedInEvent)
+- [x] Emitted in aggregate (User.create, User.verify)
+- [x] Handler examples documented (LogUserCreatedHandler in EVT-003)

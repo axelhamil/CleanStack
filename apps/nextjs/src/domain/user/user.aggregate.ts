@@ -1,6 +1,6 @@
 import { Aggregate, type Option, Result, UUID } from "@packages/ddd-kit";
 import { UserCreatedEvent } from "./events/user-created.event";
-import { UserVerifiedEvent } from "./events/user-verified.event";
+import { UserEmailVerifiedEvent } from "./events/user-verified.event";
 import { UserId } from "./user-id";
 import type { Email } from "./value-objects/email.vo";
 import type { Name } from "./value-objects/name.vo";
@@ -62,7 +62,12 @@ export class User extends Aggregate<IUserProps> {
 
     this._props.emailVerified = true;
     this._props.updatedAt = new Date();
-    this.addEvent(new UserVerifiedEvent(this.id.value.toString()));
+    this.addEvent(
+      new UserEmailVerifiedEvent(
+        this.id.value.toString(),
+        this.get("email").value,
+      ),
+    );
     return Result.ok();
   }
 

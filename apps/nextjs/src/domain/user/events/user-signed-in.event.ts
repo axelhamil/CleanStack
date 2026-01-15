@@ -1,15 +1,15 @@
 import { BaseDomainEvent } from "@packages/ddd-kit";
 
-interface UserEmailVerifiedPayload {
+interface UserSignedInPayload {
   userId: string;
   email: string;
-  verifiedAt: Date;
+  signedInAt: Date;
 }
 
-export class UserEmailVerifiedEvent extends BaseDomainEvent<UserEmailVerifiedPayload> {
-  readonly eventType = "user.email_verified";
+export class UserSignedInEvent extends BaseDomainEvent<UserSignedInPayload> {
+  readonly eventType = "user.signed_in";
   readonly aggregateId: string;
-  readonly payload: UserEmailVerifiedPayload;
+  readonly payload: UserSignedInPayload;
 
   constructor(userId: string, email: string) {
     super();
@@ -17,7 +17,7 @@ export class UserEmailVerifiedEvent extends BaseDomainEvent<UserEmailVerifiedPay
     this.payload = {
       userId,
       email,
-      verifiedAt: new Date(),
+      signedInAt: new Date(),
     };
   }
 }
