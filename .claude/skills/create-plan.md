@@ -27,17 +27,18 @@ Expects one of:
 
 ## Task Categories
 
-Organize tasks into these categories:
+Organize tasks into these categories (TDD order):
 
 | Category | Description | Examples |
 |----------|-------------|----------|
 | `setup` | Project initialization, deps, config | Create directories, install packages |
+| `domain-tests` | Domain layer tests (write FIRST) | Aggregate tests, VO tests, Event tests |
 | `domain` | Domain layer implementation | Aggregates, VOs, Events |
+| `application-tests` | Application layer tests (write FIRST) | Use case tests, BDD tests |
 | `application` | Application layer implementation | Use cases, DTOs, Ports |
-| `adapters` | Adapters layer implementation | Repositories, Mappers, Controllers |
 | `infrastructure` | Infrastructure setup | DB schema, DI bindings |
+| `adapters` | Adapters layer implementation | Repositories, Mappers, Controllers |
 | `ui` | Frontend components and pages | Components, pages, layouts |
-| `testing` | Test implementation | Unit tests, integration tests |
 | `verification` | Final validation | Build, lint, E2E checks |
 
 ## Task Structure
@@ -72,8 +73,34 @@ Each task must have:
     "description": "Initialize project structure",
     "steps": [
       "Create feature directories in src/domain/[feature]/",
+      "Create feature directories in src/domain/[feature]/__tests__/",
       "Create feature directories in src/application/use-cases/[feature]/",
+      "Create feature directories in src/application/use-cases/[feature]/__tests__/",
       "Verify project compiles with pnpm type-check"
+    ],
+    "passes": false
+  },
+  {
+    "category": "domain-tests",
+    "description": "Write [Aggregate] aggregate tests (TDD - tests first)",
+    "steps": [
+      "Create __tests__/[aggregate].aggregate.test.ts",
+      "Write tests for aggregate creation with valid props",
+      "Write tests for aggregate creation with invalid props",
+      "Write tests for domain event emission",
+      "Run pnpm test (tests should fail - no implementation yet)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "domain-tests",
+    "description": "Write value object tests (TDD - tests first)",
+    "steps": [
+      "Create __tests__/[vo-name].vo.test.ts",
+      "Write tests for valid value creation",
+      "Write tests for invalid value rejection",
+      "Write tests for edge cases",
+      "Run pnpm test (tests should fail - no implementation yet)"
     ],
     "passes": false
   },
@@ -84,7 +111,7 @@ Each task must have:
       "Create [Aggregate]Id class",
       "Create [Aggregate] aggregate with properties",
       "Create static create() and reconstitute() methods",
-      "Verify with pnpm type-check"
+      "Run pnpm test (domain tests should now pass)"
     ],
     "passes": false
   },
@@ -94,7 +121,7 @@ Each task must have:
     "steps": [
       "Create [VOName] value object with Zod validation",
       "Add validation rules per PRD spec",
-      "Verify with pnpm type-check"
+      "Run pnpm test (VO tests should now pass)"
     ],
     "passes": false
   },
@@ -105,7 +132,20 @@ Each task must have:
       "Create [EventName]Event class",
       "Define event payload interface",
       "Add event emission in aggregate methods",
-      "Verify with pnpm type-check"
+      "Run pnpm test (all domain tests should pass)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "application-tests",
+    "description": "Write [UseCaseName] use case tests (TDD - tests first)",
+    "steps": [
+      "Create __tests__/[use-case-name].use-case.test.ts",
+      "Mock repository and event dispatcher",
+      "Write happy path tests",
+      "Write validation error tests",
+      "Write business rule tests",
+      "Run pnpm test (tests should fail - no implementation yet)"
     ],
     "passes": false
   },
@@ -117,7 +157,7 @@ Each task must have:
       "Create use case class with DI",
       "Implement execute() method",
       "Add event dispatch after repository save",
-      "Verify with pnpm type-check"
+      "Run pnpm test (use case tests should now pass)"
     ],
     "passes": false
   },
@@ -140,18 +180,6 @@ Each task must have:
       "Create Drizzle[Aggregate]Repository implementation",
       "Create [Aggregate]Mapper for domain<->db conversion",
       "Register in DI module"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Write use case tests",
-    "steps": [
-      "Create test file for [UseCaseName]",
-      "Add happy path tests",
-      "Add validation error tests",
-      "Add business rule tests",
-      "Run pnpm test to verify"
     ],
     "passes": false
   },
@@ -257,14 +285,16 @@ When ALL tasks have passes true, output <promise>COMPLETE</promise>
 - Break large tasks into smaller ones
 - Each task should be independently verifiable
 
-### Task Order
-1. Setup/infrastructure first
-2. Domain layer (aggregates, VOs, events)
-3. Application layer (use cases, DTOs)
-4. Adapters layer (repositories, mappers)
-5. UI components and pages
-6. Testing
-7. Final verification
+### Task Order (TDD)
+1. Setup (directories, config)
+2. Domain Tests (write failing tests FIRST)
+3. Domain Implementation (make tests pass)
+4. Application Tests (write failing tests FIRST)
+5. Application Implementation (make tests pass)
+6. Infrastructure (DB schema, DI bindings)
+7. Adapters layer (repositories, mappers)
+8. UI components and pages
+9. Final verification
 
 ### Dependencies
 - Tasks within a category can often run in parallel
@@ -276,7 +306,7 @@ When ALL tasks have passes true, output <promise>COMPLETE</promise>
 
 ## Example
 
-For a "Bookmark" feature with PRD:
+For a "Bookmark" feature with PRD (TDD workflow):
 
 ```json
 [
@@ -285,10 +315,24 @@ For a "Bookmark" feature with PRD:
     "description": "Create bookmark feature directories",
     "steps": [
       "Create src/domain/bookmark/",
+      "Create src/domain/bookmark/__tests__/",
       "Create src/domain/bookmark/value-objects/",
       "Create src/domain/bookmark/events/",
       "Create src/application/use-cases/bookmark/",
+      "Create src/application/use-cases/bookmark/__tests__/",
       "Create src/application/dto/bookmark/"
+    ],
+    "passes": false
+  },
+  {
+    "category": "domain-tests",
+    "description": "Write Bookmark aggregate tests (TDD - tests first)",
+    "steps": [
+      "Create __tests__/bookmark.aggregate.test.ts",
+      "Write tests for Bookmark.create() with valid props",
+      "Write tests for Bookmark.create() emitting BookmarkCreatedEvent",
+      "Write tests for Bookmark.reconstitute()",
+      "Run pnpm test (tests should fail - no implementation yet)"
     ],
     "passes": false
   },
@@ -299,7 +343,8 @@ For a "Bookmark" feature with PRD:
       "Create BookmarkId in bookmark.id.ts",
       "Create Bookmark aggregate with userId, articleId, createdAt",
       "Add static create() method that emits BookmarkCreatedEvent",
-      "Add static reconstitute() method"
+      "Add static reconstitute() method",
+      "Run pnpm test (aggregate tests should now pass)"
     ],
     "passes": false
   },
@@ -309,7 +354,21 @@ For a "Bookmark" feature with PRD:
     "steps": [
       "Create events/bookmark-created.event.ts",
       "Define payload: bookmarkId, userId, articleId, createdAt",
-      "Extend BaseDomainEvent"
+      "Extend BaseDomainEvent",
+      "Run pnpm test (all domain tests should pass)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "application-tests",
+    "description": "Write CreateBookmarkUseCase tests (TDD - tests first)",
+    "steps": [
+      "Create __tests__/create-bookmark.use-case.test.ts",
+      "Mock IBookmarkRepository and IEventDispatcher",
+      "Write test for successful bookmark creation",
+      "Write test for duplicate bookmark error",
+      "Write test for event dispatch verification",
+      "Run pnpm test (tests should fail - no implementation yet)"
     ],
     "passes": false
   },
@@ -320,7 +379,8 @@ For a "Bookmark" feature with PRD:
       "Create create-bookmark.dto.ts with input/output schemas",
       "Create IBookmarkRepository port interface",
       "Create CreateBookmarkUseCase with execute()",
-      "Dispatch events after successful save"
+      "Dispatch events after successful save",
+      "Run pnpm test (use case tests should now pass)"
     ],
     "passes": false
   },
@@ -343,18 +403,6 @@ For a "Bookmark" feature with PRD:
       "Create DrizzleBookmarkRepository",
       "Implement create, delete, findByUser methods",
       "Register in DI module"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Write CreateBookmarkUseCase tests",
-    "steps": [
-      "Create __tests__/create-bookmark.use-case.test.ts",
-      "Mock IBookmarkRepository",
-      "Test successful bookmark creation",
-      "Test duplicate bookmark error",
-      "Verify event emission"
     ],
     "passes": false
   },

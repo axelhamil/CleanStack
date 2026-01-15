@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 8/65
-**Current Task:** [TDD] Write Conversation aggregate tests FIRST
+**Tasks Completed:** 9/65
+**Current Task:** [TDD] Write Domain Events tests FIRST
 
 ---
 
@@ -223,4 +223,26 @@ const role = message.get("role");
 - All 57 Message entity/VO tests pass
 - No regressions on existing tests
 - Type check passes
+
+### 2026-01-15 - Task 9: [TDD] Write Conversation aggregate tests
+
+**Completed:** ✅
+
+**TDD Workflow:** All tests passed immediately (GREEN)
+
+**Changes:**
+- Created `src/domain/llm/conversation/__tests__/conversation.aggregate.test.ts` (20 tests)
+  - create(): creates aggregate, emits event, respects provided ID
+  - reconstitute(): restores without events
+  - updateTitle(): updates title and updatedAt
+  - updateMetadata(): updates metadata and updatedAt
+  - markUpdated(): sets updatedAt
+  - id getter returns ConversationId
+
+**Commands Run:**
+- `pnpm test` - 387 tests PASSED (20 new tests)
+
+**Verification:**
+- All Conversation aggregate tests pass
+- No regressions on existing tests
 

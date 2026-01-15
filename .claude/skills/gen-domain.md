@@ -1,11 +1,33 @@
 ---
 name: gen-domain
-description: Generate domain layer code (Aggregate, Value Objects, Events) from PRD specification
+description: Generate domain layer tests FIRST (TDD), then implementation code following DDD and Clean Architecture
 ---
 
-# Domain Generator
+# Domain Generator (TDD Approach)
 
-Generate production-ready domain code following project conventions. Reference: `src/domain/user/`
+Generate production-ready domain code following TDD/BDD/DDD principles. **Tests are written FIRST, then implementation.**
+
+Reference: `src/domain/user/`
+
+## TDD Workflow
+
+```
+1. Write Tests FIRST (Red)
+   ├── Aggregate tests
+   ├── Value Object tests
+   └── Event tests
+
+2. Run tests → They FAIL (expected)
+
+3. Write Implementation (Green)
+   ├── Implement Aggregate
+   ├── Implement Value Objects
+   └── Implement Events
+
+4. Run tests → They PASS
+
+5. Refactor if needed
+```
 
 ## Input
 
@@ -14,11 +36,235 @@ PRD section describing domain model, or direct specification:
 - Value Objects needed
 - Events to emit
 
-## Output Files
+## Output Files (IN ORDER)
 
-Generate these files in `src/domain/{aggregate-kebab-case}/`:
+### Phase 1: Tests FIRST
 
-### 1. Aggregate ID
+Generate test files BEFORE implementation in `src/domain/{aggregate-kebab-case}/__tests__/`:
+
+#### 1.1 Aggregate Tests (BDD Style)
+`src/domain/{name}/__tests__/{name}.aggregate.test.ts`
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { {Name} } from "../{name}.aggregate";
+import { {Name}CreatedEvent } from "../events/{name}-created.event";
+// Import value objects...
+
+describe("{Name} Aggregate", () => {
+  // Test data following ubiquitous language
+  const validProps = {
+    // Define valid properties using domain language
+  };
+
+  describe("create()", () => {
+    describe("Given valid properties", () => {
+      it("When creating a new {Name}, Then it should succeed with correct state", () => {
+        // Given
+        const props = { ...validProps };
+
+        // When
+        const entity = {Name}.create(props);
+
+        // Then
+        expect(entity).toBeDefined();
+        expect(entity.id).toBeDefined();
+        expect(entity.get("createdAt")).toBeInstanceOf(Date);
+      });
+
+      it("When creating a new {Name}, Then it should emit {Name}Created event", () => {
+        // Given
+        const props = { ...validProps };
+
+        // When
+        const entity = {Name}.create(props);
+
+        // Then
+        expect(entity.domainEvents).toHaveLength(1);
+        expect(entity.domainEvents[0]).toBeInstanceOf({Name}CreatedEvent);
+        expect(entity.domainEvents[0].eventType).toBe("{name}.created");
+      });
+    });
+
+    describe("Given an existing ID", () => {
+      it("When creating with ID, Then it should NOT emit creation event", () => {
+        // Given
+        const existingId = new UUID();
+        const props = { ...validProps };
+
+        // When
+        const entity = {Name}.create(props, existingId);
+
+        // Then
+        expect(entity.id.value).toBe(existingId.value);
+        expect(entity.domainEvents).toHaveLength(0);
+      });
+    });
+  });
+
+  describe("reconstitute()", () => {
+    describe("Given persisted data", () => {
+      it("When reconstituting, Then it should NOT emit any events", () => {
+        // Given
+        const id = {Name}Id.create(new UUID());
+        const props = { ...validProps, createdAt: new Date() };
+
+        // When
+        const entity = {Name}.reconstitute(props, id);
+
+        // Then
+        expect(entity.domainEvents).toHaveLength(0);
+      });
+    });
+  });
+
+  describe("domain methods", () => {
+    describe("{methodName}()", () => {
+      describe("Given a valid {Name}", () => {
+        it("When {action}, Then state should change accordingly", () => {
+          // Given
+          const entity = {Name}.create(validProps);
+          entity.clearEvents();
+
+          // When
+          entity.{methodName}(newValue);
+
+          // Then
+          expect(entity.get("property")).toEqual(newValue);
+          expect(entity.get("updatedAt")).toBeInstanceOf(Date);
+        });
+
+        it("When {action}, Then it should emit appropriate event", () => {
+          // Given
+          const entity = {Name}.create(validProps);
+          entity.clearEvents();
+
+          // When
+          entity.{methodName}(newValue);
+
+          // Then
+          expect(entity.domainEvents).toHaveLength(1);
+          expect(entity.domainEvents[0].eventType).toBe("{name}.{action}");
+        });
+      });
+    });
+  });
+});
+```
+
+#### 1.2 Value Object Tests (BDD Style)
+`src/domain/{name}/__tests__/{vo-name}.vo.test.ts`
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { {VoName} } from "../value-objects/{vo-name}.vo";
+
+describe("{VoName} Value Object", () => {
+  describe("create()", () => {
+    describe("Given a valid value", () => {
+      it("When creating, Then it should succeed", () => {
+        // Given
+        const validValue = "valid-value";
+
+        // When
+        const result = {VoName}.create(validValue);
+
+        // Then
+        expect(result.isSuccess).toBe(true);
+        expect(result.getValue().value).toBe(validValue);
+      });
+    });
+
+    describe("Given an empty value", () => {
+      it("When creating, Then it should fail with validation error", () => {
+        // Given
+        const emptyValue = "";
+
+        // When
+        const result = {VoName}.create(emptyValue);
+
+        // Then
+        expect(result.isFailure).toBe(true);
+        expect(result.getError()).toContain("required");
+      });
+    });
+
+    describe("Given a value exceeding max length", () => {
+      it("When creating, Then it should fail", () => {
+        // Given
+        const tooLongValue = "a".repeat(256);
+
+        // When
+        const result = {VoName}.create(tooLongValue);
+
+        // Then
+        expect(result.isFailure).toBe(true);
+      });
+    });
+  });
+
+  describe("equals()", () => {
+    describe("Given two VOs with same value", () => {
+      it("When comparing, Then they should be equal", () => {
+        // Given
+        const vo1 = {VoName}.create("value").getValue();
+        const vo2 = {VoName}.create("value").getValue();
+
+        // When/Then
+        expect(vo1.equals(vo2)).toBe(true);
+      });
+    });
+
+    describe("Given two VOs with different values", () => {
+      it("When comparing, Then they should not be equal", () => {
+        // Given
+        const vo1 = {VoName}.create("value1").getValue();
+        const vo2 = {VoName}.create("value2").getValue();
+
+        // When/Then
+        expect(vo1.equals(vo2)).toBe(false);
+      });
+    });
+  });
+});
+```
+
+#### 1.3 Domain Event Tests
+`src/domain/{name}/__tests__/{event-name}.event.test.ts`
+
+```typescript
+import { describe, expect, it } from "vitest";
+import { {EventName}Event } from "../events/{event-name}.event";
+
+describe("{EventName}Event", () => {
+  describe("constructor", () => {
+    describe("Given valid aggregate data", () => {
+      it("When creating event, Then payload should be correctly populated", () => {
+        // Given
+        const aggregateId = "test-id";
+        const payload = { /* relevant data */ };
+
+        // When
+        const event = new {EventName}Event(aggregateId, payload);
+
+        // Then
+        expect(event.eventType).toBe("{aggregate}.{action}");
+        expect(event.aggregateId).toBe(aggregateId);
+        expect(event.payload).toMatchObject(payload);
+        expect(event.occurredAt).toBeInstanceOf(Date);
+      });
+    });
+  });
+});
+```
+
+---
+
+### Phase 2: Implementation
+
+Generate implementation files in `src/domain/{aggregate-kebab-case}/`:
+
+#### 2.1 Aggregate ID
 `src/domain/{name}/{name}-id.ts`
 
 ```typescript

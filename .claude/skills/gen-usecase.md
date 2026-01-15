@@ -1,11 +1,34 @@
 ---
 name: gen-usecase
-description: Generate application layer code (UseCase, DTOs, Ports) from PRD specification
+description: Generate application layer tests FIRST (TDD), then UseCase, DTOs, Ports following Clean Architecture
 ---
 
-# UseCase Generator
+# UseCase Generator (TDD Approach)
 
-Generate production-ready application layer code. Reference: `src/application/use-cases/auth/`
+Generate production-ready application layer code following TDD/BDD/Clean Architecture principles. **Tests are written FIRST.**
+
+Reference: `src/application/use-cases/auth/`
+
+## TDD Workflow
+
+```
+1. Write Use Case Tests FIRST (Red)
+   ├── Happy path tests
+   ├── Validation error tests
+   ├── Business rule tests
+   └── Error handling tests
+
+2. Run tests → They FAIL (expected)
+
+3. Write Implementation (Green)
+   ├── Create DTOs
+   ├── Create/Update Port interfaces
+   ├── Implement Use Case
+
+4. Run tests → They PASS
+
+5. Refactor if needed
+```
 
 ## Input
 
@@ -15,9 +38,244 @@ PRD use case spec or description:
 - Business rules
 - Events emitted
 
-## Output Files
+## Output Files (IN ORDER)
 
-### 1. UseCase
+### Phase 1: Tests FIRST
+
+Generate test file BEFORE implementation:
+
+#### 1.1 UseCase Tests (BDD Style)
+`src/application/use-cases/{domain}/__tests__/{name}.use-case.test.ts`
+
+```typescript
+import { Option, Result } from "@packages/ddd-kit";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
+import type { I{Domain}Repository } from "@/application/ports/{domain}.repository.port";
+import { {Name}UseCase } from "../{name}.use-case";
+import { {Domain} } from "@/domain/{domain}/{domain}.aggregate";
+// Import value objects for test data...
+
+describe("{Name}UseCase", () => {
+  // System Under Test
+  let sut: {Name}UseCase;
+
+  // Mocks following Clean Architecture (only ports)
+  let mock{Domain}Repo: I{Domain}Repository;
+  let mockEventDispatcher: IEventDispatcher;
+
+  // Test data using ubiquitous language
+  const validInput = {
+    field: "valid-value",
+    // ... other fields
+  };
+
+  // Mock domain entity
+  const mock{Domain} = {Domain}.create({
+    // valid props with VOs
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Setup repository mock (all BaseRepository methods)
+    mock{Domain}Repo = {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      findById: vi.fn(),
+      findAll: vi.fn(),
+      findMany: vi.fn(),
+      findBy: vi.fn(),
+      exists: vi.fn(),
+      count: vi.fn(),
+      // Custom methods...
+    };
+
+    mockEventDispatcher = {
+      dispatch: vi.fn(),
+      dispatchAll: vi.fn(),
+    };
+
+    sut = new {Name}UseCase(mock{Domain}Repo, mockEventDispatcher);
+  });
+
+  describe("execute()", () => {
+    describe("Happy Path", () => {
+      describe("Given valid input", () => {
+        it("When executing, Then it should return success with correct output", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.ok(mock{Domain}),
+          );
+
+          // When
+          const result = await sut.execute(validInput);
+
+          // Then
+          expect(result.isSuccess).toBe(true);
+          expect(result.getValue()).toMatchObject({
+            id: expect.any(String),
+            // expected output fields
+          });
+        });
+
+        it("When executing, Then it should persist via repository", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.ok(mock{Domain}),
+          );
+
+          // When
+          await sut.execute(validInput);
+
+          // Then
+          expect(mock{Domain}Repo.create).toHaveBeenCalledOnce();
+        });
+
+        it("When executing, Then it should dispatch domain events AFTER save", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.ok(mock{Domain}),
+          );
+
+          // When
+          await sut.execute(validInput);
+
+          // Then
+          expect(mockEventDispatcher.dispatchAll).toHaveBeenCalledOnce();
+          expect(mockEventDispatcher.dispatchAll).toHaveBeenCalledAfter(
+            mock{Domain}Repo.create as any,
+          );
+        });
+      });
+    });
+
+    describe("Validation Errors", () => {
+      describe("Given invalid {field}", () => {
+        it("When executing, Then it should fail with validation error", async () => {
+          // Given
+          const invalidInput = { ...validInput, field: "invalid" };
+
+          // When
+          const result = await sut.execute(invalidInput);
+
+          // Then
+          expect(result.isFailure).toBe(true);
+          expect(mock{Domain}Repo.create).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("Given empty required field", () => {
+        it("When executing, Then it should fail", async () => {
+          // Given
+          const inputWithEmptyField = { ...validInput, field: "" };
+
+          // When
+          const result = await sut.execute(inputWithEmptyField);
+
+          // Then
+          expect(result.isFailure).toBe(true);
+        });
+      });
+    });
+
+    describe("Business Rules", () => {
+      describe("Given {entity} already exists", () => {
+        it("When executing, Then it should fail with business rule violation", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.some(mock{Domain})),
+          );
+
+          // When
+          const result = await sut.execute(validInput);
+
+          // Then
+          expect(result.isFailure).toBe(true);
+          expect(result.getError()).toContain("already exists");
+          expect(mock{Domain}Repo.create).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe("Error Handling", () => {
+      describe("Given repository failure", () => {
+        it("When executing, Then it should propagate the error", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.fail("Database connection error"),
+          );
+
+          // When
+          const result = await sut.execute(validInput);
+
+          // Then
+          expect(result.isFailure).toBe(true);
+          expect(result.getError()).toBe("Database connection error");
+        });
+
+        it("When save fails, Then events should NOT be dispatched", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.fail("Database error"),
+          );
+
+          // When
+          await sut.execute(validInput);
+
+          // Then
+          expect(mockEventDispatcher.dispatchAll).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe("DTO Mapping", () => {
+      describe("Given successful execution", () => {
+        it("When mapping to output, Then all fields should be correctly transformed", async () => {
+          // Given
+          vi.mocked(mock{Domain}Repo.findBy).mockResolvedValue(
+            Result.ok(Option.none()),
+          );
+          vi.mocked(mock{Domain}Repo.create).mockResolvedValue(
+            Result.ok(mock{Domain}),
+          );
+
+          // When
+          const result = await sut.execute(validInput);
+
+          // Then
+          expect(result.isSuccess).toBe(true);
+          const output = result.getValue();
+          expect(output.id).toBeDefined();
+          // Verify all DTO fields
+        });
+      });
+    });
+  });
+});
+```
+
+---
+
+### Phase 2: Implementation
+
+#### 2.1 UseCase
 `src/application/use-cases/{domain}/{name}.use-case.ts`
 
 ```typescript
