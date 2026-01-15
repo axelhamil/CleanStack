@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 18/65
-**Current Task:** Create LLM port interfaces
+**Tasks Completed:** 19/65
+**Current Task:** Create all DTOs
 
 ---
 
@@ -486,4 +486,34 @@ const role = message.get("role");
 - All 15 DomainPrompt tests pass
 - No regressions on existing tests
 - Domain layer complete
+
+### 2026-01-15 - Task 19: Create LLM port interfaces
+
+**Completed:** ✅
+
+**Changes:**
+- Created `src/application/ports/llm.provider.port.ts`
+  - ILLMProvider interface with generateText(), streamText(), estimateTokens(), getAvailableModels()
+  - Supporting interfaces: ILLMMessage, IGenerateTextParams, IGenerateTextResponse, IStreamTextParams, IStreamTextResponse, IModelConfig
+- Created `src/application/ports/conversation.repository.port.ts`
+  - IConversationRepository extending BaseRepository with findByUserId(), getWithMessages()
+  - IConversationWithMessages interface
+- Created `src/application/ports/message.repository.port.ts`
+  - IMessageRepository extending BaseRepository with findByConversationId(), countByConversationId()
+- Created `src/application/ports/managed-prompt.repository.port.ts`
+  - IManagedPromptRepository extending BaseRepository with findByKey(), findActiveByKey(), getVersionHistory(), activateVersion()
+- Created `src/application/ports/llm-usage.repository.port.ts`
+  - ILLMUsageRepository extending BaseRepository with getTotalCostByUser(), getTotalCostGlobal(), getUsageStats()
+  - IUsageStatsParams, IUsageStatsBreakdown, IUsageStats interfaces
+- Created `src/application/ports/model-router.port.ts`
+  - IModelRouter interface with selectOptimalModel(), getModelConfig(), getAllModels()
+  - ISelectModelParams, ISelectedModel interfaces
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 6 port interfaces created
+- Type check passes
+- Application layer ports ready for use cases
 
