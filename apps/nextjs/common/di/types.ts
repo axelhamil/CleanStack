@@ -7,6 +7,7 @@ import type { SignInUseCase } from "@/application/use-cases/auth/sign-in.use-cas
 import type { SignOutUseCase } from "@/application/use-cases/auth/sign-out.use-case";
 import type { SignUpUseCase } from "@/application/use-cases/auth/sign-up.use-case";
 import type { VerifyEmailUseCase } from "@/application/use-cases/auth/verify-email.use-case";
+import type { CreateCheckoutSessionUseCase } from "@/application/use-cases/billing/create-checkout-session.use-case";
 
 export const DI_SYMBOLS = {
   IUserRepository: Symbol.for("IUserRepository"),
@@ -18,6 +19,7 @@ export const DI_SYMBOLS = {
   SignOutUseCase: Symbol.for("SignOutUseCase"),
   GetSessionUseCase: Symbol.for("GetSessionUseCase"),
   VerifyEmailUseCase: Symbol.for("VerifyEmailUseCase"),
+  CreateCheckoutSessionUseCase: Symbol.for("CreateCheckoutSessionUseCase"),
 };
 
 export interface DI_RETURN_TYPES {
@@ -30,4 +32,5 @@ export interface DI_RETURN_TYPES {
   SignOutUseCase: SignOutUseCase;
   GetSessionUseCase: GetSessionUseCase;
   VerifyEmailUseCase: VerifyEmailUseCase;
+  CreateCheckoutSessionUseCase: CreateCheckoutSessionUseCase;
 }
