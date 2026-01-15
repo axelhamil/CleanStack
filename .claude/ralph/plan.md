@@ -60,7 +60,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Add static create() method",
       "Verify with pnpm type-check"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain",

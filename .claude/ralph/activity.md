@@ -5,7 +5,7 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 2/57
+**Tasks Completed:** 3/57
 **Current Task:** None
 
 ---
@@ -15,7 +15,7 @@
 | Category | Status |
 |----------|--------|
 | Setup | ✅ Complete |
-| Domain | ⏳ Pending |
+| Domain | 🔄 In Progress |
 | Application | ⏳ Pending |
 | Adapters | ⏳ Pending |
 | Infrastructure | 🔄 In Progress |
@@ -86,4 +86,19 @@
 **Verification:**
 - Schema matches PRD requirements
 - Database schema is in sync
+
+### 2026-01-15 - Task 3: Implement Conversation aggregate ID
+
+**Completed:** ✅
+
+**Changes:**
+- Created `src/domain/llm/conversation/conversation-id.ts`
+- Extended UUID from ddd-kit
+- Added static create() method following UserId pattern
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- Type check passes
 
