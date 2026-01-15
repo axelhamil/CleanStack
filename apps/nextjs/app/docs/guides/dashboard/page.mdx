@@ -1,0 +1,337 @@
+# Dashboard & Protected Pages
+
+Build authenticated pages with the sidebar layout system.
+
+## Overview
+
+CleanStack includes a complete dashboard system:
+
+- **Protected Layout** - Requires authentication
+- **Sidebar Navigation** - Responsive sidebar with mobile support
+- **Dashboard Header** - User menu, notifications
+- **Settings Pages** - Profile, billing, preferences
+
+## Architecture
+
+```
+app/(protected)/
+├── layout.tsx              # Auth guard + sidebar layout
+├── _components/
+│   ├── sidebar.tsx         # Main navigation
+│   ├── dashboard-header.tsx
+│   ├── user-menu.tsx
+│   └── mobile-nav.tsx
+├── dashboard/
+│   ├── page.tsx            # Main dashboard
+│   └── _components/
+│       ├── profile-card.tsx
+│       ├── session-card.tsx
+│       └── stats-card.tsx
+├── settings/
+│   ├── layout.tsx          # Settings sub-layout
+│   ├── page.tsx            # Profile settings
+│   ├── billing/page.tsx    # Subscription management
+│   └── _components/
+│       ├── settings-nav.tsx
+│       └── profile-form.tsx
+└── checkout/
+    └── success/page.tsx    # Stripe success page
+```
+
+## Protected Layout
+
+The layout uses `requireAuth()` to protect all child routes.
+
+```typescript
+// app/(protected)/layout.tsx
+import { requireAuth } from "@/adapters/guards/auth.guard";
+import { Sidebar } from "./_components/sidebar";
+import { DashboardHeader } from "./_components/dashboard-header";
+
+export default async function ProtectedLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const session = await requireAuth();
+
+  return (
+    <div className="flex h-screen bg-white dark:bg-black">
+      <Sidebar />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <DashboardHeader user={session.user} />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
+```
+
+## Auth Guard
+
+The `requireAuth()` guard redirects unauthenticated users.
+
+```typescript
+// src/adapters/guards/auth.guard.ts
+export async function requireAuth(
+  redirectTo = "/login"
+): Promise<IGetSessionOutputDto> {
+  const headersList = await headers();
+  const useCase = getInjection("GetSessionUseCase");
+  const result = await useCase.execute(headersList);
+
+  if (result.isFailure) redirect(redirectTo);
+
+  return match<IGetSessionOutputDto, IGetSessionOutputDto>(result.getValue(), {
+    Some: (session) => session,
+    None: () => redirect(redirectTo),
+  });
+}
+```
+
+## Dashboard Page
+
+Pages within the protected layout have access to the session.
+
+```typescript
+// app/(protected)/dashboard/page.tsx
+import { requireAuth } from "@/adapters/guards/auth.guard";
+import { ProfileCard } from "./_components/profile-card";
+import { StatsCard } from "./_components/stats-card";
+
+export default async function DashboardPage() {
+  const session = await requireAuth();
+
+  return (
+    <div className="space-y-8">
+      <h1>Welcome, {session.user.name}</h1>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ProfileCard user={session.user} />
+        <StatsCard stats={[{ value: 42, label: "Projects" }]} />
+      </div>
+    </div>
+  );
+}
+```
+
+## Sidebar Component
+
+Responsive sidebar with navigation links.
+
+```typescript
+// app/(protected)/_components/sidebar.tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Settings, CreditCard } from "lucide-react";
+
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings/billing", label: "Billing", icon: CreditCard },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="hidden w-64 border-r bg-gray-50 lg:block">
+      <nav className="space-y-1 p-4">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                isActive
+                  ? "bg-gray-200 text-gray-900"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+```
+
+## Settings Layout
+
+Nested layout for settings pages with sub-navigation.
+
+```typescript
+// app/(protected)/settings/layout.tsx
+import { SettingsNav } from "./_components/settings-nav";
+
+export default function SettingsLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-8">
+      <SettingsNav />
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
+```
+
+## Adding New Protected Pages
+
+### 1. Create the Page
+
+```typescript
+// app/(protected)/projects/page.tsx
+import { requireAuth } from "@/adapters/guards/auth.guard";
+
+export default async function ProjectsPage() {
+  const session = await requireAuth();
+
+  // Fetch user's projects
+  const projectsUseCase = getInjection("GetUserProjectsUseCase");
+  const result = await projectsUseCase.execute({ userId: session.user.id });
+
+  if (result.isFailure) {
+    return <div>Error loading projects</div>;
+  }
+
+  return (
+    <div>
+      <h1>My Projects</h1>
+      {/* Render projects */}
+    </div>
+  );
+}
+```
+
+### 2. Add to Sidebar Navigation
+
+```typescript
+// Update navItems in sidebar.tsx
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/projects", label: "Projects", icon: Folder }, // Add new item
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+```
+
+### 3. Create Page Components
+
+```typescript
+// app/(protected)/projects/_components/project-card.tsx
+interface ProjectCardProps {
+  project: {
+    id: string;
+    name: string;
+    status: string;
+  };
+}
+
+export function ProjectCard({ project }: ProjectCardProps) {
+  return (
+    <div className="rounded-lg border p-4">
+      <h3 className="font-medium">{project.name}</h3>
+      <span className="text-sm text-gray-500">{project.status}</span>
+    </div>
+  );
+}
+```
+
+## User Menu
+
+Dropdown menu with user actions.
+
+```typescript
+// app/(protected)/_components/user-menu.tsx
+"use client";
+
+import { signOut } from "@/adapters/actions/auth/sign-out.action";
+
+export function UserMenu({ user }: { user: UserDto }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Avatar>
+          <AvatarImage src={user.image} />
+          <AvatarFallback>{user.name[0]}</AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem asChild>
+          <Link href="/settings">Settings</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings/billing">Billing</Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut()}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+```
+
+## Mobile Navigation
+
+Responsive navigation for mobile devices.
+
+```typescript
+// app/(protected)/_components/mobile-nav.tsx
+"use client";
+
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+
+export function MobileNav() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="lg:hidden p-2"
+      >
+        <Menu className="h-6 w-6" />
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsOpen(false)}
+          />
+          <nav className="absolute left-0 top-0 h-full w-64 bg-white p-4">
+            <button onClick={() => setIsOpen(false)}>
+              <X className="h-6 w-6" />
+            </button>
+            {/* Navigation items */}
+          </nav>
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+## Best Practices
+
+1. **Auth in layout** - Use `requireAuth()` in the layout, not individual pages
+2. **Server Components** - Keep pages as Server Components for data fetching
+3. **Client Components** - Use `"use client"` for interactive elements
+4. **Colocate components** - Keep page-specific components in `_components/`
+5. **Typed session** - Always type-check session data from `requireAuth()`
+
+## Next Steps
+
+- [Authentication Guide](/docs/guides/authentication)
+- [Billing Guide](/docs/guides/billing)
+- [First Use Case](/docs/guides/first-use-case)
