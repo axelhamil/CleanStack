@@ -13,7 +13,7 @@ High
 ```
 app/docs/
 ├── page.mdx                           # Landing
-├── getting-started/page.mdx           # Quick start
+├── getting-started/page.mdx           # Quick start (What's Included)
 ├── architecture/
 │   ├── page.mdx                       # Overview
 │   ├── layers/page.mdx                # Clean Architecture layers
@@ -25,15 +25,21 @@ app/docs/
 │   ├── value-objects/page.mdx         # ValueObject pattern
 │   └── entities/page.mdx              # Entity/Aggregate
 ├── guides/
+│   ├── authentication/page.mdx        # Auth implementation
+│   ├── dashboard/page.mdx             # Protected pages + sidebar ✅ NEW
 │   ├── first-use-case/page.mdx        # Use case tutorial
+│   ├── domain-events/page.mdx         # Event pattern ✅ NEW
+│   ├── billing/page.mdx               # Stripe integration ✅ NEW
+│   ├── email/page.mdx                 # React Email + Resend ✅ NEW
 │   ├── transactions/page.mdx          # DB transactions
-│   ├── testing/page.mdx               # Testing strategy
-│   └── authentication/page.mdx        # Auth implementation
+│   └── testing/page.mdx               # Testing strategy
 └── ai/
     ├── page.mdx                       # AI overview
     ├── claude-code/page.mdx           # Claude Code setup
+    ├── skills/page.mdx                # 5 interactive skills ✅ NEW
+    ├── agents/page.mdx                # 4 autonomous agents ✅ NEW
     ├── cursor/page.mdx                # Cursor setup
-    └── prompts/page.mdx               # AI prompts
+    └── prompts/page.mdx               # AI prompts (references skills)
 ```
 
 ## Acceptance Criteria
