@@ -328,4 +328,100 @@ describe("InMemoryEventDispatcher", () => {
       expect(callOrder).toEqual([1, 2, 3]);
     });
   });
+
+  describe("setLogging()", () => {
+    it("should enable logging", () => {
+      dispatcher.setLogging(true);
+
+      expect(dispatcher).toBeDefined();
+    });
+
+    it("should disable logging", () => {
+      dispatcher.setLogging(true);
+      dispatcher.setLogging(false);
+
+      expect(dispatcher).toBeDefined();
+    });
+
+    it("should log errors when logging is enabled and handler fails", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const failingHandler = vi.fn().mockReturnValue(Result.fail("test error"));
+      const event = createTestEvent("entity-1", "test data");
+
+      dispatcher.setLogging(true);
+      dispatcher.subscribe("TestEvent", failingHandler);
+
+      await dispatcher.dispatch(event);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Event handler failed: test error",
+        undefined,
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should log errors when async handler returns failure and logging enabled", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const failingHandler = vi
+        .fn()
+        .mockResolvedValue(Result.fail("async error"));
+      const event = createTestEvent("entity-1", "test data");
+
+      dispatcher.setLogging(true);
+      dispatcher.subscribe("TestEvent", failingHandler);
+
+      await dispatcher.dispatch(event);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Event handler failed: async error",
+        undefined,
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should log errors when handler throws and logging enabled", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const throwingHandler = vi.fn().mockImplementation(() => {
+        throw new Error("thrown error");
+      });
+      const event = createTestEvent("entity-1", "test data");
+
+      dispatcher.setLogging(true);
+      dispatcher.subscribe("TestEvent", throwingHandler);
+
+      await dispatcher.dispatch(event);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Event handler threw exception:",
+        expect.any(Error),
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should NOT log when logging is disabled", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const failingHandler = vi.fn().mockReturnValue(Result.fail("test error"));
+      const event = createTestEvent("entity-1", "test data");
+
+      dispatcher.setLogging(false);
+      dispatcher.subscribe("TestEvent", failingHandler);
+
+      await dispatcher.dispatch(event);
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
 });
