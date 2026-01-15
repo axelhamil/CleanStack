@@ -1,5 +1,4 @@
 import { BaseDomainEvent } from "@packages/ddd-kit";
-import type { Conversation } from "../conversation.aggregate";
 import type { Message } from "../entities/message.entity";
 
 interface MessageAddedPayload {
@@ -15,11 +14,11 @@ export class MessageAddedEvent extends BaseDomainEvent<MessageAddedPayload> {
   readonly aggregateId: string;
   readonly payload: MessageAddedPayload;
 
-  constructor(conversation: Conversation, message: Message) {
+  constructor(message: Message) {
     super();
-    this.aggregateId = conversation.id.value.toString();
+    this.aggregateId = message.conversationId;
     this.payload = {
-      conversationId: conversation.id.value.toString(),
+      conversationId: message.conversationId,
       messageId: message.id.value.toString(),
       role: message.role.value,
       content: message.content.value,

@@ -1,5 +1,4 @@
 import { BaseDomainEvent } from "@packages/ddd-kit";
-import type { Conversation } from "../conversation.aggregate";
 import type { Message } from "../entities/message.entity";
 
 interface CompletionReceivedPayload {
@@ -18,9 +17,9 @@ export class CompletionReceivedEvent extends BaseDomainEvent<CompletionReceivedP
   readonly aggregateId: string;
   readonly payload: CompletionReceivedPayload;
 
-  constructor(conversation: Conversation, message: Message) {
+  constructor(message: Message) {
     super();
-    this.aggregateId = conversation.id.value.toString();
+    this.aggregateId = message.conversationId;
 
     const tokenUsage = message.tokenUsage.isSome()
       ? message.tokenUsage.unwrap()
@@ -28,7 +27,7 @@ export class CompletionReceivedEvent extends BaseDomainEvent<CompletionReceivedP
     const cost = message.cost.isSome() ? message.cost.unwrap() : null;
 
     this.payload = {
-      conversationId: conversation.id.value.toString(),
+      conversationId: message.conversationId,
       messageId: message.id.value.toString(),
       model: message.model.isSome() ? message.model.unwrap() : null,
       inputTokens: tokenUsage?.inputTokens ?? null,

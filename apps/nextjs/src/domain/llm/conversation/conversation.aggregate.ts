@@ -1,15 +1,12 @@
 import { Aggregate, type Option, UUID } from "@packages/ddd-kit";
 import { ConversationId } from "./conversation-id";
-import type { Message } from "./entities/message.entity";
 import { ConversationCreatedEvent } from "./events/conversation-created.event";
-import { MessageAddedEvent } from "./events/message-added.event";
 import type { ConversationMetadata } from "./value-objects/conversation-metadata.vo";
 import type { ConversationTitle } from "./value-objects/conversation-title.vo";
 
 export interface IConversationProps {
   userId: string;
   title: Option<ConversationTitle>;
-  messages: Message[];
   metadata: Option<ConversationMetadata>;
   createdAt: Date;
   updatedAt?: Date;
@@ -32,10 +29,6 @@ export class Conversation extends Aggregate<IConversationProps> {
     return this._props.title;
   }
 
-  get messages(): Message[] {
-    return this._props.messages;
-  }
-
   get metadata(): Option<ConversationMetadata> {
     return this._props.metadata;
   }
@@ -49,14 +42,13 @@ export class Conversation extends Aggregate<IConversationProps> {
   }
 
   static create(
-    props: Omit<IConversationProps, "messages" | "createdAt" | "updatedAt">,
+    props: Omit<IConversationProps, "createdAt" | "updatedAt">,
     id?: UUID<string | number>,
   ): Conversation {
     const newId = id ?? new UUID<string>();
     const conversation = new Conversation(
       {
         ...props,
-        messages: [],
         createdAt: new Date(),
       },
       newId,
@@ -76,10 +68,8 @@ export class Conversation extends Aggregate<IConversationProps> {
     return new Conversation(props, id);
   }
 
-  addMessage(message: Message): void {
-    this._props.messages.push(message);
+  markUpdated(): void {
     this._props.updatedAt = new Date();
-    this.addEvent(new MessageAddedEvent(this, message));
   }
 
   updateTitle(title: Option<ConversationTitle>): void {
