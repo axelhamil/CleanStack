@@ -8,14 +8,14 @@
 
 ## Acceptance Criteria
 
-- [ ] Test list creation with initial items
-- [ ] Test `add(item)` - tracks new items
-- [ ] Test `remove(item)` - tracks removed items
-- [ ] Test `getNewItems()` - returns added items
-- [ ] Test `getRemovedItems()` - returns removed items
-- [ ] Test `getItems()` - returns current state
-- [ ] Test change detection logic
-- [ ] Coverage > 95% on WatchedList.ts
+- [x] Test list creation with initial items
+- [x] Test `add(item)` - tracks new items
+- [x] Test `remove(item)` - tracks removed items
+- [x] Test `getNewItems()` - returns added items
+- [x] Test `getRemovedItems()` - returns removed items
+- [x] Test `getItems()` - returns current state
+- [x] Test change detection logic
+- [x] Coverage > 95% on WatchedList.ts (100%)
 
 ## Test Cases
 
@@ -110,6 +110,6 @@ describe('WatchedList', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass (43 tests)
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered
