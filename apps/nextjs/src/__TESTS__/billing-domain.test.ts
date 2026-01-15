@@ -14,28 +14,28 @@ import { UserId } from "@/domain/user/user-id";
 describe("PlanId Value Object", () => {
   describe("create()", () => {
     it("should create valid plan ID", () => {
-      const result = PlanId.create("pro_monthly");
+      const result = PlanId.create("pro_monthly" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("pro_monthly");
     });
 
     it("should accept plan ID with surrounding whitespace", () => {
-      const result = PlanId.create("  pro_monthly  ");
+      const result = PlanId.create("  pro_monthly  " as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("  pro_monthly  ");
     });
 
     it("should fail for empty plan ID", () => {
-      const result = PlanId.create("");
+      const result = PlanId.create("" as string);
 
       expect(result.isFailure).toBe(true);
       expect(result.getError()).toBe("Plan ID is required");
     });
 
     it("should accept whitespace-only plan ID (valid length)", () => {
-      const result = PlanId.create("   ");
+      const result = PlanId.create("   " as string);
 
       expect(result.isSuccess).toBe(true);
     });
@@ -51,15 +51,15 @@ describe("PlanId Value Object", () => {
     });
 
     it("should be equal by value", () => {
-      const planId1 = PlanId.create("pro_monthly").getValue();
-      const planId2 = PlanId.create("pro_monthly").getValue();
+      const planId1 = PlanId.create("pro_monthly" as string).getValue();
+      const planId2 = PlanId.create("pro_monthly" as string).getValue();
 
       expect(planId1.equals(planId2)).toBe(true);
     });
 
     it("should not be equal for different values", () => {
-      const planId1 = PlanId.create("pro_monthly").getValue();
-      const planId2 = PlanId.create("enterprise_yearly").getValue();
+      const planId1 = PlanId.create("pro_monthly" as string).getValue();
+      const planId2 = PlanId.create("enterprise_yearly" as string).getValue();
 
       expect(planId1.equals(planId2)).toBe(false);
     });
@@ -69,56 +69,56 @@ describe("PlanId Value Object", () => {
 describe("SubscriptionStatus Value Object", () => {
   describe("create()", () => {
     it("should create valid active status", () => {
-      const result = SubscriptionStatus.create("active");
+      const result = SubscriptionStatus.create("active" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("active");
     });
 
     it("should create valid cancelled status", () => {
-      const result = SubscriptionStatus.create("cancelled");
+      const result = SubscriptionStatus.create("cancelled" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("cancelled");
     });
 
     it("should create valid past_due status", () => {
-      const result = SubscriptionStatus.create("past_due");
+      const result = SubscriptionStatus.create("past_due" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("past_due");
     });
 
     it("should create valid trialing status", () => {
-      const result = SubscriptionStatus.create("trialing");
+      const result = SubscriptionStatus.create("trialing" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("trialing");
     });
 
     it("should create valid incomplete status", () => {
-      const result = SubscriptionStatus.create("incomplete");
+      const result = SubscriptionStatus.create("incomplete" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("incomplete");
     });
 
     it("should create valid paused status", () => {
-      const result = SubscriptionStatus.create("paused");
+      const result = SubscriptionStatus.create("paused" as string);
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().value).toBe("paused");
     });
 
     it("should fail for invalid status", () => {
-      const result = SubscriptionStatus.create("invalid");
+      const result = SubscriptionStatus.create("invalid" as string);
 
       expect(result.isFailure).toBe(true);
       expect(result.getError()).toContain("Status must be one of:");
     });
 
     it("should fail for empty status", () => {
-      const result = SubscriptionStatus.create("");
+      const result = SubscriptionStatus.create("" as string);
 
       expect(result.isFailure).toBe(true);
     });
@@ -126,63 +126,69 @@ describe("SubscriptionStatus Value Object", () => {
 
   describe("status helpers", () => {
     it("isActive should return true for active status", () => {
-      const status = SubscriptionStatus.create("active").getValue();
+      const status = SubscriptionStatus.create("active" as string).getValue();
 
       expect(status.isActive).toBe(true);
       expect(status.isCancelled).toBe(false);
     });
 
     it("isCancelled should return true for cancelled status", () => {
-      const status = SubscriptionStatus.create("cancelled").getValue();
+      const status = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
 
       expect(status.isCancelled).toBe(true);
       expect(status.isActive).toBe(false);
     });
 
     it("isPastDue should return true for past_due status", () => {
-      const status = SubscriptionStatus.create("past_due").getValue();
+      const status = SubscriptionStatus.create("past_due" as string).getValue();
 
       expect(status.isPastDue).toBe(true);
     });
 
     it("isTrialing should return true for trialing status", () => {
-      const status = SubscriptionStatus.create("trialing").getValue();
+      const status = SubscriptionStatus.create("trialing" as string).getValue();
 
       expect(status.isTrialing).toBe(true);
     });
 
     it("isIncomplete should return true for incomplete status", () => {
-      const status = SubscriptionStatus.create("incomplete").getValue();
+      const status = SubscriptionStatus.create(
+        "incomplete" as string,
+      ).getValue();
 
       expect(status.isIncomplete).toBe(true);
     });
 
     it("isPaused should return true for paused status", () => {
-      const status = SubscriptionStatus.create("paused").getValue();
+      const status = SubscriptionStatus.create("paused" as string).getValue();
 
       expect(status.isPaused).toBe(true);
     });
 
     it("canAccess should return true for active status", () => {
-      const status = SubscriptionStatus.create("active").getValue();
+      const status = SubscriptionStatus.create("active" as string).getValue();
 
       expect(status.canAccess).toBe(true);
     });
 
     it("canAccess should return true for trialing status", () => {
-      const status = SubscriptionStatus.create("trialing").getValue();
+      const status = SubscriptionStatus.create("trialing" as string).getValue();
 
       expect(status.canAccess).toBe(true);
     });
 
     it("canAccess should return false for cancelled status", () => {
-      const status = SubscriptionStatus.create("cancelled").getValue();
+      const status = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
 
       expect(status.canAccess).toBe(false);
     });
 
     it("canAccess should return false for past_due status", () => {
-      const status = SubscriptionStatus.create("past_due").getValue();
+      const status = SubscriptionStatus.create("past_due" as string).getValue();
 
       expect(status.canAccess).toBe(false);
     });
@@ -223,8 +229,8 @@ describe("Subscription Aggregate", () => {
 
   beforeEach(() => {
     validUserId = UserId.create(new UUID<string>());
-    validPlanId = PlanId.create("pro_monthly").getValue();
-    validStatus = SubscriptionStatus.create("active").getValue();
+    validPlanId = PlanId.create("pro_monthly" as string).getValue();
+    validStatus = SubscriptionStatus.create("active" as string).getValue();
     validProps = {
       userId: validUserId,
       planId: validPlanId,
@@ -331,7 +337,9 @@ describe("Subscription Aggregate", () => {
     });
 
     it("should fail when subscription is already cancelled", () => {
-      const cancelledStatus = SubscriptionStatus.create("cancelled").getValue();
+      const cancelledStatus = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
       const subscription = Subscription.create({
         ...validProps,
         status: cancelledStatus,
@@ -377,7 +385,9 @@ describe("Subscription Aggregate", () => {
     });
 
     it("should fail when already past due", () => {
-      const pastDueStatus = SubscriptionStatus.create("past_due").getValue();
+      const pastDueStatus = SubscriptionStatus.create(
+        "past_due" as string,
+      ).getValue();
       const subscription = Subscription.create({
         ...validProps,
         status: pastDueStatus,
@@ -391,7 +401,9 @@ describe("Subscription Aggregate", () => {
     });
 
     it("should fail when subscription is cancelled", () => {
-      const cancelledStatus = SubscriptionStatus.create("cancelled").getValue();
+      const cancelledStatus = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
       const subscription = Subscription.create({
         ...validProps,
         status: cancelledStatus,
@@ -446,7 +458,9 @@ describe("Subscription Aggregate", () => {
     });
 
     it("should fail when subscription is cancelled", () => {
-      const cancelledStatus = SubscriptionStatus.create("cancelled").getValue();
+      const cancelledStatus = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
       const subscription = Subscription.create({
         ...validProps,
         status: cancelledStatus,
@@ -464,7 +478,7 @@ describe("Subscription Aggregate", () => {
     it("should change to new plan", () => {
       const subscription = Subscription.create(validProps);
       subscription.clearEvents();
-      const newPlanId = PlanId.create("enterprise_yearly").getValue();
+      const newPlanId = PlanId.create("enterprise_yearly" as string).getValue();
 
       const result = subscription.changePlan(newPlanId);
 
@@ -475,7 +489,7 @@ describe("Subscription Aggregate", () => {
     it("should emit PlanChangedEvent", () => {
       const subscription = Subscription.create(validProps);
       subscription.clearEvents();
-      const newPlanId = PlanId.create("enterprise_yearly").getValue();
+      const newPlanId = PlanId.create("enterprise_yearly" as string).getValue();
 
       subscription.changePlan(newPlanId);
 
@@ -491,7 +505,7 @@ describe("Subscription Aggregate", () => {
     it("should fail when new plan is same as current", () => {
       const subscription = Subscription.create(validProps);
       subscription.clearEvents();
-      const samePlanId = PlanId.create("pro_monthly").getValue();
+      const samePlanId = PlanId.create("pro_monthly" as string).getValue();
 
       const result = subscription.changePlan(samePlanId);
 
@@ -500,13 +514,15 @@ describe("Subscription Aggregate", () => {
     });
 
     it("should fail when subscription is cancelled", () => {
-      const cancelledStatus = SubscriptionStatus.create("cancelled").getValue();
+      const cancelledStatus = SubscriptionStatus.create(
+        "cancelled" as string,
+      ).getValue();
       const subscription = Subscription.create({
         ...validProps,
         status: cancelledStatus,
       });
       subscription.clearEvents();
-      const newPlanId = PlanId.create("enterprise_yearly").getValue();
+      const newPlanId = PlanId.create("enterprise_yearly" as string).getValue();
 
       const result = subscription.changePlan(newPlanId);
 

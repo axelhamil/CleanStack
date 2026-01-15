@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@packages/ui/components/ui/form";
 import { Input } from "@packages/ui/components/ui/input";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -111,10 +112,26 @@ export function LoginForm() {
           className="w-full"
           disabled={isPending}
         >
-          {isPending ? "Signing in..." : "Sign In"}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign In"
+          )}
         </BrutalistButton>
       </form>
       <p className="text-sm text-muted-foreground text-center mt-4">
+        Forgot your password?{" "}
+        <Link
+          href="/forgot-password"
+          className="font-bold underline hover:no-underline"
+        >
+          Reset it
+        </Link>
+      </p>
+      <p className="text-sm text-muted-foreground text-center mt-2">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"

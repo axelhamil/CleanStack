@@ -17,8 +17,8 @@ const subscriptionStatusSchema = z.enum(
   `Status must be one of: ${subscriptionStatusValues.join(", ")}`,
 );
 
-export class SubscriptionStatus extends ValueObject<SubscriptionStatusValue> {
-  protected validate(value: string): Result<SubscriptionStatusValue> {
+export class SubscriptionStatus extends ValueObject<string> {
+  protected validate(value: string): Result<string> {
     const result = subscriptionStatusSchema.safeParse(value);
 
     if (!result.success) {

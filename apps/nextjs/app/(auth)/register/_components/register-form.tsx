@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@packages/ui/components/ui/form";
 import { Input } from "@packages/ui/components/ui/input";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -133,7 +134,14 @@ export function RegisterForm() {
           className="w-full"
           disabled={isPending}
         >
-          {isPending ? "Creating account..." : "Create Account"}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create Account"
+          )}
         </BrutalistButton>
       </form>
       <p className="text-sm text-muted-foreground text-center mt-4">
