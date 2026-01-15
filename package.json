@@ -20,6 +20,7 @@
     "fix": "biome check --write .",
     "ci:check": "biome ci .",
     "check:duplication": "jscpd ./packages ./apps/nextjs/src",
+    "check:unused": "knip",
     "clean": "turbo clean && rm -rf node_modules",
     "type-check": "turbo type-check",
     "test": "turbo test",
@@ -34,6 +35,7 @@
     "@biomejs/biome": "^2.3.10",
     "husky": "^9.1.7",
     "jscpd": "^4.0.7",
+    "knip": "^5.81.0",
     "turbo": "latest"
   },
   "packageManager": "pnpm@10.26.2",

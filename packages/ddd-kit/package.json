@@ -14,12 +14,11 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@packages/drizzle": "workspace:*",
-    "zod": "^4.2.1"
+    "@packages/drizzle": "workspace:*"
   },
   "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
     "@packages/test": "workspace:*",
+    "@packages/typescript-config": "workspace:*",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }

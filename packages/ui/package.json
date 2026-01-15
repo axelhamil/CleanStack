@@ -14,10 +14,6 @@
   "exports": {
     "./globals.css": "./src/styles/globals.css",
     "./libs/*": "./src/libs/*",
-    "./hooks/*": [
-      "./src/hooks/*.ts",
-      "./src/hooks/*.tsx"
-    ],
     "./components/*": "./src/components/*.tsx",
     "./components/ui/*": "./src/components/ui/*.tsx",
     "./index": "./src/index.ts"

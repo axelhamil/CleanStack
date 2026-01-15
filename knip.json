@@ -1,0 +1,43 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreWorkspaces": ["apps/expo"],
+  "workspaces": {
+    "apps/nextjs": {
+      "entry": ["app/**/*.tsx", "src/**/*.ts", "common/**/*.ts"],
+      "project": ["**/*.ts", "**/*.tsx"],
+      "ignore": ["**/*.test.ts", "**/*.spec.ts", "vitest.config.ts"]
+    },
+    "packages/ddd-kit": {
+      "project": ["src/**/*.ts"],
+      "ignore": ["**/*.test.ts", "**/*.spec.ts"]
+    },
+    "packages/drizzle": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/ui": {
+      "entry": ["src/**/*.tsx", "src/**/*.ts"],
+      "project": ["src/**/*.ts", "src/**/*.tsx"]
+    },
+    "packages/test": {
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignore": ["**/vitest.config.ts"],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "tailwindcss-animate",
+    "nuqs",
+    "@packages/test",
+    "vitest",
+    "lucide-react",
+    "sonner",
+    "framer-motion",
+    "@next/env"
+  ],
+  "ignoreBinaries": ["vitest"],
+  "rules": {
+    "unlisted": "off",
+    "unresolved": "off",
+    "optionalPeerDependencies": "off"
+  }
+}

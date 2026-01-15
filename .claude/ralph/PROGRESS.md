@@ -1,7 +1,7 @@
 # Progress Tracker
 
 ## Current Status
-🔴 Not Started
+🟡 In Progress
 
 ## PRD Stats
 - **10 Epics** (E0-E9)
@@ -14,7 +14,7 @@
 
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
-| E0 | Tooling & CI | TOOL-001 to TOOL-006 | 🔴 0/6 |
+| E0 | Tooling & CI | TOOL-001 to TOOL-006 | 🟡 1/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🔴 0/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
@@ -30,20 +30,20 @@
 ## Current Story
 
 **Epic**: E0 - Tooling & CI
-**Story**: TOOL-001 - jscpd (code duplication)
-**File**: `.claude/ralph/prd/stories/TOOL-001-jscpd.md`
+**Story**: TOOL-002 - knip (unused code detection)
+**File**: `.claude/ralph/prd/stories/TOOL-002-knip.md`
 
 ---
 
 ## Completed Stories
 
-(none yet)
+- [x] TOOL-001 - jscpd (code duplication) - 136737f
 
 ---
 
 ## Commits Log
 
-(commits will be logged here)
+- `136737f` - feat(tooling): add jscpd for code duplication detection
 
 ---
 
@@ -62,7 +62,7 @@ None
 - Adapters: 0% → 80%
 
 ### Code Quality
-- Duplication: ? → < 3%
+- Duplication: 2.18% ✅ (target < 3%)
 - Unused code: ? → 0
 - Lint errors: ? → 0
 
