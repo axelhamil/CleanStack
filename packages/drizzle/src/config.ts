@@ -4,16 +4,27 @@ import type { ExtractTablesWithRelations } from "drizzle-orm/relations";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL;
+let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
+function getDb(): ReturnType<typeof drizzle<typeof schema>> {
+  if (!_db) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error("DATABASE_URL is not set");
+    }
+    const pool = new Pool({ connectionString });
+    _db = drizzle(pool, { schema });
+  }
+  return _db;
 }
 
-const pool = new Pool({ connectionString });
-export const db = drizzle(pool, { schema });
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(_target, prop) {
+    return Reflect.get(getDb(), prop);
+  },
+});
 
-export type DbClient = typeof db;
+export type DbClient = ReturnType<typeof drizzle<typeof schema>>;
 
 export type Transaction = NodePgTransaction<
   typeof schema,

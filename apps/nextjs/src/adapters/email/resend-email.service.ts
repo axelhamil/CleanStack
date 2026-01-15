@@ -6,22 +6,29 @@ import type {
 } from "@/application/ports/email.service.port";
 
 export class ResendEmailService implements IEmailService {
-  private resend: Resend;
-  private fromAddress: string;
+  private _resend: Resend | null = null;
+  private _fromAddress: string | null = null;
 
-  constructor() {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      throw new Error("RESEND_API_KEY is not configured");
+  private getResend(): Resend {
+    if (!this._resend) {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        throw new Error("RESEND_API_KEY is not configured");
+      }
+      this._resend = new Resend(apiKey);
     }
+    return this._resend;
+  }
 
-    const fromAddress = process.env.EMAIL_FROM;
-    if (!fromAddress) {
-      throw new Error("EMAIL_FROM is not configured");
+  private getFromAddress(): string {
+    if (!this._fromAddress) {
+      const fromAddress = process.env.EMAIL_FROM;
+      if (!fromAddress) {
+        throw new Error("EMAIL_FROM is not configured");
+      }
+      this._fromAddress = fromAddress;
     }
-
-    this.resend = new Resend(apiKey);
-    this.fromAddress = fromAddress;
+    return this._fromAddress;
   }
 
   async send(params: SendEmailParams): Promise<Result<void>> {
@@ -30,8 +37,8 @@ export class ResendEmailService implements IEmailService {
         return Result.fail("Email must have either html or text content");
       }
 
-      const { error } = await this.resend.emails.send({
-        from: this.fromAddress,
+      const { error } = await this.getResend().emails.send({
+        from: this.getFromAddress(),
         to: params.to,
         subject: params.subject,
         html: params.html ?? "",
