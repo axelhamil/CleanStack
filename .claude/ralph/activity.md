@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 22/65
-**Current Task:** [TDD] Write StreamCompletionUseCase tests FIRST
+**Tasks Completed:** 23/65
+**Current Task:** [IMPL] Implement StreamCompletionUseCase (GREEN)
 
 ---
 
@@ -620,4 +620,39 @@ const role = message.get("role");
 - No regressions on existing tests
 - Type check passes
 - Ready for Task 23 (StreamCompletionUseCase TDD RED)
+
+### 2026-01-15 - Task 23: [TDD] Write StreamCompletionUseCase tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, implementation pending)
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/stream-completion-use-case.test.ts` (~25 tests)
+  - Happy path tests (4 tests): ReadableStream return, model selection, variable substitution, system prompt
+  - Cost tracking tests (3 tests): usage recording after stream completes, cost calculation, event dispatch
+  - Cancellation tests (2 tests): graceful cancellation handling, partial stream handling
+  - Error propagation tests (6 tests): empty prompt, whitespace prompt, model selection failure, config not found, provider error, stream errors
+  - Budget check tests (3 tests): budget validation, budget exceeded, skip budget without userId
+  - Options handling tests (2 tests): temperature, maxTokens
+
+**Test Infrastructure:**
+- createMockStream() helper for creating test ReadableStreams
+- createMockStreamResponse() helper for IStreamTextResponse with usage Promise
+- Mock setup for ILLMProvider.streamText() returning IStreamTextResponse
+
+**Key Differences from SendCompletionUseCase:**
+- Returns ReadableStream<string> instead of content string
+- Usage is a Promise that resolves when stream completes
+- Tests consume stream to trigger completion and verify usage recording
+- Tests cover stream cancellation and error propagation scenarios
+
+**Commands Run:**
+- `pnpm test` - FAILED as expected (RED phase)
+  - Error: "Cannot find package '@/application/use-cases/llm/stream-completion.use-case'"
+
+**Verification:**
+- Tests written first following TDD workflow
+- Tests fail because StreamCompletionUseCase doesn't exist yet
+- Ready for GREEN phase (Task 24)
 
