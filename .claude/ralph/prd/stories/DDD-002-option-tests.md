@@ -8,15 +8,15 @@
 
 ## Acceptance Criteria
 
-- [ ] Test `Option.some(value)` - creates Some
-- [ ] Test `Option.none()` - creates None
-- [ ] Test `Option.fromNullable()` - Some if value, None if null/undefined
-- [ ] Test `isSome()` / `isNone()` methods
-- [ ] Test `unwrap()` - throws on None
-- [ ] Test `unwrapOr(default)` - returns default on None
-- [ ] Test `map()` / `flatMap()` transformations
-- [ ] Test `match()` pattern matching
-- [ ] Coverage > 95% on Option.ts
+- [x] Test `Option.some(value)` - creates Some
+- [x] Test `Option.none()` - creates None
+- [x] Test `Option.fromNullable()` - Some if value, None if null/undefined
+- [x] Test `isSome()` / `isNone()` methods
+- [x] Test `unwrap()` - throws on None
+- [x] Test `unwrapOr(default)` - returns default on None
+- [x] Test `map()` / `flatMap()` transformations
+- [x] Test `match()` pattern matching
+- [x] Coverage > 95% on Option.ts (100%)
 
 ## Test Cases
 
@@ -107,6 +107,6 @@ describe('Option', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass (56 tests)
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered
