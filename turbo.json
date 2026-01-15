@@ -40,9 +40,7 @@
       "cache": false
     },
     "type-check": {
-      "dependsOn": ["^db:generate"],
-      "outputs": ["next-env.d.ts", ".next/types/**"],
-      "env": ["DATABASE_URL"]
+      "outputs": ["next-env.d.ts", ".next/types/**"]
     },
     "format": {
       "outputs": []
