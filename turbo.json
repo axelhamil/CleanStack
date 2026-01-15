@@ -40,6 +40,7 @@
       "cache": false
     },
     "type-check": {
+      "dependsOn": ["^build"],
       "outputs": ["next-env.d.ts", ".next/types/**"]
     },
     "format": {
