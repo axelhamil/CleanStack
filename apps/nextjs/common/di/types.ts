@@ -1,4 +1,5 @@
 import type { IAuthProvider } from "@/application/ports/auth.service.port";
+import type { IEmailService } from "@/application/ports/email.service.port";
 import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { IPaymentProvider } from "@/application/ports/payment.provider.port";
 import type { ISubscriptionRepository } from "@/application/ports/subscription.repository.port";
@@ -17,6 +18,7 @@ export const DI_SYMBOLS = {
   ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
   IAuthProvider: Symbol.for("IAuthProvider"),
   IPaymentProvider: Symbol.for("IPaymentProvider"),
+  IEmailService: Symbol.for("IEmailService"),
   IEventDispatcher: Symbol.for("IEventDispatcher"),
   SignInUseCase: Symbol.for("SignInUseCase"),
   SignUpUseCase: Symbol.for("SignUpUseCase"),
@@ -33,6 +35,7 @@ export interface DI_RETURN_TYPES {
   ISubscriptionRepository: ISubscriptionRepository;
   IAuthProvider: IAuthProvider;
   IPaymentProvider: IPaymentProvider;
+  IEmailService: IEmailService;
   IEventDispatcher: IEventDispatcher;
   SignInUseCase: SignInUseCase;
   SignUpUseCase: SignUpUseCase;
