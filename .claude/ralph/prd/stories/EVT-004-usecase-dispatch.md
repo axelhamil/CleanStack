@@ -8,10 +8,10 @@
 
 ## Acceptance Criteria
 
-- [ ] Events dispatched AFTER `repository.save()` succeeds
-- [ ] Events collected from aggregate
-- [ ] Aggregate events cleared after dispatch
-- [ ] Pattern documented in CLAUDE.md
+- [x] Events dispatched AFTER `repository.save()` succeeds
+- [x] Events collected from aggregate
+- [x] Aggregate events cleared after dispatch
+- [ ] Pattern documented in CLAUDE.md (defer to DOC stories)
 
 ## Technical Notes
 
@@ -83,6 +83,8 @@ UseCase approach is preferred because:
 
 ## Definition of Done
 
-- [ ] Pattern implemented in SignUpUseCase
-- [ ] Pattern documented
-- [ ] Tests verify events dispatched
+- [x] Pattern implemented in SignUpUseCase
+- [x] Pattern implemented in VerifyEmailUseCase
+- [x] DI container setup with events module
+- [x] Handler registration at startup
+- [x] Tests verify events dispatched (6 tests)

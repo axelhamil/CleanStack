@@ -26,6 +26,7 @@ export const createAuthModule = () => {
     .toClass(SignUpUseCase, [
       DI_SYMBOLS.IUserRepository,
       DI_SYMBOLS.IAuthProvider,
+      DI_SYMBOLS.IEventDispatcher,
     ]);
 
   authModule
@@ -41,6 +42,7 @@ export const createAuthModule = () => {
     .toClass(VerifyEmailUseCase, [
       DI_SYMBOLS.IUserRepository,
       DI_SYMBOLS.IAuthProvider,
+      DI_SYMBOLS.IEventDispatcher,
     ]);
 
   return authModule;

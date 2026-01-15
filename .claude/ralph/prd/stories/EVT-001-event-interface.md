@@ -8,10 +8,10 @@
 
 ## Acceptance Criteria
 
-- [ ] `IDomainEvent` interface defined in ddd-kit
-- [ ] Properties: `dateOccurred`, `eventType`, `aggregateId`
-- [ ] Generic type for payload
-- [ ] Exported from ddd-kit
+- [x] `IDomainEvent` interface defined in ddd-kit
+- [x] Properties: `dateOccurred`, `eventType`, `aggregateId`
+- [x] Generic type for payload
+- [x] Exported from ddd-kit
 
 ## Technical Notes
 
@@ -58,6 +58,7 @@ export class UserCreatedEvent extends DomainEvent<{
 
 ## Definition of Done
 
-- [ ] Interface implemented
-- [ ] Exported from ddd-kit
-- [ ] Example event created
+- [x] Interface implemented
+- [x] Exported from ddd-kit
+- [x] Example event created (BaseDomainEvent with typed payload)
+- [x] Tests written (10 tests in domainevent.test.ts)

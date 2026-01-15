@@ -1,5 +1,6 @@
 // Core
 export * from "./core/Aggregate";
+export * from "./core/DomainEvent";
 export * from "./core/DomainEvents";
 export * from "./core/Entity";
 export * from "./core/Option";

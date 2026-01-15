@@ -16,7 +16,7 @@
 |------|-------------|---------|--------|
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
-| E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
+| E2 | Domain Events | EVT-001 to EVT-006 | 🟡 4/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | 🔴 0/4 |
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E2 - Domain Events
-**Story**: EVT-001 - (next story)
-**File**: `.claude/ralph/prd/stories/`
+**Story**: EVT-005 - User Domain Events
+**File**: `.claude/ralph/prd/stories/EVT-005-user-events.md`
 
 ---
 
@@ -56,6 +56,12 @@
 - [x] DDD-008 - DomainEvents tests (92% coverage)
 - [x] DDD-009 - BaseRepository tests (30 tests)
 - [x] DDD-010 - npm package setup (tsup, README, CHANGELOG)
+
+### E2 - Domain Events 🟡
+- [x] EVT-001 - IDomainEvent<T> interface + BaseDomainEvent + tests (10 tests)
+- [x] EVT-002 - IEventDispatcher port + InMemoryEventDispatcher + tests (25 tests)
+- [x] EVT-003 - IEventHandler interface + LogUserCreatedHandler + tests (3 tests)
+- [x] EVT-004 - UseCase Event Dispatch + DI setup + tests (6 tests)
 
 ---
 

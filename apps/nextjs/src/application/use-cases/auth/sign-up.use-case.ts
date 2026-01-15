@@ -7,6 +7,7 @@ import type {
   AuthResponse,
   IAuthProvider,
 } from "@/application/ports/auth.service.port";
+import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { IUserRepository } from "@/application/ports/user.repository.port";
 import { User } from "@/domain/user/user.aggregate";
 import { Email } from "@/domain/user/value-objects/email.vo";
@@ -19,6 +20,7 @@ export class SignUpUseCase
   constructor(
     private readonly userRepo: IUserRepository,
     private readonly authProvider: IAuthProvider,
+    private readonly eventDispatcher: IEventDispatcher,
   ) {}
 
   async execute(input: ISignUpInputDto): Promise<Result<ISignUpOutputDto>> {
@@ -43,6 +45,9 @@ export class SignUpUseCase
       passwordResult.getValue(),
     );
     if (authResult.isFailure) return Result.fail(authResult.getError());
+
+    await this.eventDispatcher.dispatchAll(user.domainEvents);
+    user.clearEvents();
 
     return Result.ok(this.toDto(authResult.getValue()));
   }

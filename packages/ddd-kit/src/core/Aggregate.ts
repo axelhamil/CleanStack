@@ -1,4 +1,5 @@
-import { type DomainEvent, DomainEvents } from "./DomainEvents";
+import type { IDomainEvent } from "./DomainEvent";
+import { DomainEvents } from "./DomainEvents";
 import { Entity } from "./Entity";
 import { Result } from "./Result";
 import type { UUID } from "./UUID";
@@ -11,7 +12,7 @@ export interface IAggregate {
   /**
    * List of domain events associated with this aggregate.
    */
-  readonly domainEvents: DomainEvent[];
+  readonly domainEvents: IDomainEvent[];
   /**
    * Clears all domain events from the aggregate.
    */
@@ -28,7 +29,7 @@ export interface IAggregate {
  * @template T The type of properties for the aggregate.
  */
 export abstract class Aggregate<T> extends Entity<T> implements IAggregate {
-  private _domainEvents: DomainEvent[] = [];
+  private _domainEvents: IDomainEvent[] = [];
 
   /**
    * Creates a new Aggregate instance.
@@ -42,7 +43,7 @@ export abstract class Aggregate<T> extends Entity<T> implements IAggregate {
   /**
    * Returns a copy of the domain events associated with this aggregate.
    */
-  public get domainEvents(): DomainEvent[] {
+  public get domainEvents(): IDomainEvent[] {
     return [...this._domainEvents];
   }
 
@@ -58,7 +59,7 @@ export abstract class Aggregate<T> extends Entity<T> implements IAggregate {
    * @param event The domain event to add.
    * @returns Result indicating success or failure of registration.
    */
-  protected addEvent(event: DomainEvent): Result<void> {
+  protected addEvent(event: IDomainEvent): Result<void> {
     this._domainEvents.push(event);
     return DomainEvents.registerEvent(this._id.value.toString(), event);
   }
@@ -67,7 +68,7 @@ export abstract class Aggregate<T> extends Entity<T> implements IAggregate {
    * Adds a domain event to the aggregate (alias for addEvent).
    * @param event The domain event to add.
    */
-  protected addDomainEvent(event: DomainEvent): void {
+  protected addDomainEvent(event: IDomainEvent): void {
     this.addEvent(event);
   }
 
@@ -107,7 +108,7 @@ export abstract class Aggregate<T> extends Entity<T> implements IAggregate {
    * Adds multiple domain events to the aggregate.
    * @param events Array of domain events to add.
    */
-  protected addEvents(events: DomainEvent[]): void {
+  protected addEvents(events: IDomainEvent[]): void {
     for (const event of events) {
       this.addEvent(event);
     }

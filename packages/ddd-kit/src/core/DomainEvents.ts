@@ -1,24 +1,6 @@
+import type { IDomainEvent } from "./DomainEvent";
 import { None, type Option, Some } from "./Option";
 import { Result } from "./Result";
-
-/**
- * Represents a domain event in the system.
- * Domain events capture something that happened in the domain that is important to the business.
- */
-export interface DomainEvent {
-  /**
-   * The type or name of the event.
-   */
-  type: string;
-  /**
-   * The date and time when the event occurred.
-   */
-  dateTimeOccurred: Date;
-  /**
-   * The identifier of the aggregate associated with this event.
-   */
-  aggregateId: string;
-}
 
 /**
  * Enum for possible errors related to domain event handling.
@@ -31,29 +13,20 @@ export enum DomainEventError {
   UNSUBSCRIPTION_FAILED = "UNSUBSCRIPTION_FAILED",
 }
 
-/**
- * Interface for event handler classes that handle domain events.
- * @template T The type of domain event handled.
- */
-export interface IEventHandler<T extends DomainEvent> {
-  /**
-   * Handles the given domain event.
-   * @param event The event to handle.
-   * @returns A Result or Promise<Result> indicating success or failure.
-   */
-  handle(event: T): Promise<Result<void>> | Result<void>;
-}
-
-type EventHandler<T extends DomainEvent> = (
+type EventHandler<T extends IDomainEvent = IDomainEvent> = (
   event: T,
 ) => Promise<Result<void>> | Result<void>;
 
-type EventHandlers<T extends DomainEvent = DomainEvent> = {
-  [key: string]: EventHandler<T>[];
+type EventHandlers = {
+  [key: string]: EventHandler[];
 };
 
-type Events = { [id: string]: DomainEvent[] };
+type Events = { [id: string]: IDomainEvent[] };
 
+/**
+ * Static domain events dispatcher.
+ * Use for simple event dispatch without DI.
+ */
 export class DomainEvents {
   private static eventHandlers: EventHandlers = {};
   private static events: Events = {};
@@ -74,7 +47,7 @@ export class DomainEvents {
     }
   }
 
-  public static subscribe<T extends DomainEvent>(
+  public static subscribe<T extends IDomainEvent>(
     eventType: string,
     listener: EventHandler<T>,
   ): Result<void> {
@@ -83,9 +56,7 @@ export class DomainEvents {
         DomainEvents.eventHandlers[eventType] = [];
       }
 
-      DomainEvents.eventHandlers[eventType].push(
-        listener as EventHandler<DomainEvent>,
-      );
+      DomainEvents.eventHandlers[eventType].push(listener as EventHandler);
 
       return Result.ok();
     } catch (_error) {
@@ -95,7 +66,7 @@ export class DomainEvents {
 
   public static unsubscribe(
     eventType: string,
-    listener: EventHandler<DomainEvent>,
+    listener: EventHandler,
   ): Result<void> {
     try {
       const handlers = DomainEvents.eventHandlers[eventType];
@@ -118,7 +89,7 @@ export class DomainEvents {
 
   public static registerEvent(
     entityId: string,
-    event: DomainEvent,
+    event: IDomainEvent,
   ): Result<void> {
     try {
       if (!DomainEvents.events[entityId]) {
@@ -143,7 +114,7 @@ export class DomainEvents {
       const dispatchPromises: Promise<Result<void>>[] = [];
 
       for (const event of eventsForEntity) {
-        const listeners = DomainEvents.eventHandlers[event.type] || [];
+        const listeners = DomainEvents.eventHandlers[event.eventType] || [];
 
         for (const listener of listeners) {
           const result = listener(event);
@@ -191,9 +162,9 @@ export class DomainEvents {
     }
   }
 
-  public static getEventsForEntity(entityId: string): Option<DomainEvent[]> {
+  public static getEventsForEntity(entityId: string): Option<IDomainEvent[]> {
     const events = DomainEvents.events[entityId];
-    return events ? Some.of(events) : None.of<DomainEvent[]>();
+    return events ? Some.of(events) : None.of<IDomainEvent[]>();
   }
 
   public static clearEvents(): void {

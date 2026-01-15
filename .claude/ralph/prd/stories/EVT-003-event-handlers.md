@@ -8,11 +8,11 @@
 
 ## Acceptance Criteria
 
-- [ ] `IEventHandler<T>` interface defined
-- [ ] One handler per side effect
-- [ ] Handlers registered at app startup
-- [ ] Handlers can be async
-- [ ] Example: `SendWelcomeEmailOnUserCreated`
+- [x] `IEventHandler<T>` interface defined
+- [x] One handler per side effect
+- [x] Handlers registered at app startup (EVT-004)
+- [x] Handlers can be async
+- [x] Example: `LogUserCreatedHandler` (email handler will come with FTR-014)
 
 ## Technical Notes
 
@@ -68,6 +68,7 @@ export function registerEventHandlers(dispatcher: IEventDispatcher) {
 
 ## Definition of Done
 
-- [ ] Handler interface created
-- [ ] Example handler implemented
-- [ ] Registration pattern documented
+- [x] Handler interface created
+- [x] Example handler implemented (LogUserCreatedHandler)
+- [x] Registration pattern documented (EVT-004)
+- [x] Tests pass (3 tests)

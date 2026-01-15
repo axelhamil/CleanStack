@@ -1,12 +1,12 @@
-import type { DomainEvent } from "@packages/ddd-kit";
+import { BaseDomainEvent } from "@packages/ddd-kit";
 
-export class UserVerifiedEvent implements DomainEvent {
-  public readonly type = "UserVerified";
-  public readonly dateTimeOccurred: Date;
-  public readonly aggregateId: string;
+export class UserVerifiedEvent extends BaseDomainEvent<void> {
+  readonly eventType = "user.verified";
+  readonly aggregateId: string;
+  readonly payload: void = undefined;
 
   constructor(userId: string) {
+    super();
     this.aggregateId = userId;
-    this.dateTimeOccurred = new Date();
   }
 }

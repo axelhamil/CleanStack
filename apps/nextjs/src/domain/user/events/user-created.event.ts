@@ -1,16 +1,18 @@
-import type { DomainEvent } from "@packages/ddd-kit";
+import { BaseDomainEvent } from "@packages/ddd-kit";
 
-export class UserCreatedEvent implements DomainEvent {
-  public readonly type = "UserCreated";
-  public readonly dateTimeOccurred: Date;
-  public readonly aggregateId: string;
+interface UserCreatedPayload {
+  email: string;
+  name: string;
+}
 
-  constructor(
-    userId: string,
-    public readonly email: string,
-    public readonly name: string,
-  ) {
+export class UserCreatedEvent extends BaseDomainEvent<UserCreatedPayload> {
+  readonly eventType = "user.created";
+  readonly aggregateId: string;
+  readonly payload: UserCreatedPayload;
+
+  constructor(userId: string, email: string, name: string) {
+    super();
     this.aggregateId = userId;
-    this.dateTimeOccurred = new Date();
+    this.payload = { email, name };
   }
 }

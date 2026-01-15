@@ -8,13 +8,13 @@
 
 ## Acceptance Criteria
 
-- [ ] `IEventDispatcher` interface defined
-- [ ] `InMemoryEventDispatcher` implementation
-- [ ] Subscribe by event type
-- [ ] Dispatch single event
-- [ ] Dispatch all events from aggregate
-- [ ] Handlers execute in order
-- [ ] Error in one handler doesn't break others
+- [x] `IEventDispatcher` interface defined
+- [x] `InMemoryEventDispatcher` implementation
+- [x] Subscribe by event type
+- [x] Dispatch single event
+- [x] Dispatch all events from aggregate
+- [x] Handlers execute in order
+- [x] Error in one handler doesn't break others
 
 ## Technical Notes
 
@@ -64,6 +64,6 @@ export class InMemoryEventDispatcher implements IEventDispatcher {
 
 ## Definition of Done
 
-- [ ] Interface and implementation created
-- [ ] Registered in DI container
-- [ ] Tests pass
+- [x] Interface and implementation created
+- [ ] Registered in DI container (will be done in EVT-004)
+- [x] Tests pass (25 tests)

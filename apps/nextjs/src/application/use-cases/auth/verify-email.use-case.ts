@@ -1,6 +1,7 @@
 import { match, Result, type UseCase, UUID } from "@packages/ddd-kit";
 import type { IVerifyEmailInputDto } from "@/application/dto/verify-email.dto";
 import type { IAuthProvider } from "@/application/ports/auth.service.port";
+import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { IUserRepository } from "@/application/ports/user.repository.port";
 import type { User } from "@/domain/user/user.aggregate";
 import { UserId } from "@/domain/user/user-id";
@@ -9,6 +10,7 @@ export class VerifyEmailUseCase implements UseCase<IVerifyEmailInputDto, void> {
   constructor(
     private readonly userRepo: IUserRepository,
     private readonly authProvider: IAuthProvider,
+    private readonly eventDispatcher: IEventDispatcher,
   ) {}
 
   async execute(input: IVerifyEmailInputDto): Promise<Result<void>> {
@@ -26,6 +28,9 @@ export class VerifyEmailUseCase implements UseCase<IVerifyEmailInputDto, void> {
 
     const updateResult = await this.userRepo.update(user);
     if (updateResult.isFailure) return Result.fail(updateResult.getError());
+
+    await this.eventDispatcher.dispatchAll(user.domainEvents);
+    user.clearEvents();
 
     await this.authProvider.verifyEmail(input.userId);
 
