@@ -100,6 +100,10 @@ const navSections = [
         label: "Authentication",
       },
       {
+        href: "/docs/guides/dashboard",
+        label: "Dashboard & Protected",
+      },
+      {
         href: "/docs/guides/first-use-case",
         label: "Your First Use Case",
       },
