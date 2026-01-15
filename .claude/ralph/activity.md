@@ -5,7 +5,7 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 3/57
+**Tasks Completed:** 4/57
 **Current Task:** None
 
 ---
@@ -95,6 +95,21 @@
 - Created `src/domain/llm/conversation/conversation-id.ts`
 - Extended UUID from ddd-kit
 - Added static create() method following UserId pattern
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- Type check passes
+
+### 2026-01-15 - Task 4: Implement Conversation value objects
+
+**Completed:** ✅
+
+**Changes:**
+- Created `ConversationTitle` VO (1-200 chars, trimmed)
+- Created `ConversationMetadata` VO (JSON object, nullable)
+- Both use Zod validation
 
 **Commands Run:**
 - `pnpm type-check` - PASSED

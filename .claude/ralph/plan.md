@@ -71,7 +71,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Add Zod validation to each VO",
       "Verify with pnpm type-check"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain",
