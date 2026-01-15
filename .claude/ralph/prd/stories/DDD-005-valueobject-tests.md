@@ -8,13 +8,13 @@
 
 ## Acceptance Criteria
 
-- [ ] Test successful creation with valid value
-- [ ] Test failed creation with invalid value
-- [ ] Test `value` getter
-- [ ] Test validation via Result
-- [ ] Test equality by value (not reference)
-- [ ] Test immutability
-- [ ] Coverage > 95% on ValueObject.ts
+- [x] Test successful creation with valid value
+- [x] Test failed creation with invalid value
+- [x] Test `value` getter
+- [x] Test validation via Result
+- [x] Test equality by value (not reference)
+- [x] Test immutability
+- [x] Coverage > 95% on ValueObject.ts (100%)
 
 ## Test Cases
 
@@ -103,6 +103,6 @@ describe('ValueObject', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass (28 tests)
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered
