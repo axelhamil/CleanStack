@@ -13,7 +13,8 @@
       "@/application/*": ["./src/application/*"],
       "@/adapters/*": ["./src/adapters/*"],
       "@/shared/*": ["./src/shared/*"],
-      "@/common/*": ["./common/*"]
+      "@/common/*": ["./common/*"],
+      "@/emails/*": ["./emails/*"]
     }
   },
   "include": [
