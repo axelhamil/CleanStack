@@ -5,7 +5,7 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 4/57
+**Tasks Completed:** 5/57
 **Current Task:** None
 
 ---
@@ -110,6 +110,24 @@
 - Created `ConversationTitle` VO (1-200 chars, trimmed)
 - Created `ConversationMetadata` VO (JSON object, nullable)
 - Both use Zod validation
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- Type check passes
+
+### 2026-01-15 - Task 5: Implement Message entity
+
+**Completed:** ✅
+
+**Changes:**
+- Created `MessageId` in entities/message-id.ts
+- Created `MessageRole` VO (enum: user, assistant, system)
+- Created `MessageContent` VO (non-empty string)
+- Created `TokenUsage` VO (inputTokens, outputTokens, totalTokens)
+- Created `Cost` VO (amount, currency)
+- Created `Message` entity with all properties
 
 **Commands Run:**
 - `pnpm type-check` - PASSED

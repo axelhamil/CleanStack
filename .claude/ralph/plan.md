@@ -85,7 +85,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Create Message entity with all properties",
       "Verify with pnpm type-check"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain",
