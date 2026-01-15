@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 24/65
-**Current Task:** [TDD] Write SendChatMessageUseCase tests FIRST
+**Tasks Completed:** 25/65
+**Current Task:** [IMPL] Implement SendChatMessageUseCase (GREEN)
 
 ---
 
@@ -704,4 +704,42 @@ const role = message.get("role");
 - No regressions on existing tests
 - Type check passes
 - Ready for Task 25 (SendChatMessageUseCase TDD RED)
+
+### 2026-01-15 - Task 25: [TDD] Write SendChatMessageUseCase tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, implementation pending)
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/send-chat-message-use-case.test.ts` (~30 tests)
+  - Happy path - new conversation (4 tests): creates conversation, creates user/assistant messages, records usage
+  - Happy path - existing conversation (2 tests): uses existing conversation, includes history
+  - Ownership verification (2 tests): validates userId matches conversation, rejects unauthorized access
+  - Usage tracking (3 tests): records usage, dispatches events, calculates cost correctly
+  - Budget checks (2 tests): validates budget, returns error when exceeded
+  - System prompt (1 test): includes system prompt in messages
+  - Error handling (6 tests): validation, repository errors, provider errors, model selection
+  - Provider selection (1 test): selects optimal model using capabilities and strategy
+
+**Mocks Created:**
+- mockLLMProvider (ILLMProvider)
+- mockModelRouter (IModelRouter)
+- mockConversationRepository (IConversationRepository)
+- mockMessageRepository (IMessageRepository)
+- mockUsageRepository (ILLMUsageRepository)
+- mockEventDispatcher (IEventDispatcher)
+
+**Test Helpers:**
+- createMockConversation(userId, id?) - creates Conversation aggregate
+- createMockMessage(conversationId, role, content) - creates Message entity
+
+**Commands Run:**
+- `pnpm test` - FAILED as expected (RED phase)
+  - Error: "Cannot find package '@/application/use-cases/llm/send-chat-message.use-case'"
+
+**Verification:**
+- Tests written first following TDD workflow
+- Tests fail because SendChatMessageUseCase doesn't exist yet
+- Ready for GREEN phase (Task 26)
 
