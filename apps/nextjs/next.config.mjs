@@ -3,11 +3,16 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   transpilePackages: ["@packages/ui", "@packages/drizzle", "@packages/ddd-kit"],
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  images: {
+    remotePatterns: [
+      { hostname: "avatars.githubusercontent.com" },
+      { hostname: "lh3.googleusercontent.com" },
+    ],
+  },
   webpack: (config) => {
-    // Prioritize .web.tsx over .tsx for web platform
-    // Order: .web.tsx -> .tsx -> .ts -> .js
     config.resolve.extensions = [
       ".web.tsx",
       ".web.ts",
