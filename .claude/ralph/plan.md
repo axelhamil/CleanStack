@@ -49,7 +49,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Export from packages/drizzle/src/schema/index.ts",
       "Run pnpm db:push"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain",

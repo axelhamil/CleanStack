@@ -5,7 +5,7 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 1/57
+**Tasks Completed:** 2/57
 **Current Task:** None
 
 ---
@@ -14,11 +14,11 @@
 
 | Category | Status |
 |----------|--------|
-| Setup | 🔄 In Progress |
+| Setup | ✅ Complete |
 | Domain | ⏳ Pending |
 | Application | ⏳ Pending |
 | Adapters | ⏳ Pending |
-| Infrastructure | ⏳ Pending |
+| Infrastructure | 🔄 In Progress |
 | UI | ⏳ Pending |
 | Testing | ⏳ Pending |
 | Verification | ⏳ Pending |
@@ -66,4 +66,24 @@
 **Verification:**
 - All directories created successfully
 - Type check passes
+
+### 2026-01-15 - Task 2: Add LLM database schema
+
+**Completed:** ✅
+
+**Changes:**
+- Schema already existed in `packages/drizzle/src/schema/llm.ts`
+- Verified enums: messageRoleEnum, providerEnum, environmentEnum
+- Verified tables: conversation, message, managedPrompt, llmUsage
+- All indexes defined for userId+createdAt, provider+model
+- Exported from `packages/drizzle/src/schema/index.ts`
+- Pushed schema to database (already up to date)
+
+**Commands Run:**
+- `pnpm drizzle-kit push` - "No changes detected" (already synced)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- Schema matches PRD requirements
+- Database schema is in sync
 
