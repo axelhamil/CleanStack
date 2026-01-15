@@ -75,3 +75,6 @@
 **/.DS_Store
 **/*.swp
 **/*.swo
+
+# Local plugin settings
+**/*.local.md
