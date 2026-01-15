@@ -21,7 +21,7 @@
 | E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
-| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 8/17 |
+| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 11/17 |
 | E6 | Docs & Release | REL-001 to REL-006 | 🔴 0/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | 🔴 0/5 |
 
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E8 - Starter Features
-**Story**: FTR-008 - Subscription Management
-**File**: `.claude/ralph/prd/stories/FTR-008-subscription-management.md`
+**Story**: FTR-011 - Dashboard Layout
+**File**: `.claude/ralph/prd/stories/FTR-011-dashboard-layout.md`
 
 ---
 
@@ -105,7 +105,10 @@
 - [x] FTR-004 - Billing Domain (Subscription aggregate, VOs, events, repo port, 61 tests) - e857147
 - [x] FTR-005 - Stripe Provider (IPaymentProvider port, StripePaymentProvider, tests) - c8d5673
 - [x] FTR-006 - Stripe Checkout (CreateCheckoutSessionUseCase, API, success page, 7 tests) - 697761a
-- [x] FTR-007 - Stripe Webhooks (HandleStripeWebhookUseCase, webhook API, 10 tests)
+- [x] FTR-007 - Stripe Webhooks (HandleStripeWebhookUseCase, webhook API, 10 tests) - b99785e
+- [x] FTR-008 - Customer Portal (CreatePortalSessionUseCase, portal API, settings page, 9 tests) - e8ea83e
+- [x] FTR-009 - Pricing Components (BrutalistPricingCard, Toggle, Table) - 8bc4f04
+- [x] FTR-010 - Pricing Page (/pricing with checkout integration) - 81521a8
 
 ---
 
@@ -124,6 +127,11 @@
 - `a1db840` - feat(auth): add google and github oauth providers
 - `c8d5673` - feat(billing): add stripe payment provider integration
 - `697761a` - feat(billing): add stripe checkout flow with use case and api
+- `b99785e` - feat(billing): add stripe webhook handling with use case and api
+- `91538c8` - refactor(tests): reorganize tests into domain/application/adapters structure
+- `e8ea83e` - feat(billing): add customer portal for subscription management
+- `8bc4f04` - feat(ui): add brutalist pricing components
+- `81521a8` - feat(pricing): add pricing page with checkout integration
 
 ---
 
