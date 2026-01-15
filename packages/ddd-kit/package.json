@@ -1,5 +1,5 @@
 {
-  "name": "ddd-kit",
+  "name": "@packages/ddd-kit",
   "version": "0.0.0",
   "description": "DDD primitives for TypeScript: Result, Option, Entity, Aggregate, ValueObject",
   "main": "./dist/index.js",

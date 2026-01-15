@@ -5,6 +5,9 @@ import { defineConfig, mergeConfig } from "vitest/config";
 export default mergeConfig(
   baseConfig,
   defineConfig({
+    test: {
+      exclude: ["node_modules", "dist", "e2e"],
+    },
     resolve: {
       alias: {
         "@/domain": path.resolve(__dirname, "./src/domain"),
