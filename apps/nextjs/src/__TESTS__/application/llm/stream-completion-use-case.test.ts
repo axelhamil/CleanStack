@@ -13,7 +13,6 @@ import type {
   ISelectedModel,
 } from "@/application/ports/model-router.port";
 import { StreamCompletionUseCase } from "@/application/use-cases/llm/stream-completion.use-case";
-import type { LLMUsage } from "@/domain/llm/usage/llm-usage.aggregate";
 
 describe("StreamCompletionUseCase", () => {
   let useCase: StreamCompletionUseCase;
@@ -41,7 +40,10 @@ describe("StreamCompletionUseCase", () => {
   const defaultSelectedModel: ISelectedModel = {
     provider: "openai",
     model: "gpt-4o-mini",
-    maxBudget: 0.001,
+    estimatedCostPer1kTokens: {
+      input: 0.00015,
+      output: 0.0006,
+    },
   };
 
   const defaultModelConfig: IModelConfig = {
@@ -100,6 +102,11 @@ describe("StreamCompletionUseCase", () => {
     mockEventDispatcher = {
       dispatch: vi.fn().mockResolvedValue(undefined),
       dispatchAll: vi.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      isSubscribed: vi.fn(),
+      getHandlerCount: vi.fn(),
+      clearHandlers: vi.fn(),
     };
 
     useCase = new StreamCompletionUseCase(
@@ -238,11 +245,12 @@ describe("StreamCompletionUseCase", () => {
       mockModelRouter.getModelConfig.mockReturnValue(
         Option.some(defaultModelConfig),
       );
+      mockUsageRepository.getTotalCostByUser.mockResolvedValue(Result.ok(0));
 
-      const streamResponse = createMockStreamResponse(
-        ["Hello", " World"],
-        { inputTokens: 10, outputTokens: 2 },
-      );
+      const streamResponse = createMockStreamResponse(["Hello", " World"], {
+        inputTokens: 10,
+        outputTokens: 2,
+      });
       mockLLMProvider.streamText.mockResolvedValue(Result.ok(streamResponse));
       mockUsageRepository.create.mockResolvedValue(Result.ok({}));
 
@@ -276,11 +284,12 @@ describe("StreamCompletionUseCase", () => {
       mockModelRouter.getModelConfig.mockReturnValue(
         Option.some(defaultModelConfig),
       );
+      mockUsageRepository.getTotalCostByUser.mockResolvedValue(Result.ok(0));
 
-      const streamResponse = createMockStreamResponse(
-        ["Response"],
-        { inputTokens: 1000, outputTokens: 500 },
-      );
+      const streamResponse = createMockStreamResponse(["Response"], {
+        inputTokens: 1000,
+        outputTokens: 500,
+      });
       mockLLMProvider.streamText.mockResolvedValue(Result.ok(streamResponse));
       mockUsageRepository.create.mockResolvedValue(Result.ok({}));
 
@@ -319,11 +328,12 @@ describe("StreamCompletionUseCase", () => {
       mockModelRouter.getModelConfig.mockReturnValue(
         Option.some(defaultModelConfig),
       );
+      mockUsageRepository.getTotalCostByUser.mockResolvedValue(Result.ok(0));
 
-      const streamResponse = createMockStreamResponse(
-        ["Done"],
-        { inputTokens: 10, outputTokens: 1 },
-      );
+      const streamResponse = createMockStreamResponse(["Done"], {
+        inputTokens: 10,
+        outputTokens: 1,
+      });
       mockLLMProvider.streamText.mockResolvedValue(Result.ok(streamResponse));
       mockUsageRepository.create.mockResolvedValue(Result.ok({}));
 
@@ -378,10 +388,17 @@ describe("StreamCompletionUseCase", () => {
       mockModelRouter.getModelConfig.mockReturnValue(
         Option.some(defaultModelConfig),
       );
+      mockUsageRepository.getTotalCostByUser.mockResolvedValue(Result.ok(0));
 
       // Create a stream that won't auto-complete
-      let resolveUsage: (value: { inputTokens: number; outputTokens: number }) => void;
-      const usagePromise = new Promise<{ inputTokens: number; outputTokens: number }>((resolve) => {
+      let resolveUsage: (value: {
+        inputTokens: number;
+        outputTokens: number;
+      }) => void = () => {};
+      const usagePromise = new Promise<{
+        inputTokens: number;
+        outputTokens: number;
+      }>((resolve) => {
         resolveUsage = resolve;
       });
 
@@ -403,7 +420,7 @@ describe("StreamCompletionUseCase", () => {
       await reader.cancel();
 
       // Resolve usage after cancellation to simulate real-world scenario
-      resolveUsage!({ inputTokens: 10, outputTokens: 1 });
+      resolveUsage({ inputTokens: 10, outputTokens: 1 });
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Usage should still be recorded for partial streaming

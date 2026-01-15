@@ -408,7 +408,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Handle cancellation",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application-tdd",

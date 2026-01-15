@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 23/65
-**Current Task:** [IMPL] Implement StreamCompletionUseCase (GREEN)
+**Tasks Completed:** 24/65
+**Current Task:** [TDD] Write SendChatMessageUseCase tests FIRST
 
 ---
 
@@ -655,4 +655,53 @@ const role = message.get("role");
 - Tests written first following TDD workflow
 - Tests fail because StreamCompletionUseCase doesn't exist yet
 - Ready for GREEN phase (Task 24)
+
+### 2026-01-15 - Task 24: [IMPL] Implement StreamCompletionUseCase (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Created `src/application/use-cases/llm/stream-completion.use-case.ts`
+  - Constructor with 4 dependencies: llmProvider, modelRouter, usageRepository, eventDispatcher
+  - execute() method implementing streaming completion flow:
+    1. validateInput() - checks prompt is non-empty
+    2. selectModel() - uses modelRouter with text capability
+    3. getModelConfig() - retrieves pricing config for cost calculation
+    4. checkBudget() - validates user hasn't exceeded daily budget (if userId provided)
+    5. substituteVariables() - replaces {{variables}} in prompt
+    6. buildMessages() - creates system + user message array
+    7. llmProvider.streamText() - calls LLM (returns stream + usage Promise)
+    8. handleStreamCompletion() - async handler for usage Promise
+    9. Returns ReadableStream<string> immediately
+
+**Key Differences from SendCompletionUseCase:**
+- Uses llmProvider.streamText() instead of generateText()
+- Returns ReadableStream<string> immediately, doesn't await completion
+- handleStreamCompletion() attaches .then() to usage Promise
+- Cost recording happens asynchronously when stream completes
+- Silently catches errors (stream may be cancelled)
+
+**Implementation Details:**
+- DEFAULT_MAX_BUDGET = 100 (daily budget in USD)
+- Uses match() from ddd-kit for Option handling
+- Creates LLMUsage aggregate with all value objects (ProviderIdentifier, ModelIdentifier, TokenCount, Cost)
+- Dispatches domain events after successful save
+- Proper error handling with Result pattern at each step
+
+**Test Fixes Applied:**
+- Added mockUsageRepository.getTotalCostByUser mock for tests with userId
+- Fixed ISelectedModel type: estimatedCostPer1kTokens instead of maxBudget
+- Added missing IEventDispatcher mock properties (subscribe, unsubscribe, isSubscribed, getHandlerCount, clearHandlers)
+
+**Commands Run:**
+- `pnpm test` - 667 tests PASSED (all 20 StreamCompletionUseCase tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 20 StreamCompletionUseCase tests pass
+- No regressions on existing tests
+- Type check passes
+- Ready for Task 25 (SendChatMessageUseCase TDD RED)
 
