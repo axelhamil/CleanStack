@@ -103,7 +103,6 @@ jobs:
 
       - name: Run E2E tests
         run: pnpm test:e2e
-        working-directory: apps/nextjs
         env:
           CI: true
 

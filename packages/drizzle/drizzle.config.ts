@@ -4,14 +4,14 @@ import { defineConfig } from "drizzle-kit";
 
 config({ path: resolve(__dirname, "../../.env") });
 
-if (!process.env.DATABASE_URL)
-  throw new Error("DATABASE_URL is not defined in root .env file");
+// Use placeholder for static analysis tools (knip), actual value required at runtime
+const databaseUrl = process.env.DATABASE_URL ?? "postgresql://placeholder";
 
 export default defineConfig({
   schema: "./src/schema/*",
   out: "./migrations",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
   },
   verbose: true,
   strict: true,

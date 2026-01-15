@@ -28,7 +28,7 @@
     "test:watch": "turbo test:watch",
     "test:coverage": "turbo test:coverage",
     "test:ui": "vitest --ui",
-    "test:e2e": "pnpm --filter=nextjs test:e2e",
+    "test:e2e": "turbo test:e2e",
     "setup": "pnpm install && pnpm db && pnpm db:push",
     "validate": "pnpm type-check && pnpm check && pnpm test",
     "quick-check": "pnpm type-check && pnpm check",
@@ -38,8 +38,6 @@
     "@biomejs/biome": "^2.3.10",
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
     "husky": "^9.1.7",
     "jscpd": "^4.0.7",
     "knip": "^5.81.0",
@@ -57,6 +55,6 @@
   },
   "packageManager": "pnpm@10.26.2",
   "engines": {
-    "node": ">=24.12.0"
+    "node": ">=22.0.0"
   }
 }
