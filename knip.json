@@ -17,7 +17,8 @@
       "ignore": ["**/*.test.ts", "**/*.spec.ts", "**/stubs/**"]
     },
     "packages/drizzle": {
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      "ignore": ["drizzle.config.ts"]
     },
     "packages/ui": {
       "entry": ["src/**/*.tsx", "src/**/*.ts"],
