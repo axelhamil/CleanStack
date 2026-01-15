@@ -7,7 +7,7 @@ import { SubscriptionCreatedEvent } from "./events/subscription-created.event";
 import { SubscriptionRenewedEvent } from "./events/subscription-renewed.event";
 import { SubscriptionId } from "./subscription-id";
 import type { PlanId } from "./value-objects/plan-id.vo";
-import type { SubscriptionStatus } from "./value-objects/subscription-status.vo";
+import { SubscriptionStatus } from "./value-objects/subscription-status.vo";
 
 export interface ISubscriptionProps {
   userId: UserId;
@@ -77,7 +77,15 @@ export class Subscription extends Aggregate<ISubscriptionProps> {
       return Result.fail("Subscription is already cancelled");
     }
 
+    const cancelledStatusResult = SubscriptionStatus.create(
+      "cancelled" as string,
+    );
+    if (cancelledStatusResult.isFailure) {
+      return Result.fail(cancelledStatusResult.getError());
+    }
+
     const cancelledAt = new Date();
+    this._props.status = cancelledStatusResult.getValue() as SubscriptionStatus;
     this._props.cancelledAt = cancelledAt;
     this._props.updatedAt = new Date();
 
@@ -102,6 +110,12 @@ export class Subscription extends Aggregate<ISubscriptionProps> {
       return Result.fail("Cannot mark cancelled subscription as past due");
     }
 
+    const pastDueStatusResult = SubscriptionStatus.create("past_due" as string);
+    if (pastDueStatusResult.isFailure) {
+      return Result.fail(pastDueStatusResult.getError());
+    }
+
+    this._props.status = pastDueStatusResult.getValue() as SubscriptionStatus;
     this._props.updatedAt = new Date();
 
     this.addEvent(

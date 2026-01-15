@@ -18,10 +18,10 @@
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | ✅ 6/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | ✅ 6/7 |
-| E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
-| E4 | Agents Claude | AGT-001 to AGT-004 | 🔴 0/4 |
-| E5 | CLAUDE.md | DOC-001 to DOC-008 | 🔴 0/8 |
-| E8 | Starter Features | FTR-001 to FTR-017 | 🔴 0/17 |
+| E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
+| E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
+| E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
+| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 8/17 |
 | E6 | Docs & Release | REL-001 to REL-006 | 🔴 0/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | 🔴 0/5 |
 
@@ -29,9 +29,9 @@
 
 ## Current Story
 
-**Epic**: E3 - Skills Claude
-**Story**: SKL-001 - Create Skill (first skill)
-**File**: `.claude/ralph/prd/stories/SKL-001-create-skill.md`
+**Epic**: E8 - Starter Features
+**Story**: FTR-008 - Subscription Management
+**File**: `.claude/ralph/prd/stories/FTR-008-subscription-management.md`
 
 ---
 
@@ -74,6 +74,39 @@
 - [x] TST-006 - Coverage in CI (Codecov + PR reports) - 878946b
 - [x] TST-007 - Playwright E2E Tests (11 tests, CI integration)
 
+### E3 - Skills Claude ✅
+- [x] SKL-001 - EventStorming skill - fc3c432
+- [x] SKL-002 - Feature PRD skill - e4ec5f0
+- [x] SKL-003 - Gen Domain skill - e4ec5f0
+- [x] SKL-004 - Gen UseCase skill - e4ec5f0
+- [x] SKL-005 - Gen Tests skill - e4ec5f0
+- [x] SKL-006 - AI Auto-Routing hook - e4ec5f0
+
+### E4 - Agents Claude ✅
+- [x] AGT-001 - Feature Architect Agent - cf0549e
+- [x] AGT-002 - Code Reviewer Agent - cf0549e
+- [x] AGT-003 - Test Writer Agent - cf0549e
+- [x] AGT-004 - Doc Writer Agent - cf0549e
+
+### E5 - CLAUDE.md ✅
+- [x] DOC-001 - Quick Start Section - 0155182
+- [x] DOC-002 - Development Workflow - 0155182
+- [x] DOC-003 - Skills Reference - 0155182
+- [x] DOC-004 - Agents Reference - 0155182
+- [x] DOC-005 - Templates Section - 0155182
+- [x] DOC-006 - Decision Trees - 0155182
+- [x] DOC-007 - AI Guidance - 0155182
+- [x] DOC-008 - Domain Events - 0155182
+
+### E8 - Starter Features 🟡
+- [x] FTR-001 - Verify Existing Auth (verified, 187 tests passing)
+- [x] FTR-002 - OAuth Providers (Google + GitHub, auth-client, OAuth buttons) - a1db840
+- [x] FTR-003 - Auth UI Polish (loading states, forgot/reset password flow) - ed3dd7c
+- [x] FTR-004 - Billing Domain (Subscription aggregate, VOs, events, repo port, 61 tests) - e857147
+- [x] FTR-005 - Stripe Provider (IPaymentProvider port, StripePaymentProvider, tests) - c8d5673
+- [x] FTR-006 - Stripe Checkout (CreateCheckoutSessionUseCase, API, success page, 7 tests) - 697761a
+- [x] FTR-007 - Stripe Webhooks (HandleStripeWebhookUseCase, webhook API, 10 tests)
+
 ---
 
 ## Commits Log
@@ -83,6 +116,14 @@
 - `2c8c77a` - test(events): add comprehensive event system tests
 - `fe107c9` - test(domain): add comprehensive user domain tests
 - `cb17de4` - test(auth): add comprehensive auth use cases tests
+- `fc3c432` - feat(skills): add eventstorming skill for domain discovery
+- `e4ec5f0` - feat(skills): add feature-prd, gen-domain, gen-usecase, gen-tests skills and auto-routing
+- `cf0549e` - feat(agents): add claude agents for architecture and quality
+- `0155182` - docs(claude): add comprehensive developer documentation
+- `e857147` - feat(billing): add subscription domain with aggregate, events, and tests
+- `a1db840` - feat(auth): add google and github oauth providers
+- `c8d5673` - feat(billing): add stripe payment provider integration
+- `697761a` - feat(billing): add stripe checkout flow with use case and api
 
 ---
 
