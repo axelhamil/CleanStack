@@ -1,16 +1,25 @@
-import { Github, Twitter } from "lucide-react";
+import { Github, Globe, Twitter } from "lucide-react";
 import Link from "next/link";
 
 const navigation = {
   product: [
     { name: "Features", href: "/#features" },
     { name: "Pricing", href: "/pricing" },
-    { name: "Documentation", href: "/docs" },
+    { name: "Manifest", href: "/docs" },
   ],
   resources: [
-    { name: "Getting Started", href: "/docs/getting-started" },
-    { name: "Architecture", href: "/docs/architecture" },
-    { name: "Examples", href: "/docs/examples" },
+    {
+      name: "Quick Start",
+      href: "https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/01-quick-start.md",
+    },
+    {
+      name: "Architecture",
+      href: "https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/02-architecture.md",
+    },
+    {
+      name: "AI Workflow",
+      href: "https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/04-ai-workflow.md",
+    },
   ],
   legal: [
     { name: "Privacy", href: "/privacy" },
@@ -21,6 +30,11 @@ const navigation = {
       name: "GitHub",
       href: "https://github.com/axelhamil/nextjs-clean-architecture-starter",
       icon: Github,
+    },
+    {
+      name: "Website",
+      href: "https://axelhamilcaro.com",
+      icon: Globe,
     },
     { name: "Twitter", href: "https://twitter.com", icon: Twitter },
   ],

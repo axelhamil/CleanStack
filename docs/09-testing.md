@@ -17,7 +17,7 @@ Clean Architecture makes testing easy.
 No mocks needed - pure business logic.
 
 ```typescript
-// domain/product/__TESTS__/ProductName.test.ts
+// domain/product/__tests__/ProductName.test.ts
 describe('ProductName', () => {
   it('creates valid name', () => {
     const result = ProductName.create({ value: 'iPhone' })
@@ -41,7 +41,7 @@ describe('ProductName', () => {
 Mock repositories.
 
 ```typescript
-// application/use-cases/__TESTS__/CreateUserUseCase.test.ts
+// application/use-cases/__tests__/CreateUserUseCase.test.ts
 describe('CreateUserUseCase', () => {
   const mockRepo = {
     create: vi.fn(),
@@ -75,7 +75,7 @@ describe('CreateUserUseCase', () => {
 Real database.
 
 ```typescript
-// adapters/in/api/__TESTS__/users.test.ts
+// adapters/in/api/__tests__/users.test.ts
 describe('POST /api/users', () => {
   beforeEach(async () => {
     await db.delete(users)
@@ -111,9 +111,77 @@ pnpm test:watch        # Watch mode
 pnpm test:coverage     # Coverage report
 ```
 
+## Test Structure
+
+```typescript
+describe("CreateSubscriptionUseCase", () => {
+  let sut: CreateSubscriptionUseCase;
+  let mockRepo: ISubscriptionRepository;
+  let mockEventDispatcher: IEventDispatcher;
+
+  const validInput = {
+    userId: "user-123",
+    planId: "plan-pro",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRepo = {
+      create: vi.fn(),
+      findById: vi.fn(),
+    };
+    mockEventDispatcher = {
+      dispatch: vi.fn(),
+      dispatchAll: vi.fn(),
+    };
+    sut = new CreateSubscriptionUseCase(mockRepo, mockEventDispatcher);
+  });
+
+  describe("happy path", () => {
+    it("should create subscription when input is valid", async () => {
+      vi.mocked(mockRepo.create).mockResolvedValue(Result.ok(mockEntity));
+
+      const result = await sut.execute(validInput);
+
+      expect(result.isSuccess).toBe(true);
+    });
+  });
+
+  describe("error handling", () => {
+    it("should not dispatch events when save fails", async () => {
+      vi.mocked(mockRepo.create).mockResolvedValue(
+        Result.fail("Database error")
+      );
+
+      await sut.execute(validInput);
+
+      expect(mockEventDispatcher.dispatchAll).not.toHaveBeenCalled();
+    });
+  });
+});
+```
+
+## Test Categories
+
+| Category | Purpose | Example |
+|----------|---------|---------|
+| Happy Path | Success scenarios | `should create user when email is unique` |
+| Validation | Invalid input | `should fail when email format is invalid` |
+| Business Rules | Domain logic | `should fail when user already subscribed` |
+| Error Handling | Failures | `should fail when repository returns error` |
+| Events | Event emission | `should dispatch UserCreated event` |
+
+## Naming Convention
+
+BDD pattern: `"should [action] when [condition]"`
+
+- `should create user when email is unique`
+- `should fail when password is too short`
+- `should emit UserCreated event on success`
+
 ## Best Practices
 
-### ✅ Do
+### Do
 
 ```typescript
 // Test behavior
@@ -137,7 +205,7 @@ it('creates user', async () => {
 it('should reject email longer than 255 characters', () => {})
 ```
 
-### ❌ Don't
+### Don't
 
 ```typescript
 // Test implementation
@@ -149,7 +217,17 @@ it('creates user', () => { user = ... })
 it('updates user', () => { user.update(...) })  // Depends on previous!
 ```
 
+## Rules
+
+1. **One file per Use Case** - Keep tests organized
+2. **Mock at repository level** - Not internal implementation
+3. **Test Result/Option states** - Verify success and failure paths
+4. **Name as behaviors** - "should X when Y"
+5. **No test interdependence** - Each test is isolated
+
+---
+
 ## Next Steps
 
-- [First Use Case](/docs/guides/first-use-case)
-- [Transactions](/docs/guides/transactions)
+- [AI Workflow](./04-ai-workflow.md) - Generate tests with `/gen-tests`
+- [Core Concepts](./08-core-concepts.md) - Result and Option patterns

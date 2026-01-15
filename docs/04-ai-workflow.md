@@ -11,12 +11,12 @@ New Feature Request
        │
        ▼
 ┌──────────────┐
-│ EventStorming│ → Discover domain events and aggregates
+│  Feature PRD │ → Conversational PRD + EventStorming
 └──────────────┘
        │
        ▼
 ┌──────────────┐
-│  Feature PRD │ → Document requirements and stories
+│  Create Plan │ → Generate plan.md + PROMPT.md
 └──────────────┘
        │
        ▼
@@ -45,45 +45,98 @@ New Feature Request
 └──────────────┘
 ```
 
+---
+
 ## Skills Reference
 
 | Skill | Purpose | Example |
 |-------|---------|---------|
-| `/eventstorming` | Discover domain events, commands, aggregates | `/eventstorming "User billing"` |
-| `/feature-prd` | Generate feature specification with stories | `/feature-prd "Export data" --events DataExported` |
+| `/feature-prd` | Conversational PRD with EventStorming discovery | `/feature-prd` |
+| `/create-plan` | Generate plan.md + PROMPT.md for autonomous workflow | `/create-plan` |
+| `/create-activity` | Initialize activity.md for session logging | `/create-activity` |
 | `/gen-domain` | Create aggregate, VOs, events | `/gen-domain Invoice` |
 | `/gen-usecase` | Create use case, DTO, port | `/gen-usecase SendInvoice` |
 | `/gen-tests` | Generate BDD tests for use case | `/gen-tests SendInvoiceUseCase` |
 
-### /eventstorming
-
-Start here for new features. Identifies the domain model.
-
-**Input:**
-```
-/eventstorming "Subscription billing with monthly payments"
-```
-
-**Output:**
-- Commands: CreateSubscription, CancelSubscription, ProcessPayment
-- Events: SubscriptionCreated, PaymentProcessed, SubscriptionCancelled
-- Aggregates: Subscription, Payment
-- Value Objects: SubscriptionId, PlanId, Amount
-
 ### /feature-prd
 
-Documents requirements as user stories with acceptance criteria.
+Start here for new features. Guides you through domain discovery and requirements.
+
+**Process:**
+1. **EventStorming Discovery** - Domain Events, Commands, Aggregates, Policies
+2. **Feature Deep Dive** - 10 essential aspects (audience, platform, data, auth, etc.)
+3. **Technology Discussion** - Research and recommendations
+4. **PRD Generation** - Comprehensive implementation-ready document
+
+**How to use:**
+```
+/feature-prd
+```
+
+Claude will ask questions to understand your feature before generating the PRD.
+
+**Output:**
+- Domain model specification
+- Use case definitions with DTOs
+- API endpoints
+- Event handlers
+- Implementation checklist with file locations
+
+### /create-plan
+
+Generates `plan.md` and `PROMPT.md` for autonomous agent loops (Ralph Wiggum workflow).
 
 **Input:**
 ```
-/feature-prd "Subscription management" --events SubscriptionCreated,SubscriptionCancelled
+/create-plan
 ```
 
-**Output:**
-- User stories
-- Acceptance criteria
-- Technical notes
-- API endpoints
+**Output: plan.md**
+```markdown
+# Implementation Plan: [Feature Name]
+
+## Task List
+
+```json
+[
+  {
+    "category": "setup",
+    "description": "Create feature directories",
+    "steps": ["Create src/domain/feature/", "..."],
+    "passes": false
+  }
+]
+```
+```
+
+**Output: PROMPT.md**
+```markdown
+@plan.md @activity.md
+
+We are implementing [Feature] in this repo.
+Read activity.md first, then find the next task with passes: false...
+```
+
+### /create-activity
+
+Initializes `activity.md` for tracking agent progress during autonomous loops.
+
+**Input:**
+```
+/create-activity
+```
+
+**Output: activity.md**
+```markdown
+# [Feature] - Activity Log
+
+## Current Status
+**Tasks Completed:** 0/[total]
+**Current Task:** [next task]
+
+## Session Log
+<!-- Agent appends entries here -->
+```
 
 ### /gen-domain
 
@@ -137,9 +190,69 @@ Generates BDD tests mocking at repository level.
 
 **Output:**
 ```
-src/application/use-cases/subscription/__TESTS__/
+src/application/use-cases/subscription/__tests__/
 └── create-subscription.use-case.test.ts
 ```
+
+---
+
+## Ralph Wiggum Workflow
+
+For complex features, use the autonomous agent loop:
+
+### Setup
+
+1. **Create PRD**: `/feature-prd` → Generate comprehensive requirements
+2. **Create Plan**: `/create-plan` → Generate `plan.md` and `PROMPT.md`
+3. **Create Activity Log**: `/create-activity` → Initialize `activity.md`
+
+### Execution
+
+The agent loop works as follows:
+
+```
+┌─────────────────────────────────┐
+│    Read activity.md (state)     │
+└─────────────────┬───────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────┐
+│   Find next task in plan.md    │
+│        (passes: false)         │
+└─────────────────┬───────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────┐
+│     Complete task steps         │
+│   - Implement code              │
+│   - Run type-check              │
+│   - Verify in browser           │
+└─────────────────┬───────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────┐
+│   Update plan.md (passes: true) │
+│   Log in activity.md            │
+│   Git commit                    │
+└─────────────────┬───────────────┘
+                  │
+                  ▼
+            ┌─────────┐
+            │ Repeat  │
+            └─────────┘
+```
+
+### Status Icons
+
+| Icon | Meaning |
+|------|---------|
+| ⏳ | Pending |
+| 🔄 | In Progress |
+| ✅ | Complete |
+| ❌ | Failed |
+| ⚠️ | Blocked |
+
+---
 
 ## Agents Reference
 
@@ -161,6 +274,11 @@ Provides architectural guidance before implementation.
 - "What's the best approach for..."
 - "Help me design..."
 
+**Output:**
+- File structure proposal
+- Implementation order
+- Dependency mapping
+
 ### code-reviewer
 
 Reviews code for patterns, quality, and conventions.
@@ -175,6 +293,20 @@ Reviews code for patterns, quality, and conventions.
 - Error handling (Result/Option)
 - Test coverage
 
+**Output:**
+```markdown
+## Review Summary
+
+### Issues by Severity
+- CRITICAL: 0
+- ERROR: 2
+- WARNING: 3
+
+### Top Priorities
+1. Fix domain layer import violation
+2. Add Result return type to method
+```
+
 ### test-writer
 
 Generates comprehensive BDD tests.
@@ -183,6 +315,13 @@ Generates comprehensive BDD tests.
 - After UseCase creation
 - When asked for tests
 
+**Test Categories:**
+- Happy path
+- Validation errors
+- Business rules
+- Error handling
+- Event emission
+
 ### doc-writer
 
 Updates documentation to match code.
@@ -190,6 +329,8 @@ Updates documentation to match code.
 **Triggers on:**
 - Before release
 - When docs are outdated
+
+---
 
 ## Tips for Effective AI Development
 
@@ -236,22 +377,33 @@ The `CLAUDE.md` file teaches Claude the project patterns. Keep it updated.
 If unsure about approach:
 > "How should I implement X? What patterns should I follow?"
 
-### 6. Let Hooks Guide You
-
-The auto-routing hook suggests skills based on your request. Trust its suggestions.
+---
 
 ## Common Workflows
 
-### Adding a New Aggregate
+### Adding a New Feature (Interactive)
 
 ```
-1. /eventstorming "feature description"
-2. /gen-domain AggregateName
-3. Review and adjust generated code
-4. Commit: feat(feature): add aggregate domain
+1. /feature-prd                    # Conversational discovery
+2. /gen-domain AggregateName       # Generate domain layer
+3. /gen-usecase UseCase1           # Generate use cases
+4. Implement repository
+5. Create UI
+6. /gen-tests                      # Generate tests
+7. Commit
 ```
 
-### Adding a New Use Case
+### Adding a New Feature (Autonomous)
+
+```
+1. /feature-prd                    # Generate PRD
+2. /create-plan                    # Generate plan.md + PROMPT.md
+3. /create-activity                # Initialize activity.md
+4. Run autonomous loop             # Agent executes tasks
+5. Review and merge
+```
+
+### Adding a Single Use Case
 
 ```
 1. /gen-usecase UseCaseName
@@ -260,27 +412,15 @@ The auto-routing hook suggests skills based on your request. Trust its suggestio
 4. Commit: feat(feature): add use case
 ```
 
-### Building Complete Feature
-
-```
-1. /eventstorming "feature"
-2. /feature-prd "feature"
-3. /gen-domain Aggregate
-4. /gen-usecase UseCase1
-5. /gen-usecase UseCase2
-6. Implement repository
-7. Create UI
-8. /gen-tests
-9. Commit: feat(feature): complete feature
-```
+---
 
 ## Troubleshooting
 
 ### Skills Not Working
 
 1. Check `CLAUDE.md` is in project root
-2. Verify hooks are enabled in Claude settings
-3. Try explicit skill call: `/eventstorming "..."`
+2. Verify `.claude/skills/` directory exists
+3. Try explicit skill call: `/feature-prd`
 
 ### Generated Code Has Errors
 
@@ -294,8 +434,11 @@ The auto-routing hook suggests skills based on your request. Trust its suggestio
 2. Verify DI module registration
 3. Run single test: `pnpm test -- path/to/test.ts`
 
+---
+
 ## Next Steps
 
 - **[Tutorial](./03-tutorial-first-feature.md)** - See workflow in action
-- **[Architecture](./02-architecture.md)** - Understand the patterns
+- **[Core Concepts](./08-core-concepts.md)** - DDD patterns
+- **[Testing](./09-testing.md)** - BDD testing guide
 - **[Deployment](./05-deployment.md)** - Go to production

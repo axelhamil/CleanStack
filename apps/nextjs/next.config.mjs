@@ -13,6 +13,20 @@ const nextConfig = {
       { hostname: "lh3.googleusercontent.com" },
     ],
   },
+  async redirects() {
+    return [
+      // Redirect old doc routes to main docs page
+      { source: "/docs/getting-started", destination: "/docs", permanent: true },
+      { source: "/docs/core-concepts", destination: "/docs", permanent: true },
+      { source: "/docs/core-concepts/:path*", destination: "/docs", permanent: true },
+      { source: "/docs/architecture", destination: "/docs", permanent: true },
+      { source: "/docs/architecture/:path*", destination: "/docs", permanent: true },
+      { source: "/docs/ai", destination: "/docs", permanent: true },
+      { source: "/docs/ai/:path*", destination: "/docs", permanent: true },
+      { source: "/docs/guides", destination: "/docs", permanent: true },
+      { source: "/docs/guides/:path*", destination: "/docs", permanent: true },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin("./common/i18n/request.ts");

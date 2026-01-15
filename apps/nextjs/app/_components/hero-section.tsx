@@ -107,7 +107,7 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
             <BrutalistButton size="lg" asChild>
-              <Link href="/docs/getting-started">{t("cta_start")}</Link>
+              <Link href="/docs">{t("cta_start")}</Link>
             </BrutalistButton>
             <BrutalistButton size="lg" variant="outline" asChild>
               <Link

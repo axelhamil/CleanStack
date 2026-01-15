@@ -12,25 +12,20 @@ pnpm db:push      # Push schema
 pnpm dev          # Start dev server
 ```
 
-### 2. Discover Your Domain (1 min)
+### 2. Generate PRD (Interactive)
 ```
-/eventstorming
+/feature-prd
 ```
-Tell Claude about your feature. Get structured domain output.
+Conversational domain discovery with EventStorming + structured PRD generation.
 
-### 3. Generate PRD
-```
-/feature-prd [paste EventStorming output]
-```
-
-### 4. Generate Code
+### 3. Generate Code
 ```
 /gen-domain [aggregate spec]
 /gen-usecase [use case spec]
 /gen-tests [use case name]
 ```
 
-### 5. Implement & Test
+### 4. Implement & Test
 Claude writes the implementation. Run:
 ```bash
 pnpm test
@@ -39,12 +34,11 @@ pnpm check:all
 
 ### Example: Add "Bookmark" Feature
 
-1. `/eventstorming` → "Users can bookmark articles"
-2. `/feature-prd` → Generate PRD
-3. `/gen-domain Bookmark with userId, articleId, createdAt`
-4. `/gen-usecase CreateBookmark`
-5. `/gen-tests CreateBookmarkUseCase`
-6. `pnpm test` → All green
+1. `/feature-prd` → "Users can bookmark articles" (interactive discovery)
+2. `/gen-domain Bookmark with userId, articleId, createdAt`
+3. `/gen-usecase CreateBookmark`
+4. `/gen-tests CreateBookmarkUseCase`
+5. `pnpm test` → All green
 
 ---
 
@@ -572,18 +566,13 @@ packages/ui/src/components/ui/  # shadcn (auto-generated)
 
 ## Development Workflow
 
-### The Vibe Coding Flow
+### Interactive Flow
 
 ```
 ┌─────────────────┐
-│  EventStorming  │  /eventstorming
-│  (Discovery)    │  → Events, Commands, Aggregates
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
 │   Feature PRD   │  /feature-prd
-│  (Specification)│  → Structured requirements
+│  (Discovery +   │  → EventStorming + Structured PRD
+│   Specification)│
 └────────┬────────┘
          │
          ▼
@@ -617,39 +606,78 @@ packages/ui/src/components/ui/  # shadcn (auto-generated)
 └─────────────────┘
 ```
 
+### Autonomous Flow (Ralph Wiggum)
+
+For complex features, use the autonomous agent loop:
+
+```
+┌─────────────────┐
+│   Feature PRD   │  /feature-prd
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Create Plan   │  /create-plan
+│  (plan.md +     │  → JSON tasks + PROMPT.md
+│   PROMPT.md)    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Create Activity │  /create-activity
+│  (activity.md)  │  → Session log template
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────┐
+│      Autonomous Agent Loop      │
+│  ┌────────────────────────────┐ │
+│  │ Read activity.md (state)   │ │
+│  └─────────────┬──────────────┘ │
+│                │                │
+│                ▼                │
+│  ┌────────────────────────────┐ │
+│  │ Find next task in plan.md │ │
+│  │     (passes: false)        │ │
+│  └─────────────┬──────────────┘ │
+│                │                │
+│                ▼                │
+│  ┌────────────────────────────┐ │
+│  │ Complete task steps        │ │
+│  │ Update plan.md + log       │ │
+│  │ Git commit                 │ │
+│  └─────────────┬──────────────┘ │
+│                │                │
+│                ▼                │
+│           [Repeat]              │
+└─────────────────────────────────┘
+```
+
 ### Step Details
 
-#### 1. EventStorming
-Interactive session with Claude to discover:
-- Domain Events (what happened)
-- Commands (what triggers events)
-- Aggregates (who owns events)
-- Policies (automatic reactions)
+#### 1. Feature PRD
+Conversational domain discovery:
+- EventStorming (Events, Commands, Aggregates, Policies)
+- 10 essential aspects covered
+- Structured PRD with implementation checklist
 
-#### 2. Feature PRD
-Structured document with:
-- Domain model specification
-- Use case definitions
-- API contracts
-- Test requirements
-
-#### 3. Domain Layer
+#### 2. Domain Layer
 Generated files:
 - `src/domain/{feature}/{feature}.aggregate.ts`
 - `src/domain/{feature}/value-objects/*.vo.ts`
 - `src/domain/{feature}/events/*.event.ts`
 
-#### 4. Application Layer
+#### 3. Application Layer
 Generated files:
 - `src/application/use-cases/{feature}/*.use-case.ts`
 - `src/application/dto/{feature}/*.dto.ts`
 - `common/di/modules/{feature}.module.ts`
 
-#### 5. Testing
+#### 4. Testing
 Generated files:
 - `src/application/use-cases/{feature}/__tests__/*.test.ts`
 
-#### 6. Validation
+#### 5. Validation
 Quality checks:
 - `pnpm check` - Code style
 - `pnpm type-check` - TypeScript
@@ -659,27 +687,47 @@ Quality checks:
 
 ## Skills Reference
 
-### /eventstorming
-**Purpose:** Discover domain events interactively
+### /feature-prd
+**Purpose:** Conversational PRD with EventStorming discovery
 
 **Usage:**
 ```
-/eventstorming
+/feature-prd
 ```
 
-**Output:** YAML with events, commands, aggregates, policies
+**Process:**
+1. EventStorming discovery (Events, Commands, Aggregates, Policies)
+2. Feature deep dive (10 essential aspects)
+3. Technology research (WebSearch, Context7)
+4. PRD generation with implementation checklist
+
+**Output:** Comprehensive PRD with domain model, use cases, API, file locations
 
 ---
 
-### /feature-prd
-**Purpose:** Generate PRD from EventStorming output
+### /create-plan
+**Purpose:** Generate plan.md + PROMPT.md for autonomous workflow
 
 **Usage:**
 ```
-/feature-prd [EventStorming YAML or description]
+/create-plan
 ```
 
-**Output:** Markdown PRD with domain model, use cases, API
+**Output:**
+- `plan.md` - JSON task list with steps and passes:false/true
+- `PROMPT.md` - Agent instructions for Ralph Wiggum loop
+
+---
+
+### /create-activity
+**Purpose:** Initialize activity.md for session logging
+
+**Usage:**
+```
+/create-activity
+```
+
+**Output:** `activity.md` with status tracking and session log template
 
 ---
 

@@ -10,6 +10,13 @@ Welcome to the Next.js Clean Architecture Starter documentation.
 | [Architecture](./02-architecture.md) | Understand the structure | 10 min |
 | [Tutorial](./03-tutorial-first-feature.md) | Build your first feature | 30 min |
 
+## Core Concepts
+
+| Guide | Description |
+|-------|-------------|
+| [Core Concepts](./08-core-concepts.md) | Result, Option, Value Objects, Entities |
+| [Testing](./09-testing.md) | BDD testing patterns |
+
 ## Development
 
 | Guide | Description |
@@ -30,15 +37,22 @@ Welcome to the Next.js Clean Architecture Starter documentation.
 - [CHANGELOG](../CHANGELOG.md) - Version history
 - [README](../README.md) - Project overview
 
-## New to Clean Architecture?
+## Learning Paths
 
-Start here:
+### New to Clean Architecture?
 
 1. **[Quick Start](./01-quick-start.md)** - Get the app running locally
 2. **[Architecture](./02-architecture.md)** - Understand the layers
-3. **[Tutorial](./03-tutorial-first-feature.md)** - Build a complete feature
+3. **[Core Concepts](./08-core-concepts.md)** - Learn DDD primitives
+4. **[Tutorial](./03-tutorial-first-feature.md)** - Build a complete feature
 
-## Using AI Development?
+### Using AI Development?
 
 1. **[AI Workflow](./04-ai-workflow.md)** - Learn the skills and agents
 2. **[Tutorial](./03-tutorial-first-feature.md)** - See AI workflow in action
+3. **[Testing](./09-testing.md)** - Write BDD tests
+
+### Ready for Production?
+
+1. **[Deployment](./05-deployment.md)** - Deploy your app
+2. **[Troubleshooting](./06-troubleshooting.md)** - Solve common issues
