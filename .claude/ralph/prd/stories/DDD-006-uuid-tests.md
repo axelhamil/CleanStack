@@ -8,14 +8,14 @@
 
 ## Acceptance Criteria
 
-- [ ] Test UUID generation (random)
-- [ ] Test UUID from string
-- [ ] Test UUID from number
-- [ ] Test `value` getter
-- [ ] Test `equals()` comparison
-- [ ] Test `toString()` format
-- [ ] Test typed UUID subclasses
-- [ ] Coverage > 95% on UUID.ts
+- [x] Test UUID generation (random)
+- [x] Test UUID from string
+- [x] Test UUID from number
+- [x] Test `value` getter
+- [x] Test `equals()` comparison
+- [x] Test `toString()` format (via create() method)
+- [x] Test typed UUID subclasses
+- [x] Coverage > 95% on UUID.ts (100%)
 
 ## Test Cases
 
@@ -98,6 +98,6 @@ describe('UUID', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass (18 tests)
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered

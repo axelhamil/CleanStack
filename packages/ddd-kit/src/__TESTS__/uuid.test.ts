@@ -69,6 +69,58 @@ describe("UUID", () => {
       // biome-ignore lint/suspicious/noExplicitAny: I need to test the equals method with undefined
       expect(uuid.equals(undefined as any)).toBe(false);
     });
+
+    it("should return false when subclass compares with base class", () => {
+      const uuid = new UUID<string>("test-uuid");
+      const stubId = StubId.create(new UUID<string>("test-uuid"));
+
+      // StubId.equals(UUID) should return false because UUID is not instanceof StubId
+      // biome-ignore lint/suspicious/noExplicitAny: Testing instanceof check with different UUID types
+      expect(stubId.equals(uuid as any)).toBe(false);
+    });
+
+    it("should return true when base class compares with subclass", () => {
+      const uuid = new UUID<string>("test-uuid");
+      const stubId = StubId.create(new UUID<string>("test-uuid"));
+
+      // UUID.equals(StubId) returns true because StubId is instanceof UUID
+      // biome-ignore lint/suspicious/noExplicitAny: Testing instanceof check with different UUID types
+      expect(uuid.equals(stubId as any)).toBe(true);
+    });
+  });
+
+  describe("generation", () => {
+    it("should generate valid UUID v4 format", () => {
+      const uuid = new UUID<string>();
+
+      expect(uuid.value).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
+    });
+
+    it("should generate unique UUIDs", () => {
+      const uuid1 = new UUID<string>();
+      const uuid2 = new UUID<string>();
+
+      expect(uuid1.value).not.toBe(uuid2.value);
+    });
+  });
+
+  describe("from number", () => {
+    it("should create UUID from number", () => {
+      const uuid = new UUID<number>(123);
+
+      expect(uuid.value).toBe(123);
+    });
+
+    it("should support numeric comparison", () => {
+      const uuid1 = new UUID<number>(42);
+      const uuid2 = new UUID<number>(42);
+      const uuid3 = new UUID<number>(99);
+
+      expect(uuid1.equals(uuid2)).toBe(true);
+      expect(uuid1.equals(uuid3)).toBe(false);
+    });
   });
 });
 

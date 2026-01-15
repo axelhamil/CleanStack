@@ -225,7 +225,8 @@ describe("Entity", () => {
     });
 
     it("should serialize value objects to their values", () => {
-      const nameResult = Name.create("John Doe");
+      const nameValue: string = "John Doe";
+      const nameResult = Name.create(nameValue);
       expect(nameResult.isSuccess).toBe(true);
 
       const entity = EntityWithValueObject.create({
