@@ -8,7 +8,10 @@
     "**/coverage/**",
     "**/.turbo/**",
     "**/pnpm-lock.yaml",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "**/__TESTS__/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ],
   "format": ["typescript", "javascript", "tsx", "jsx"],
   "minLines": 5,
