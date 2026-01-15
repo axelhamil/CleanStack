@@ -25,14 +25,12 @@ const ScrollIndicator = React.forwardRef<
       transition={{ delay: 1.2 }}
       className={cn(
         "flex flex-col items-center gap-2 cursor-pointer",
-        "text-gray-500 dark:text-gray-400",
-        "hover:text-black dark:hover:text-white transition-colors",
+        "text-muted-foreground",
+        "hover:text-primary transition-colors",
         className,
       )}
     >
-      <span className="font-medium text-xs uppercase tracking-wide">
-        {label}
-      </span>
+      <span className="font-medium text-xs tracking-wide">{label}</span>
       <motion.div
         animate={{ y: [0, 6, 0] }}
         transition={{

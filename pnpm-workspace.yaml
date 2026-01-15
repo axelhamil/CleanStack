@@ -5,6 +5,7 @@ packages:
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@parcel/watcher'
+  - '@sentry/cli'
   - '@swc/core'
   - '@tailwindcss/oxide'
   - esbuild

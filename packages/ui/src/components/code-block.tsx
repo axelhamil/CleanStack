@@ -26,39 +26,26 @@ const CodeBlock = React.forwardRef<HTMLDivElement, CodeBlockProps>(
       >
         <div
           className={cn(
-            "border-2 border-black dark:border-white p-6",
+            "rounded-2xl border border-border/50 p-6",
+            "shadow-lg backdrop-blur-sm",
             isTerminal
-              ? "bg-gray-900 dark:bg-gray-950 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)]"
-              : "bg-black dark:bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)]",
+              ? "bg-slate-900 dark:bg-slate-950"
+              : "bg-slate-900 dark:bg-slate-950",
           )}
         >
           {/* Terminal header */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+            <div className="w-3 h-3 rounded-full bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-green-400" />
             {title && (
-              <span
-                className={cn(
-                  "ml-3 font-mono text-xs",
-                  isTerminal
-                    ? "text-green-400"
-                    : "text-green-400 dark:text-green-600",
-                )}
-              >
+              <span className="ml-3 font-mono text-xs text-slate-400">
                 {title}
               </span>
             )}
           </div>
 
-          <pre
-            className={cn(
-              "font-mono text-xs md:text-sm leading-relaxed overflow-x-auto",
-              isTerminal
-                ? "text-green-400"
-                : "text-green-400 dark:text-green-600",
-            )}
-          >
+          <pre className="font-mono text-xs md:text-sm leading-relaxed overflow-x-auto text-emerald-400">
             <code>{code}</code>
           </pre>
         </div>

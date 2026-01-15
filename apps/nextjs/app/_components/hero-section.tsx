@@ -1,17 +1,20 @@
 "use client";
 
-import { BrutalistBadge } from "@packages/ui/components/brutalist-badge";
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
-import { FloatingIcon } from "@packages/ui/components/floating-icon";
-import { GridBackground } from "@packages/ui/components/grid-background";
 import { ScrollIndicator } from "@packages/ui/components/scroll-indicator";
-import { TechBadge } from "@packages/ui/components/tech-badge";
+import { Badge } from "@packages/ui/components/ui/badge";
+import { Button } from "@packages/ui/components/ui/button";
 import { motion } from "framer-motion";
-import { Bot, Code2, Layers, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Github, Terminal } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-const techStack = ["Next.js 16", "TypeScript", "DDD", "Drizzle", "AI-Ready"];
+const techStack = [
+  "Next.js 16",
+  "TypeScript",
+  "Clean Architecture",
+  "DDD",
+  "AI-Ready",
+];
 
 export function HeroSection() {
   const t = useTranslations("home.hero");
@@ -21,121 +24,141 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50 dark:from-black dark:to-gray-950">
-      <GridBackground />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a]">
+      {/* Gradient background glow */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/20 rounded-full blur-[128px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[128px]" />
+      </div>
 
-      <FloatingIcon icon={Bot} delay={0} className="top-24 left-[12%]" />
-      <FloatingIcon icon={Code2} delay={1.5} className="top-32 right-[15%]" />
-      <FloatingIcon icon={Layers} delay={3} className="bottom-40 left-[18%]" />
-      <FloatingIcon
-        icon={Sparkles}
-        delay={2}
-        className="bottom-36 right-[12%]"
+      {/* Grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: "64px 64px",
+        }}
       />
 
-      <div className="relative z-10 container mx-auto px-4 text-center max-w-5xl">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-10"
-        >
-          <BrutalistBadge icon={Bot}>AI-Optimized Boilerplate</BrutalistBadge>
-        </motion.div>
-
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
-          }}
-        >
-          <motion.h1
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight mb-8 leading-[1.1]"
-          >
-            {t("title_part1")}
-            <br />
-            <motion.span
-              variants={{
-                hidden: { opacity: 0, scale: 0.95 },
-                visible: { opacity: 1, scale: 1 },
-              }}
-              className="inline-block bg-black dark:bg-white text-white dark:text-black px-5 py-1 mt-2"
-            >
-              {t("title_emphasis")}
-            </motion.span>
-            <br />
-            <span className="text-gray-600 dark:text-gray-400">
-              {t("title_part2")}
-            </span>
-          </motion.h1>
-
-          <motion.p
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-6 text-gray-700 dark:text-gray-300"
-          >
-            {t("subtitle")}
-          </motion.p>
-
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className="flex items-center justify-center gap-3 mb-12 text-gray-600 dark:text-gray-400"
-          >
-            <Zap className="w-5 h-5 text-yellow-500" />
-            <span className="font-semibold text-sm md:text-base">
-              Built for Claude Code, Cursor & AI assistants
-            </span>
-            <Zap className="w-5 h-5 text-yellow-500" />
-          </motion.div>
-
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-          >
-            <BrutalistButton size="lg" asChild>
-              <Link href="/docs">{t("cta_start")}</Link>
-            </BrutalistButton>
-            <BrutalistButton size="lg" variant="outline" asChild>
-              <Link
-                href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
-                target="_blank"
-              >
-                {t("cta_github")} →
-              </Link>
-            </BrutalistButton>
-          </motion.div>
-        </motion.div>
-
+      <div className="relative z-10 container mx-auto px-4 text-center max-w-4xl">
+        {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="flex flex-wrap justify-center gap-3"
+          transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          {techStack.map((tech) => (
-            <TechBadge key={tech}>{tech}</TechBadge>
+          <Badge
+            variant="outline"
+            className="px-4 py-1.5 text-sm font-medium border-white/10 bg-white/5 text-neutral-300 backdrop-blur-sm"
+          >
+            <Terminal className="w-3.5 h-3.5 mr-2 text-violet-400" />
+            AI-Optimized Development
+          </Badge>
+        </motion.div>
+
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-white mb-6 leading-[1.1]"
+        >
+          {t("title_part1")}
+          <br />
+          <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-violet-400 bg-clip-text text-transparent">
+            {t("title_emphasis")}
+          </span>
+          <br />
+          <span className="text-neutral-500">{t("title_part2")}</span>
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto mb-8 leading-relaxed"
+        >
+          {t("subtitle")}
+        </motion.p>
+
+        {/* AI mention */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="text-sm text-neutral-500 mb-10"
+        >
+          Built for <span className="text-neutral-300">Claude Code</span>,{" "}
+          <span className="text-neutral-300">Cursor</span> &{" "}
+          <span className="text-neutral-300">AI assistants</span>
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16"
+        >
+          <Button
+            size="lg"
+            asChild
+            className="h-12 px-6 text-sm font-medium bg-white text-black hover:bg-neutral-200 transition-colors rounded-lg"
+          >
+            <Link href="/docs" className="flex items-center gap-2">
+              {t("cta_start")}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            asChild
+            className="h-12 px-6 text-sm font-medium border-white/10 bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white transition-colors rounded-lg"
+          >
+            <Link
+              href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
+              target="_blank"
+              className="flex items-center gap-2"
+            >
+              <Github className="w-4 h-4" />
+              {t("cta_github")}
+            </Link>
+          </Button>
+        </motion.div>
+
+        {/* Tech stack */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex flex-wrap justify-center gap-2"
+        >
+          {techStack.map((tech, index) => (
+            <motion.span
+              key={tech}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 + index * 0.05 }}
+              className="px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white/5 border border-white/5 rounded-md"
+            >
+              {tech}
+            </motion.span>
           ))}
         </motion.div>
       </div>
 
+      {/* Scroll indicator */}
       <ScrollIndicator
         onClick={scrollToFeatures}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-neutral-500 hover:text-neutral-300"
       />
+
+      {/* Bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
     </section>
   );
 }

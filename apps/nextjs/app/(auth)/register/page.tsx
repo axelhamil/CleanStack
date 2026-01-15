@@ -1,24 +1,24 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 import { RegisterForm } from "./_components/register-form";
 
 export default function RegisterPage() {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Create Account</BrutalistCardTitle>
-        <BrutalistCardDescription>
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle>Create Account</CardTitle>
+        <CardDescription>
           Enter your details to create a new account
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <RegisterForm />
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

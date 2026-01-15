@@ -5,8 +5,9 @@ import * as React from "react";
 import { cn } from "../libs/utils";
 
 interface DecorativeShapeProps {
-  variant: "square" | "outline";
+  variant: "blob" | "circle" | "ring";
   size?: "sm" | "md" | "lg";
+  color?: "primary" | "accent" | "secondary" | "teal";
   position: string;
   rotationDirection?: "clockwise" | "counterclockwise";
   duration?: number;
@@ -18,6 +19,7 @@ const DecorativeShape = React.forwardRef<HTMLDivElement, DecorativeShapeProps>(
     {
       variant,
       size = "md",
+      color = "primary",
       position,
       rotationDirection = "clockwise",
       duration = 20,
@@ -31,9 +33,22 @@ const DecorativeShape = React.forwardRef<HTMLDivElement, DecorativeShapeProps>(
       lg: "w-32 h-32",
     };
 
+    const colors = {
+      primary: "from-primary/30 to-primary/10",
+      accent: "from-accent/30 to-accent/10",
+      secondary: "from-secondary/50 to-secondary/20",
+      teal: "from-teal-400/30 to-teal-400/10",
+    };
+
     const variantClasses = {
-      square: "bg-black dark:bg-white",
-      outline: "border-4 border-black dark:border-white",
+      blob: cn(
+        "rounded-[40%_60%_70%_30%/40%_50%_60%_50%]",
+        "bg-gradient-to-br",
+        colors[color],
+        "blur-sm",
+      ),
+      circle: cn("rounded-full", "bg-gradient-to-br", colors[color], "blur-sm"),
+      ring: cn("rounded-full", "border-2 border-primary/20", "bg-transparent"),
     };
 
     return (
@@ -46,11 +61,21 @@ const DecorativeShape = React.forwardRef<HTMLDivElement, DecorativeShapeProps>(
           position,
           className,
         )}
-        animate={{ rotate: rotationDirection === "clockwise" ? 360 : -360 }}
+        animate={{
+          rotate: rotationDirection === "clockwise" ? 360 : -360,
+          scale: [1, 1.1, 1],
+        }}
         transition={{
-          duration,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "linear",
+          rotate: {
+            duration,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "linear",
+          },
+          scale: {
+            duration: duration / 2,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          },
         }}
       />
     );
@@ -71,7 +96,7 @@ const FloatingSymbol = React.forwardRef<HTMLDivElement, FloatingSymbolProps>(
       <motion.div
         ref={ref}
         className={cn(
-          "absolute text-6xl font-mono text-black/5 dark:text-white/5 select-none",
+          "absolute text-6xl font-mono text-primary/5 select-none",
           position,
           className,
         )}

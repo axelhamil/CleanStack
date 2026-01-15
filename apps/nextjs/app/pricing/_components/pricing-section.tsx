@@ -1,6 +1,6 @@
 "use client";
 
-import { BrutalistPricingTable } from "@packages/ui/components/brutalist-pricing-table";
+import { PricingTable } from "@packages/ui/components/pricing-table";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -45,7 +45,7 @@ export function PricingSection() {
   }
 
   return (
-    <BrutalistPricingTable
+    <PricingTable
       plans={plans}
       onSelectPlan={handleSelectPlan}
       loading={loading}

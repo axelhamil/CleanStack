@@ -13,8 +13,10 @@ const TechBadge = React.forwardRef<HTMLDivElement, TechBadgeProps>(
       <div
         ref={ref}
         className={cn(
-          "px-4 py-2 border-2 border-black/20 dark:border-white/20",
-          "text-sm font-medium text-gray-700 dark:text-gray-300",
+          "px-4 py-2 rounded-full",
+          "border border-border/50 bg-card/50 backdrop-blur-sm",
+          "text-sm font-medium text-muted-foreground",
+          "hover:border-primary/30 hover:text-foreground transition-all duration-300",
           className,
         )}
         {...props}

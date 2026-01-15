@@ -1,10 +1,10 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 
 interface SessionCardProps {
   session: {
@@ -15,14 +15,12 @@ interface SessionCardProps {
 
 export function SessionCard({ session }: SessionCardProps) {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Session</BrutalistCardTitle>
-        <BrutalistCardDescription>
-          Current session details
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent className="space-y-2">
+    <Card>
+      <CardHeader>
+        <CardTitle>Session</CardTitle>
+        <CardDescription>Current session details</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
         <div>
           <span className="text-sm text-muted-foreground">Session ID</span>
           <p className="font-mono text-xs truncate">{session.id}</p>
@@ -33,7 +31,7 @@ export function SessionCard({ session }: SessionCardProps) {
             {new Date(session.expiresAt).toLocaleDateString()}
           </p>
         </div>
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

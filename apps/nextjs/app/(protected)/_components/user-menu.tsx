@@ -1,11 +1,11 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@packages/ui/components/ui/avatar";
+import { Button } from "@packages/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,48 +58,46 @@ export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <BrutalistButton
-          variant="outline"
-          size="sm"
-          className="relative h-10 w-10 rounded-none p-0"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-10 w-10 rounded-full"
         >
-          <Avatar className="h-9 w-9 rounded-none border-2 border-black dark:border-white">
+          <Avatar className="h-9 w-9">
             <AvatarImage src={user.image ?? undefined} alt={user.name} />
-            <AvatarFallback className="rounded-none bg-yellow-300 dark:bg-yellow-500 text-black font-bold text-sm">
+            <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
               {initials}
             </AvatarFallback>
           </Avatar>
-        </BrutalistButton>
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-56 border-3 border-black dark:border-white rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
-      >
-        <div className="flex items-center gap-2 p-3 border-b-2 border-black dark:border-white">
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="flex items-center gap-2 p-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-bold">{user.name}</p>
+            <p className="text-sm font-medium">{user.name}</p>
             <p className="text-xs text-muted-foreground truncate">
               {user.email}
             </p>
           </div>
         </div>
-        <DropdownMenuItem asChild className="rounded-none cursor-pointer">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
           <Link href="/settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Settings
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="rounded-none cursor-pointer">
+        <DropdownMenuItem asChild className="cursor-pointer">
           <Link href="/settings/billing" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Billing
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-black dark:bg-white" />
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
           disabled={isPending}
-          className="rounded-none cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+          className="cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {isPending ? "Signing out..." : "Sign Out"}

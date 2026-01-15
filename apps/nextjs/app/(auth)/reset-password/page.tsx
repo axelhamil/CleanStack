@@ -1,24 +1,22 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 import { ResetPasswordForm } from "./_components/reset-password-form";
 
 export default function ResetPasswordPage() {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Set New Password</BrutalistCardTitle>
-        <BrutalistCardDescription>
-          Enter your new password below
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent>
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle>Set New Password</CardTitle>
+        <CardDescription>Enter your new password below</CardDescription>
+      </CardHeader>
+      <CardContent>
         <ResetPasswordForm />
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

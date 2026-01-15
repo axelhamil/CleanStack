@@ -15,14 +15,15 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
       <div
         ref={ref}
         className={cn(
-          "border-2 border-black/20 dark:border-white/20 p-4",
+          "rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-4",
+          "shadow-sm hover:shadow-md transition-shadow duration-300",
           className,
         )}
       >
-        <div className="text-xl font-black mb-1">{value}</div>
-        <div className="text-xs font-medium uppercase text-gray-500">
-          {label}
+        <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-1">
+          {value}
         </div>
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
       </div>
     );
   },

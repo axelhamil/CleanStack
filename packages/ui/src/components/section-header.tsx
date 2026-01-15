@@ -14,12 +14,21 @@ interface SectionHeaderProps {
   };
   centered?: boolean;
   inverted?: boolean;
+  gradient?: boolean;
   className?: string;
 }
 
 const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
   (
-    { title, subtitle, badge, centered = true, inverted = false, className },
+    {
+      title,
+      subtitle,
+      badge,
+      centered = true,
+      inverted = false,
+      gradient = false,
+      className,
+    },
     ref,
   ) => {
     const Badge = badge?.icon;
@@ -36,14 +45,14 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
         {badge && (
           <div
             className={cn(
-              "inline-flex items-center gap-2 mb-6 px-4 py-2 border-2",
+              "inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full",
               inverted
-                ? "border-white bg-white/10"
-                : "border-black dark:border-white bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50",
+                ? "bg-white/10 border border-white/20 text-white"
+                : "bg-secondary/50 border border-border/50 text-foreground",
             )}
           >
             {Badge && <Badge className="w-4 h-4" />}
-            <span className="font-bold uppercase text-xs tracking-wide">
+            <span className="font-medium text-xs tracking-wide">
               {badge.text}
             </span>
           </div>
@@ -51,8 +60,10 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
 
         <h2
           className={cn(
-            "text-3xl md:text-5xl font-black uppercase mb-6",
-            inverted && "text-white dark:text-black",
+            "text-3xl md:text-5xl font-bold mb-6",
+            inverted && "text-white",
+            gradient &&
+              "bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent",
           )}
         >
           {title}
@@ -63,9 +74,7 @@ const SectionHeader = React.forwardRef<HTMLDivElement, SectionHeaderProps>(
             className={cn(
               "text-lg max-w-2xl leading-relaxed",
               centered && "mx-auto",
-              inverted
-                ? "text-gray-300 dark:text-gray-600"
-                : "text-gray-600 dark:text-gray-400",
+              inverted ? "text-white/70" : "text-muted-foreground",
             )}
           >
             {subtitle}

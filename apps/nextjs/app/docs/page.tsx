@@ -1,8 +1,8 @@
 "use client";
 
-import { BrutalistBadge } from "@packages/ui/components/brutalist-badge";
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
 import { GridBackground } from "@packages/ui/components/grid-background";
+import { Badge } from "@packages/ui/components/ui/badge";
+import { Button } from "@packages/ui/components/ui/button";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -41,9 +41,9 @@ function ManifestSection({
   className?: string;
 }) {
   const bgClasses = {
-    light: "bg-white dark:bg-black",
-    dark: "bg-black dark:bg-white text-white dark:text-black",
-    accent: "bg-yellow-300 dark:bg-yellow-500",
+    light: "bg-background",
+    dark: "bg-foreground text-background",
+    accent: "bg-gradient-to-br from-primary/20 via-accent/20 to-secondary/20",
   };
 
   return (
@@ -69,16 +69,12 @@ function FeaturePoint({
 }) {
   return (
     <motion.div variants={fadeIn} className="flex gap-4 items-start">
-      <div className="flex-shrink-0 w-12 h-12 border-3 border-black dark:border-white bg-yellow-300 dark:bg-yellow-500 flex items-center justify-center">
-        <Icon className="w-6 h-6" strokeWidth={2.5} />
+      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+        <Icon className="w-6 h-6 text-primary" strokeWidth={2} />
       </div>
       <div>
-        <h4 className="font-bold text-lg uppercase tracking-tight mb-1">
-          {title}
-        </h4>
-        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-          {description}
-        </p>
+        <h4 className="font-semibold text-lg mb-1">{title}</h4>
+        <p className="text-muted-foreground leading-relaxed">{description}</p>
       </div>
     </motion.div>
   );
@@ -93,11 +89,11 @@ function CodeFlow() {
     >
       {steps.map((step, i) => (
         <div key={step} className="flex items-center gap-2">
-          <span className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-mono text-sm font-bold">
+          <span className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-mono text-sm font-medium">
             {step}
           </span>
           {i < steps.length - 1 && (
-            <ArrowRight className="w-5 h-5 text-gray-400" />
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
           )}
         </div>
       ))}
@@ -107,9 +103,9 @@ function CodeFlow() {
 
 export default function ManifestPage() {
   return (
-    <main className="bg-white dark:bg-black text-black dark:text-white">
+    <main className="bg-background text-foreground">
       {/* Hero */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50 dark:from-black dark:to-gray-950">
+      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-background to-secondary/20">
         <GridBackground />
 
         <div className="relative z-10 container mx-auto px-4 text-center max-w-4xl py-24">
@@ -119,18 +115,20 @@ export default function ManifestPage() {
             transition={{ duration: 0.5 }}
             className="mb-8"
           >
-            <BrutalistBadge icon={FileText}>Manifest</BrutalistBadge>
+            <Badge variant="secondary" className="gap-2 px-4 py-2">
+              <FileText className="w-4 h-4" />
+              Manifest
+            </Badge>
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight mb-8 leading-[1.1]"
+            className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 leading-[1.1]"
           >
-            Our
-            <br />
-            <span className="inline-block bg-black dark:bg-white text-white dark:text-black px-5 py-1 mt-2">
+            Our{" "}
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Approach
             </span>
           </motion.h1>
@@ -139,7 +137,7 @@ export default function ManifestPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto text-gray-700 dark:text-gray-300"
+            className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto text-muted-foreground"
           >
             A Next.js 16 monorepo with Clean Architecture + DDD. Here&apos;s why
             we built it this way.
@@ -157,14 +155,14 @@ export default function ManifestPage() {
         >
           <motion.h2
             variants={fadeIn}
-            className="text-3xl md:text-5xl font-black uppercase mb-8"
+            className="text-3xl md:text-5xl font-bold mb-8"
           >
             The Context
           </motion.h2>
 
           <motion.div
             variants={fadeIn}
-            className="space-y-6 text-lg leading-relaxed"
+            className="space-y-6 text-lg leading-relaxed opacity-90"
           >
             <p>
               AI tools write code fast. Really fast. You describe what you want,
@@ -194,26 +192,28 @@ export default function ManifestPage() {
           whileInView="visible"
           viewport={{ once: true }}
           variants={stagger}
-          className="text-black"
         >
           <motion.div
             variants={fadeIn}
             className="flex items-center gap-3 mb-6"
           >
-            <Layers className="w-8 h-8" />
-            <span className="font-bold uppercase tracking-wide text-sm">
+            <Layers className="w-8 h-8 text-primary" />
+            <span className="font-medium text-sm text-primary">
               The Structure
             </span>
           </motion.div>
 
           <motion.h2
             variants={fadeIn}
-            className="text-3xl md:text-5xl font-black uppercase mb-8"
+            className="text-3xl md:text-5xl font-bold mb-8"
           >
             Why Clean Architecture + DDD
           </motion.h2>
 
-          <motion.p variants={fadeIn} className="text-lg mb-8">
+          <motion.p
+            variants={fadeIn}
+            className="text-lg mb-8 text-muted-foreground"
+          >
             We picked these patterns because they work well with AI tools and
             make debugging straightforward.
           </motion.p>
@@ -245,7 +245,9 @@ export default function ManifestPage() {
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-12">
-            <p className="font-bold text-lg mb-4">The flow is consistent:</p>
+            <p className="font-semibold text-lg mb-4">
+              The flow is consistent:
+            </p>
             <CodeFlow />
           </motion.div>
         </motion.div>
@@ -264,14 +266,14 @@ export default function ManifestPage() {
             className="flex items-center gap-3 mb-6"
           >
             <Sparkles className="w-8 h-8 text-green-400" />
-            <span className="font-bold uppercase tracking-wide text-sm text-green-400">
+            <span className="font-medium text-sm text-green-400">
               What&apos;s Included
             </span>
           </motion.div>
 
           <motion.h2
             variants={fadeIn}
-            className="text-3xl md:text-5xl font-black uppercase mb-8"
+            className="text-3xl md:text-5xl font-bold mb-8"
           >
             Out of the Box
           </motion.h2>
@@ -288,7 +290,7 @@ export default function ManifestPage() {
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span>{item}</span>
+                    <span className="opacity-90">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -309,22 +311,20 @@ export default function ManifestPage() {
             variants={fadeIn}
             className="flex items-center gap-3 mb-6"
           >
-            <Code2 className="w-8 h-8 text-orange-600 dark:text-orange-400" />
-            <span className="font-bold uppercase tracking-wide text-sm text-orange-600 dark:text-orange-400">
-              A Note
-            </span>
+            <Code2 className="w-8 h-8 text-orange-500" />
+            <span className="font-medium text-sm text-orange-500">A Note</span>
           </motion.div>
 
           <motion.h2
             variants={fadeIn}
-            className="text-3xl md:text-5xl font-black uppercase mb-8"
+            className="text-3xl md:text-5xl font-bold mb-8"
           >
             About Complexity
           </motion.h2>
 
           <motion.div
             variants={fadeIn}
-            className="space-y-6 text-lg leading-relaxed"
+            className="space-y-6 text-lg leading-relaxed text-muted-foreground"
           >
             <p>
               More files doesn&apos;t mean more work. You&apos;re writing the
@@ -342,7 +342,7 @@ export default function ManifestPage() {
                 "Return a response",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-3">
-                  <span className="w-2 h-2 bg-black dark:bg-white" />
+                  <span className="w-2 h-2 rounded-full bg-primary" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -350,9 +350,9 @@ export default function ManifestPage() {
 
             <motion.div
               variants={fadeIn}
-              className="border-4 border-black dark:border-white p-6 my-8 bg-gray-50 dark:bg-gray-900"
+              className="rounded-2xl border border-border/50 p-6 my-8 bg-secondary/30 backdrop-blur-sm"
             >
-              <p className="text-xl font-bold">
+              <p className="text-xl font-semibold text-foreground">
                 Same code. Different organization.
               </p>
             </motion.div>
@@ -366,10 +366,7 @@ export default function ManifestPage() {
       </ManifestSection>
 
       {/* Quick Start */}
-      <ManifestSection
-        variant="dark"
-        className="border-t-4 border-white dark:border-black"
-      >
+      <ManifestSection variant="dark" className="border-t border-border/20">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -378,14 +375,14 @@ export default function ManifestPage() {
         >
           <motion.h2
             variants={fadeIn}
-            className="text-3xl md:text-5xl font-black uppercase mb-8 text-center"
+            className="text-3xl md:text-5xl font-bold mb-8 text-center"
           >
             Get Started
           </motion.h2>
 
           <motion.div
             variants={fadeIn}
-            className="bg-gray-900 dark:bg-gray-100 text-green-400 dark:text-green-600 p-6 font-mono text-sm mb-12 border-4 border-white dark:border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            className="bg-card/10 backdrop-blur-sm text-green-400 p-6 font-mono text-sm mb-12 rounded-2xl border border-border/20 shadow-lg"
           >
             <pre className="overflow-x-auto">
               {`pnpm install && cp .env.example .env
@@ -395,66 +392,68 @@ pnpm dev`}
           </motion.div>
 
           <motion.div variants={fadeIn} className="mb-12">
-            <h3 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
               Documentation
             </h3>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Link
                   href="https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/01-quick-start.md"
-                  className="hover:underline font-medium"
+                  className="hover:text-primary transition-colors font-medium"
                 >
                   Quick Start
                 </Link>
-                <span className="text-gray-400">— Installation and setup</span>
+                <span className="text-muted-foreground">
+                  — Installation and setup
+                </span>
               </li>
               <li className="flex items-center gap-3">
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Link
                   href="https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/02-architecture.md"
-                  className="hover:underline font-medium"
+                  className="hover:text-primary transition-colors font-medium"
                 >
                   Architecture
                 </Link>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   — Clean Architecture layers
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Link
                   href="https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/03-tutorial-first-feature.md"
-                  className="hover:underline font-medium"
+                  className="hover:text-primary transition-colors font-medium"
                 >
                   Tutorial
                 </Link>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   — Build your first feature
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Link
                   href="https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/04-ai-workflow.md"
-                  className="hover:underline font-medium"
+                  className="hover:text-primary transition-colors font-medium"
                 >
                   AI Workflow
                 </Link>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   — Claude skills and agents
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Link
                   href="https://github.com/axelhamil/nextjs-clean-architecture-starter/blob/main/docs/08-core-concepts.md"
-                  className="hover:underline font-medium"
+                  className="hover:text-primary transition-colors font-medium"
                 >
                   Core Concepts
                 </Link>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   — Result, Option, Value Objects
                 </span>
               </li>
@@ -462,46 +461,48 @@ pnpm dev`}
           </motion.div>
 
           <motion.div variants={fadeIn} className="mb-12">
-            <h3 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <Terminal className="w-5 h-5" />
               AI Skills
             </h3>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
-                <code className="px-2 py-1 bg-white dark:bg-black text-black dark:text-white font-mono text-sm">
+                <code className="px-3 py-1 rounded-lg bg-primary/20 text-primary font-mono text-sm">
                   /feature-prd
                 </code>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   Conversational PRD with EventStorming
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <code className="px-2 py-1 bg-white dark:bg-black text-black dark:text-white font-mono text-sm">
+                <code className="px-3 py-1 rounded-lg bg-primary/20 text-primary font-mono text-sm">
                   /gen-domain
                 </code>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   Generate domain layer code
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <code className="px-2 py-1 bg-white dark:bg-black text-black dark:text-white font-mono text-sm">
+                <code className="px-3 py-1 rounded-lg bg-primary/20 text-primary font-mono text-sm">
                   /gen-usecase
                 </code>
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   Generate use case with DTOs
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <code className="px-2 py-1 bg-white dark:bg-black text-black dark:text-white font-mono text-sm">
+                <code className="px-3 py-1 rounded-lg bg-primary/20 text-primary font-mono text-sm">
                   /gen-tests
                 </code>
-                <span className="text-gray-400">Generate BDD tests</span>
+                <span className="text-muted-foreground">
+                  Generate BDD tests
+                </span>
               </li>
             </ul>
           </motion.div>
 
           <motion.div variants={fadeIn} className="mb-12">
-            <h3 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5" />
               Tech Stack
             </h3>
@@ -520,7 +521,7 @@ pnpm dev`}
               ].map((tech) => (
                 <span
                   key={tech}
-                  className="px-3 py-1 border-2 border-white dark:border-black text-sm font-medium"
+                  className="px-3 py-1 rounded-full border border-border/30 bg-card/10 text-sm font-medium"
                 >
                   {tech}
                 </span>
@@ -532,15 +533,15 @@ pnpm dev`}
             variants={fadeIn}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16"
           >
-            <BrutalistButton size="lg" asChild>
+            <Button size="lg" asChild>
               <Link href="https://github.com/axelhamil/nextjs-clean-architecture-starter">
                 <Github className="w-5 h-5 mr-2" />
                 View on GitHub
               </Link>
-            </BrutalistButton>
-            <BrutalistButton size="lg" variant="outline" asChild>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
               <Link href="/">← Back to Home</Link>
-            </BrutalistButton>
+            </Button>
           </motion.div>
         </motion.div>
       </ManifestSection>

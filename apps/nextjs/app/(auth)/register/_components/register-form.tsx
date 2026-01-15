@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
+import { Button } from "@packages/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -128,12 +128,7 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <BrutalistButton
-          type="submit"
-          variant="dark"
-          className="w-full"
-          disabled={isPending}
-        >
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -142,7 +137,7 @@ export function RegisterForm() {
           ) : (
             "Create Account"
           )}
-        </BrutalistButton>
+        </Button>
       </form>
       <p className="text-sm text-muted-foreground text-center mt-4">
         Already have an account?{" "}

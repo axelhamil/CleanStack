@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "../libs/utils";
 
 interface SectionProps extends React.HTMLAttributes<HTMLElement> {
-  variant?: "default" | "muted" | "inverted";
+  variant?: "default" | "muted" | "accent" | "inverted";
   containerSize?: "default" | "narrow" | "wide";
 }
 
@@ -14,9 +14,10 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
     ref,
   ) => {
     const variantClasses = {
-      default: "bg-white dark:bg-black",
-      muted: "bg-gray-50 dark:bg-gray-950",
-      inverted: "bg-black dark:bg-white",
+      default: "bg-background",
+      muted: "bg-secondary/30",
+      accent: "bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/10",
+      inverted: "bg-foreground text-background",
     };
 
     const containerClasses = {

@@ -1,10 +1,10 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 
 interface ProfileCardProps {
   user: {
@@ -16,14 +16,12 @@ interface ProfileCardProps {
 
 export function ProfileCard({ user }: ProfileCardProps) {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Profile</BrutalistCardTitle>
-        <BrutalistCardDescription>
-          Your account information
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent className="space-y-2">
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>Your account information</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
         <div>
           <span className="text-sm text-muted-foreground">Email</span>
           <p className="font-medium">{user.email}</p>
@@ -36,7 +34,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
           <span className="text-sm text-muted-foreground">Email Verified</span>
           <p className="font-medium">{user.emailVerified ? "Yes" : "No"}</p>
         </div>
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

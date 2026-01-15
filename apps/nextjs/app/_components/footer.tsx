@@ -42,11 +42,11 @@ const navigation = {
 
 export function Footer() {
   return (
-    <footer className="border-t-3 border-black dark:border-white bg-white dark:bg-black">
+    <footer className="border-t border-border/30 bg-secondary/20">
       <div className="container mx-auto px-4 py-12 lg:py-16">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div>
-            <h3 className="font-black uppercase text-sm tracking-wide mb-4">
+            <h3 className="font-semibold text-sm text-foreground mb-4">
               Product
             </h3>
             <ul className="space-y-3">
@@ -54,7 +54,7 @@ export function Footer() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -64,7 +64,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-black uppercase text-sm tracking-wide mb-4">
+            <h3 className="font-semibold text-sm text-foreground mb-4">
               Resources
             </h3>
             <ul className="space-y-3">
@@ -72,7 +72,7 @@ export function Footer() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -82,7 +82,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-black uppercase text-sm tracking-wide mb-4">
+            <h3 className="font-semibold text-sm text-foreground mb-4">
               Legal
             </h3>
             <ul className="space-y-3">
@@ -90,7 +90,7 @@ export function Footer() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -100,19 +100,19 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-black uppercase text-sm tracking-wide mb-4">
+            <h3 className="font-semibold text-sm text-foreground mb-4">
               Connect
             </h3>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {navigation.social.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 border-2 border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                  className="p-2.5 rounded-xl border border-border/50 bg-card/50 text-muted-foreground hover:text-primary hover:border-primary/30 hover:shadow-md transition-all"
                 >
-                  <item.icon className="h-5 w-5" strokeWidth={2.5} />
+                  <item.icon className="h-5 w-5" strokeWidth={2} />
                   <span className="sr-only">{item.name}</span>
                 </Link>
               ))}
@@ -120,14 +120,14 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t-2 border-black/10 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
           <Link
             href="/"
-            className="font-black text-xl uppercase tracking-tight"
+            className="font-bold text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
           >
-            Clean Architecture Starter
+            CleanStack
           </Link>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} All rights reserved. Built with Next.js
             & DDD.
           </p>

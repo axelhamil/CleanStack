@@ -1,13 +1,13 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
+import { Button } from "@packages/ui/components/ui/button";
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -35,19 +35,17 @@ export function ManageSubscription() {
   }
 
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Subscription</BrutalistCardTitle>
-        <BrutalistCardDescription>
-          Manage your billing and subscription
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent>
-        <BrutalistButton onClick={openPortal} disabled={loading}>
+    <Card>
+      <CardHeader>
+        <CardTitle>Subscription</CardTitle>
+        <CardDescription>Manage your billing and subscription</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={openPortal} disabled={loading}>
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Manage Subscription
-        </BrutalistButton>
-      </BrutalistCardContent>
-    </BrutalistCard>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

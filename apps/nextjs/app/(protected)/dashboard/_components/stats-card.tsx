@@ -1,10 +1,10 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 
 interface StatItem {
   value: number;
@@ -17,28 +17,24 @@ interface StatsCardProps {
 
 export function StatsCard({ stats }: StatsCardProps) {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Quick Stats</BrutalistCardTitle>
-        <BrutalistCardDescription>
-          Example dashboard metrics
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent>
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Stats</CardTitle>
+        <CardDescription>Example dashboard metrics</CardDescription>
+      </CardHeader>
+      <CardContent>
         <div className="grid grid-cols-2 gap-4">
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="text-center p-4 border-3 border-black dark:border-white"
+              className="text-center p-4 rounded-xl bg-secondary/50"
             >
               <p className="text-3xl font-bold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground uppercase">
-                {stat.label}
-              </p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

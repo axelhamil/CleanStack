@@ -1,7 +1,7 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
 import { StatCard } from "@packages/ui/components/stat-card";
+import { Button } from "@packages/ui/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Github } from "lucide-react";
 import Link from "next/link";
@@ -17,7 +17,7 @@ export function FinalCTASection() {
   const t = useTranslations("home.cta");
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-gray-100 dark:from-black dark:to-gray-950 border-t-2 border-black/10 dark:border-white/10">
+    <section className="py-24 bg-gradient-to-b from-background to-secondary/30 border-t border-border/30">
       <div className="container mx-auto px-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -25,16 +25,14 @@ export function FinalCTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-4xl md:text-5xl font-black uppercase mb-6">
-            {t("title")}
-          </h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">{t("title")}</h2>
 
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl mx-auto">
+          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
             {t("subtitle")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <BrutalistButton size="lg" asChild>
+            <Button size="lg" variant="glow" asChild>
               <Link
                 href="/docs/getting-started"
                 className="flex items-center gap-2"
@@ -42,9 +40,9 @@ export function FinalCTASection() {
                 {t("button")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
-            </BrutalistButton>
+            </Button>
 
-            <BrutalistButton size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild>
               <Link
                 href="https://github.com/axelhamil/nextjs-clean-architecture-starter"
                 target="_blank"
@@ -53,7 +51,7 @@ export function FinalCTASection() {
                 <Github className="w-4 h-4" />
                 Star on GitHub
               </Link>
-            </BrutalistButton>
+            </Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">

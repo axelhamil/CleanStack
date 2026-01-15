@@ -1,6 +1,6 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
+import { Button } from "@packages/ui/components/ui/button";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/common/auth-client";
@@ -67,7 +67,7 @@ export function OAuthButtons() {
 
   return (
     <div className="grid gap-2">
-      <BrutalistButton
+      <Button
         type="button"
         variant="outline"
         className="w-full"
@@ -76,8 +76,8 @@ export function OAuthButtons() {
       >
         <GoogleIcon />
         Continue with Google
-      </BrutalistButton>
-      <BrutalistButton
+      </Button>
+      <Button
         type="button"
         variant="outline"
         className="w-full"
@@ -86,7 +86,7 @@ export function OAuthButtons() {
       >
         <GitHubIcon />
         Continue with GitHub
-      </BrutalistButton>
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { BrutalistButton } from "@packages/ui/components/brutalist-button";
+import { Button } from "@packages/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -63,9 +63,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-bold uppercase text-sm tracking-wide">
-                Name
-              </FormLabel>
+              <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input {...field} placeholder="Your name" />
               </FormControl>
@@ -77,7 +75,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <div className="space-y-2">
           <label
             htmlFor="email"
-            className="font-bold uppercase text-sm tracking-wide"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             Email
           </label>
@@ -87,17 +85,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
             disabled
             className="opacity-60"
           />
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Email cannot be changed at this time.
           </p>
         </div>
 
-        <BrutalistButton type="submit" disabled={form.formState.isSubmitting}>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
           Save Changes
-        </BrutalistButton>
+        </Button>
       </form>
     </Form>
   );

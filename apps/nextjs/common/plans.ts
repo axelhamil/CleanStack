@@ -1,4 +1,4 @@
-import type { Plan } from "@packages/ui/components/brutalist-pricing-table";
+import type { Plan } from "@packages/ui/components/pricing-table";
 
 export const plans: Plan[] = [
   {

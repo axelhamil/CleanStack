@@ -1,24 +1,24 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 import { ForgotPasswordForm } from "./_components/forgot-password-form";
 
 export default function ForgotPasswordPage() {
   return (
-    <BrutalistCard>
-      <BrutalistCardHeader>
-        <BrutalistCardTitle>Reset Password</BrutalistCardTitle>
-        <BrutalistCardDescription>
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle>Reset Password</CardTitle>
+        <CardDescription>
           Enter your email to receive a password reset link
-        </BrutalistCardDescription>
-      </BrutalistCardHeader>
-      <BrutalistCardContent>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <ForgotPasswordForm />
-      </BrutalistCardContent>
-    </BrutalistCard>
+      </CardContent>
+    </Card>
   );
 }

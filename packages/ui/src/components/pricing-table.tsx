@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { cn } from "../libs/utils";
-import { BrutalistPricingCard } from "./brutalist-pricing-card";
-import { BrutalistPricingToggle } from "./brutalist-pricing-toggle";
+import { PricingCard } from "./pricing-card";
+import { PricingToggle } from "./pricing-toggle";
 
 interface Plan {
   id: string;
@@ -19,7 +19,7 @@ interface Plan {
   };
 }
 
-interface BrutalistPricingTableProps {
+interface PricingTableProps {
   plans: Plan[];
   onSelectPlan: (priceId: string) => void;
   loading?: string;
@@ -27,18 +27,18 @@ interface BrutalistPricingTableProps {
   className?: string;
 }
 
-function BrutalistPricingTable({
+function PricingTable({
   plans,
   onSelectPlan,
   loading,
   yearlyDiscount = 20,
   className,
-}: BrutalistPricingTableProps) {
+}: PricingTableProps) {
   const [interval, setInterval] = useState<"month" | "year">("month");
 
   return (
     <div className={cn("space-y-8", className)}>
-      <BrutalistPricingToggle
+      <PricingToggle
         interval={interval}
         onChange={setInterval}
         yearlyDiscount={yearlyDiscount}
@@ -49,7 +49,7 @@ function BrutalistPricingTable({
           const currentPriceId =
             interval === "month" ? plan.priceId.monthly : plan.priceId.yearly;
           return (
-            <BrutalistPricingCard
+            <PricingCard
               key={plan.id}
               name={plan.name}
               description={plan.description}
@@ -70,5 +70,5 @@ function BrutalistPricingTable({
   );
 }
 
-export { BrutalistPricingTable };
+export { PricingTable };
 export type { Plan };

@@ -1,10 +1,10 @@
 import {
-  BrutalistCard,
-  BrutalistCardContent,
-  BrutalistCardDescription,
-  BrutalistCardHeader,
-  BrutalistCardTitle,
-} from "@packages/ui/components/brutalist-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui/components/ui/card";
 import { requireAuth } from "@/adapters/guards/auth.guard";
 import { ProfileForm } from "./_components/profile-form";
 
@@ -13,17 +13,15 @@ export default async function ProfileSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <BrutalistCard>
-        <BrutalistCardHeader>
-          <BrutalistCardTitle>Profile</BrutalistCardTitle>
-          <BrutalistCardDescription>
-            Update your profile information.
-          </BrutalistCardDescription>
-        </BrutalistCardHeader>
-        <BrutalistCardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>Update your profile information.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <ProfileForm user={session.user} />
-        </BrutalistCardContent>
-      </BrutalistCard>
+        </CardContent>
+      </Card>
     </div>
   );
 }
