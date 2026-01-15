@@ -38,6 +38,7 @@
     "react": "^19",
     "react-dom": "^19",
     "react-hook-form": "^7.69.0",
+    "stripe": "^20.1.2",
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.2.1"

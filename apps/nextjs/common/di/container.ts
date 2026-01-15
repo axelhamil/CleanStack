@@ -1,6 +1,7 @@
 import { createContainer } from "@evyweb/ioctopus";
 import type { InMemoryEventDispatcher } from "@/adapters/events/in-memory-event-dispatcher";
 import { createAuthModule } from "./modules/auth.module";
+import { createBillingModule } from "./modules/billing.module";
 import {
   createEventsModule,
   registerEventHandlers,
@@ -11,6 +12,7 @@ const ApplicationContainer = createContainer();
 
 ApplicationContainer.load(Symbol("EventsModule"), createEventsModule());
 ApplicationContainer.load(Symbol("AuthModule"), createAuthModule());
+ApplicationContainer.load(Symbol("BillingModule"), createBillingModule());
 
 const dispatcher = ApplicationContainer.get(
   DI_SYMBOLS.IEventDispatcher,
