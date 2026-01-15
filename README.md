@@ -141,7 +141,59 @@ Visit [localhost:3000](http://localhost:3000)
 
 ## Stack
 
-Next.js 16 (App Router) • Expo (React Native) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Cloudflare R2 • shadcn/ui • Tailwind CSS 4
+Next.js 16 (App Router) • Expo (React Native) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Stripe • Resend • Sentry • shadcn/ui • Tailwind CSS 4
+
+## AI-Powered Development
+
+This starter includes Claude Code skills and agents to accelerate development.
+
+### Skills
+
+| Command | Purpose |
+|---------|---------|
+| `/eventstorming` | Discover domain events and aggregates |
+| `/feature-prd` | Generate feature specification |
+| `/gen-domain` | Scaffold domain layer (entities, VOs, events) |
+| `/gen-usecase` | Scaffold use cases and ports |
+| `/gen-tests` | Generate BDD tests |
+
+### Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `feature-architect` | Design feature architecture |
+| `code-reviewer` | Review code quality and patterns |
+| `test-writer` | Write comprehensive tests |
+| `doc-writer` | Update documentation |
+
+### Workflow Example
+
+```bash
+# 1. Discover domain
+/eventstorming "user subscription management"
+
+# 2. Generate PRD
+/feature-prd "subscription checkout"
+
+# 3. Scaffold code
+/gen-domain subscription
+/gen-usecase CreateCheckoutSession
+
+# 4. Generate tests
+/gen-tests CreateCheckoutSessionUseCase
+```
+
+## Production Features
+
+All features follow Clean Architecture patterns with full test coverage.
+
+| Feature | Implementation |
+|---------|----------------|
+| **Authentication** | BetterAuth with email/password, Google & GitHub OAuth |
+| **Payments** | Stripe checkout, webhooks, customer portal |
+| **Emails** | Resend with React Email templates |
+| **Monitoring** | Sentry error tracking |
+| **Deployment** | Vercel-ready with standalone output |
 
 ## Commands
 
@@ -154,7 +206,9 @@ pnpm db               # Start PostgreSQL
 pnpm db:push          # Push schema (dev)
 pnpm db:generate      # Generate migrations
 pnpm test             # Run tests
+pnpm test:e2e         # E2E tests (Playwright)
 pnpm ui:add           # Add shadcn component
+pnpm email:dev        # Preview email templates
 ```
 
 ## Architecture
