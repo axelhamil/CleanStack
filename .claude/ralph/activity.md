@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 13/65
-**Current Task:** [IMPL] Implement ManagedPrompt VOs and aggregate (GREEN)
+**Tasks Completed:** 15/65
+**Current Task:** [IMPL] Implement LLMUsage domain (GREEN)
 
 ---
 
@@ -364,4 +364,54 @@ const role = message.get("role");
 - All ManagedPrompt aggregate tests pass
 - No regressions on existing tests
 - Implementation follows existing aggregate patterns (User, Conversation)
+
+### 2026-01-15 - Task 14: [IMPL] Implement ManagedPrompt VOs and aggregate (GREEN)
+
+**Completed:** ✅
+
+**Note:** This task was already completed during Task 12 and Task 13. All VOs and aggregate were implemented during the TDD cycle:
+- Task 12: Implemented all 6 VOs (PromptKey, PromptName, PromptDescription, PromptTemplate, PromptVariable, PromptEnvironment)
+- Task 13: Implemented ManagedPrompt aggregate, ManagedPromptId, and all 4 domain events
+
+**Commands Run:**
+- `pnpm test` - 556 tests PASSED
+
+**Verification:**
+- All ManagedPrompt tests pass (GREEN)
+- No implementation fixes needed
+
+### 2026-01-15 - Task 15: [TDD] Write LLMUsage tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED → GREEN
+
+**Changes:**
+- Created 5 test files in `src/domain/llm/usage/__tests__/`:
+  - `llm-usage.aggregate.test.ts` (12 tests) - aggregate create, reconstitute, events, totalTokens
+  - `provider-identifier.vo.test.ts` (12 tests) - valid providers, invalid providers, helpers
+  - `model-identifier.vo.test.ts` (10 tests) - valid models, invalid models, equality
+  - `token-count.vo.test.ts` (11 tests) - positive integers, add(), zero()
+  - `duration.vo.test.ts` (13 tests) - positive milliseconds, toSeconds(), toHumanReadable()
+
+**RED Phase (TypeScript type inference issues):**
+- `ValueObject.create()` generic inferred literal types (e.g., `100` instead of `number`)
+- Caused error: "The 'this' context of type 'typeof TokenCount' is not assignable to method's 'this' of type 'new (value: 100) => ValueObject<100>'"
+
+**GREEN Phase Fixes:**
+- Applied `as Type` pattern from existing codebase (`user-domain.test.ts`)
+- Changed all test values to use type assertions:
+  - `TokenCount.create(100 as number)`
+  - `Duration.create(1500 as number)`
+  - `ModelIdentifier.create("gpt-4o" as string)`
+  - `ProviderIdentifier.create("openai" as ProviderType)`
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+- `pnpm test` - 614 tests PASSED (58 new LLMUsage tests)
+
+**Verification:**
+- All LLMUsage tests pass
+- No regressions on existing tests
+- Type check passes
 

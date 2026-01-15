@@ -254,7 +254,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Create ManagedPromptDeactivatedEvent",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-tdd",
@@ -274,7 +274,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test positive milliseconds",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-impl",
