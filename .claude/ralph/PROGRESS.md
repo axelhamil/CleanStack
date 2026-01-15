@@ -17,7 +17,7 @@
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | ✅ 6/6 |
-| E7 | Tests Coverage | TST-001 to TST-007 | 🟡 3/7 |
+| E7 | Tests Coverage | TST-001 to TST-007 | 🟡 5/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | 🔴 0/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | 🔴 0/8 |
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E7 - Tests Coverage
-**Story**: TST-006 - Coverage in CI
-**File**: `.claude/ralph/prd/stories/TST-006-coverage-ci.md`
+**Story**: TST-007 - Playwright E2E Tests
+**File**: `.claude/ralph/prd/stories/TST-007-e2e-playwright.md`
 
 ---
 
@@ -71,6 +71,7 @@
 - [x] TST-003 - Auth Use Cases Tests (51 tests, 99% coverage) - cb17de4
 - [~] TST-004 - Blocked (Billing use cases don't exist - depends on E8)
 - [x] TST-005 - Mappers + Event Dispatcher Tests (27+31 tests, 100%/91% coverage)
+- [x] TST-006 - Coverage in CI (Codecov + PR reports)
 
 ---
 

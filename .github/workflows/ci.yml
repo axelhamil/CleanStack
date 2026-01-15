@@ -62,12 +62,21 @@ jobs:
       - name: Run Tests with Coverage
         run: pnpm test:coverage
 
-      - name: Upload Coverage
+      - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           files: ./packages/ddd-kit/coverage/lcov.info,./apps/nextjs/coverage/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ddd-kit,nextjs
+
+      - name: Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          json-summary-path: ./apps/nextjs/coverage/coverage-summary.json
+          json-final-path: ./apps/nextjs/coverage/coverage-final.json
+          vite-config-path: ./apps/nextjs/vitest.config.ts
 
   build:
     name: Build
