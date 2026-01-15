@@ -75,6 +75,14 @@ const navSections = [
         label: "Claude Code",
       },
       {
+        href: "/docs/ai/skills",
+        label: "Skills",
+      },
+      {
+        href: "/docs/ai/agents",
+        label: "Agents",
+      },
+      {
         href: "/docs/ai/cursor",
         label: "Cursor",
       },
@@ -94,6 +102,18 @@ const navSections = [
       {
         href: "/docs/guides/first-use-case",
         label: "Your First Use Case",
+      },
+      {
+        href: "/docs/guides/domain-events",
+        label: "Domain Events",
+      },
+      {
+        href: "/docs/guides/billing",
+        label: "Billing & Stripe",
+      },
+      {
+        href: "/docs/guides/email",
+        label: "Email Service",
       },
       {
         href: "/docs/guides/transactions",

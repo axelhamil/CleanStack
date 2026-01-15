@@ -1,0 +1,252 @@
+# Billing Integration
+
+Complete Stripe integration with Clean Architecture.
+
+## Overview
+
+CleanStack provides a production-ready billing system:
+
+- **Subscription Aggregate** - Domain model for subscriptions
+- **Stripe Provider** - Payment provider implementation
+- **Checkout Flow** - Stripe Checkout integration
+- **Webhook Handling** - Subscription lifecycle events
+- **Customer Portal** - Self-service subscription management
+
+## Architecture
+
+```
+domain/billing/
+├── subscription.aggregate.ts    # Core business logic
+├── subscription-id.ts           # Typed ID
+├── value-objects/
+│   ├── plan-id.vo.ts           # Plan identifier
+│   └── subscription-status.vo.ts
+└── events/                      # Domain events
+    ├── subscription-created.event.ts
+    ├── subscription-cancelled.event.ts
+    └── ...
+
+application/
+├── ports/
+│   ├── payment.provider.port.ts      # IPaymentProvider
+│   └── subscription.repository.port.ts
+└── use-cases/billing/
+    ├── create-checkout-session.use-case.ts
+    ├── handle-stripe-webhook.use-case.ts
+    └── create-portal-session.use-case.ts
+
+adapters/payment/
+└── stripe-payment.provider.ts   # Stripe implementation
+```
+
+## Subscription Aggregate
+
+```typescript
+// domain/billing/subscription.aggregate.ts
+export class Subscription extends Aggregate<ISubscriptionProps> {
+  static create(props: CreateSubscriptionProps, id?: UUID): Subscription {
+    const subscription = new Subscription({ ...props, createdAt: new Date() }, id ?? new UUID());
+
+    // Emit domain event
+    subscription.addEvent(new SubscriptionCreatedEvent(...));
+    return subscription;
+  }
+
+  cancel(reason: string): Result<void> {
+    if (this.get("status").isCancelled) {
+      return Result.fail("Subscription is already cancelled");
+    }
+    // Update status and emit event
+    this.addEvent(new SubscriptionCancelledEvent(...));
+    return Result.ok();
+  }
+
+  renew(newPeriodEnd: Date): Result<void> { ... }
+  changePlan(newPlanId: PlanId): Result<void> { ... }
+}
+```
+
+## Payment Provider Port
+
+```typescript
+// application/ports/payment.provider.port.ts
+export interface IPaymentProvider {
+  createCheckoutSession(params: CreateCheckoutParams): Promise<Result<{ url: string }>>;
+  createPortalSession(customerId: string, returnUrl: string): Promise<Result<{ url: string }>>;
+  constructWebhookEvent(payload: string, signature: string): Result<StripeEvent>;
+}
+```
+
+## Checkout Flow
+
+### 1. Create Checkout Session
+
+```typescript
+// application/use-cases/billing/create-checkout-session.use-case.ts
+export class CreateCheckoutSessionUseCase implements UseCase<Input, Output> {
+  async execute(input: Input): Promise<Result<Output>> {
+    const user = await this.getUser(input.userId);
+    if (user.isFailure) return Result.fail(user.getError());
+
+    const session = await this.paymentProvider.createCheckoutSession({
+      customerEmail: user.getValue().get("email").value,
+      priceId: input.priceId,
+      successUrl: `${input.baseUrl}/checkout/success`,
+      cancelUrl: `${input.baseUrl}/pricing`,
+      metadata: { userId: user.getValue().id.value },
+    });
+
+    return Result.ok({ url: session.getValue().url });
+  }
+}
+```
+
+### 2. API Route
+
+```typescript
+// app/api/checkout/route.ts
+export async function POST(request: Request) {
+  const session = await requireAuth();
+  const { priceId } = await request.json();
+
+  const useCase = getInjection("CreateCheckoutSessionUseCase");
+  const result = await useCase.execute({
+    userId: session.user.id,
+    priceId,
+    baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  });
+
+  if (result.isFailure) {
+    return Response.json({ error: result.getError() }, { status: 400 });
+  }
+
+  return Response.json(result.getValue());
+}
+```
+
+## Webhook Handling
+
+### 1. Webhook Use Case
+
+```typescript
+// application/use-cases/billing/handle-stripe-webhook.use-case.ts
+export class HandleStripeWebhookUseCase implements UseCase<Input, Output> {
+  async execute(input: Input): Promise<Result<Output>> {
+    const eventResult = this.paymentProvider.constructWebhookEvent(
+      input.payload,
+      input.signature
+    );
+    if (eventResult.isFailure) return Result.fail(eventResult.getError());
+
+    const event = eventResult.getValue();
+
+    switch (event.type) {
+      case "checkout.session.completed":
+        return this.handleCheckoutCompleted(event);
+      case "customer.subscription.updated":
+        return this.handleSubscriptionUpdated(event);
+      case "customer.subscription.deleted":
+        return this.handleSubscriptionDeleted(event);
+      default:
+        return Result.ok({ handled: false });
+    }
+  }
+}
+```
+
+### 2. Webhook API Route
+
+```typescript
+// app/api/webhooks/stripe/route.ts
+export async function POST(request: Request) {
+  const payload = await request.text();
+  const signature = request.headers.get("stripe-signature")!;
+
+  const useCase = getInjection("HandleStripeWebhookUseCase");
+  const result = await useCase.execute({ payload, signature });
+
+  if (result.isFailure) {
+    return Response.json({ error: result.getError() }, { status: 400 });
+  }
+
+  return Response.json({ received: true });
+}
+```
+
+## Customer Portal
+
+```typescript
+// application/use-cases/billing/create-portal-session.use-case.ts
+export class CreatePortalSessionUseCase implements UseCase<Input, Output> {
+  async execute(input: Input): Promise<Result<Output>> {
+    const subscription = await this.subscriptionRepo.findByUserId(input.userId);
+    if (subscription.isNone()) {
+      return Result.fail("No active subscription");
+    }
+
+    const session = await this.paymentProvider.createPortalSession(
+      subscription.unwrap().get("stripeCustomerId"),
+      input.returnUrl
+    );
+
+    return Result.ok({ url: session.getValue().url });
+  }
+}
+```
+
+## Environment Variables
+
+```env
+# .env.local
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+
+# Price IDs from Stripe Dashboard
+STRIPE_PRICE_BASIC=price_...
+STRIPE_PRICE_PRO=price_...
+```
+
+## Pricing Page Integration
+
+```tsx
+// app/pricing/page.tsx
+export default function PricingPage() {
+  return (
+    <PricingCard
+      name="Pro"
+      price={29}
+      priceId={process.env.STRIPE_PRICE_PRO}
+      features={["Unlimited projects", "Priority support"]}
+    />
+  );
+}
+```
+
+## Testing
+
+```typescript
+describe("CreateCheckoutSessionUseCase", () => {
+  it("should create checkout session for valid user", async () => {
+    mockUserRepo.findById.mockResolvedValue(Result.ok(Option.some(mockUser)));
+    mockPaymentProvider.createCheckoutSession.mockResolvedValue(
+      Result.ok({ url: "https://checkout.stripe.com/..." })
+    );
+
+    const result = await useCase.execute({
+      userId: "123",
+      priceId: "price_xxx",
+      baseUrl: "https://app.com",
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(result.getValue().url).toContain("checkout.stripe.com");
+  });
+});
+```
+
+## Next Steps
+
+- [Domain Events](/docs/guides/domain-events)
+- [Email Service](/docs/guides/email)
+- [Authentication](/docs/guides/authentication)

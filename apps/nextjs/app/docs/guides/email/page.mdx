@@ -1,0 +1,300 @@
+# Email Service
+
+Transactional emails with React Email and Resend.
+
+## Overview
+
+CleanStack provides a complete email system:
+
+- **IEmailService** - Port for email sending
+- **ResendEmailService** - Resend implementation
+- **React Email Templates** - Type-safe email components
+- **Event-driven** - Send emails via domain events
+
+## Architecture
+
+```
+application/ports/
+└── email.service.port.ts    # IEmailService interface
+
+adapters/email/
+└── resend-email.service.ts  # Resend implementation
+
+emails/
+├── templates/               # React Email templates
+│   ├── welcome.tsx
+│   ├── password-reset.tsx
+│   └── payment-confirmation.tsx
+└── components/              # Shared components
+    ├── email-layout.tsx
+    ├── email-button.tsx
+    └── email-footer.tsx
+```
+
+## Email Service Port
+
+```typescript
+// application/ports/email.service.port.ts
+export interface SendEmailParams {
+  to: string | string[];
+  subject: string;
+  html?: string;
+  text?: string;
+  template?: {
+    name: string;
+    data: Record<string, unknown>;
+  };
+}
+
+export interface IEmailService {
+  send(params: SendEmailParams): Promise<Result<void>>;
+}
+```
+
+## Resend Implementation
+
+```typescript
+// adapters/email/resend-email.service.ts
+import { Resend } from "resend";
+
+export class ResendEmailService implements IEmailService {
+  private resend = new Resend(process.env.RESEND_API_KEY);
+
+  async send(params: SendEmailParams): Promise<Result<void>> {
+    try {
+      const { error } = await this.resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: params.to,
+        subject: params.subject,
+        html: params.html ?? "",
+      });
+
+      if (error) {
+        return Result.fail(`Email error: ${error.message}`);
+      }
+
+      return Result.ok();
+    } catch (error) {
+      return Result.fail(`Email error: ${error.message}`);
+    }
+  }
+}
+```
+
+## React Email Templates
+
+### Welcome Email
+
+```tsx
+// emails/templates/welcome.tsx
+import { Body, Container, Heading, Text } from "@react-email/components";
+import { EmailLayout } from "../components/email-layout";
+import { EmailButton } from "../components/email-button";
+
+interface WelcomeEmailProps {
+  name: string;
+  loginUrl: string;
+}
+
+export default function WelcomeEmail({ name, loginUrl }: WelcomeEmailProps) {
+  return (
+    <EmailLayout previewText={`Welcome to CleanStack, ${name}!`}>
+      <Container>
+        <Heading>Welcome, {name}!</Heading>
+        <Text>
+          Thanks for signing up. We're excited to have you on board.
+        </Text>
+        <EmailButton href={loginUrl}>Get Started</EmailButton>
+      </Container>
+    </EmailLayout>
+  );
+}
+```
+
+### Password Reset
+
+```tsx
+// emails/templates/password-reset.tsx
+export default function PasswordResetEmail({ resetUrl }: Props) {
+  return (
+    <EmailLayout previewText="Reset your password">
+      <Heading>Password Reset</Heading>
+      <Text>
+        Click the button below to reset your password.
+        This link expires in 1 hour.
+      </Text>
+      <EmailButton href={resetUrl}>Reset Password</EmailButton>
+    </EmailLayout>
+  );
+}
+```
+
+### Payment Confirmation
+
+```tsx
+// emails/templates/payment-confirmation.tsx
+export default function PaymentConfirmationEmail({
+  planName,
+  amount,
+}: Props) {
+  return (
+    <EmailLayout previewText="Payment confirmed">
+      <Heading>Payment Confirmed</Heading>
+      <Text>
+        Your subscription to {planName} has been activated.
+        Amount: ${amount}/month
+      </Text>
+    </EmailLayout>
+  );
+}
+```
+
+## Shared Components
+
+### Email Layout
+
+```tsx
+// emails/components/email-layout.tsx
+import { Html, Head, Body, Container, Font } from "@react-email/components";
+import { EmailFooter } from "./email-footer";
+
+export function EmailLayout({ children, previewText }: Props) {
+  return (
+    <Html>
+      <Head>
+        <Font fontFamily="Inter" fallbackFontFamily="Arial" />
+      </Head>
+      <Body style={{ backgroundColor: "#f6f9fc" }}>
+        <Container>{children}</Container>
+        <EmailFooter />
+      </Body>
+    </Html>
+  );
+}
+```
+
+### Email Button
+
+```tsx
+// emails/components/email-button.tsx
+import { Button } from "@react-email/components";
+
+export function EmailButton({ href, children }: Props) {
+  return (
+    <Button
+      href={href}
+      style={{
+        backgroundColor: "#000",
+        color: "#fff",
+        padding: "12px 24px",
+        borderRadius: "4px",
+      }}
+    >
+      {children}
+    </Button>
+  );
+}
+```
+
+## Sending via Domain Events
+
+Send emails automatically when domain events occur:
+
+```typescript
+// application/event-handlers/send-welcome-email.handler.ts
+import { render } from "@react-email/render";
+import WelcomeEmail from "@/emails/templates/welcome";
+
+export const createSendWelcomeEmailHandler = (
+  emailService: IEmailService
+): EventHandler<UserCreatedEvent> => {
+  return async (event) => {
+    const html = await render(
+      WelcomeEmail({
+        name: event.payload.name,
+        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+      })
+    );
+
+    return emailService.send({
+      to: event.payload.email,
+      subject: "Welcome to CleanStack!",
+      html,
+    });
+  };
+};
+```
+
+## DI Registration
+
+```typescript
+// common/di/modules/email.module.ts
+export const createEmailModule = () => {
+  const m = createModule();
+
+  m.bind(DI_SYMBOLS.IEmailService).toClass(ResendEmailService);
+
+  return m;
+};
+```
+
+## Environment Variables
+
+```env
+# .env.local
+RESEND_API_KEY=re_xxxxx
+EMAIL_FROM="CleanStack <noreply@yourdomain.com>"
+```
+
+## Preview Emails
+
+Use React Email's preview server:
+
+```bash
+# Install React Email CLI
+pnpm add -D react-email
+
+# Start preview server
+pnpm email dev
+```
+
+Open `http://localhost:3000` to preview templates.
+
+## Testing
+
+```typescript
+describe("ResendEmailService", () => {
+  it("should send email successfully", async () => {
+    const mockResend = { emails: { send: vi.fn().mockResolvedValue({}) } };
+    const service = new ResendEmailService(mockResend);
+
+    const result = await service.send({
+      to: "test@example.com",
+      subject: "Test",
+      html: "<p>Hello</p>",
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(mockResend.emails.send).toHaveBeenCalledWith({
+      from: expect.any(String),
+      to: "test@example.com",
+      subject: "Test",
+      html: "<p>Hello</p>",
+    });
+  });
+});
+```
+
+## Available Templates
+
+| Template | Trigger | Description |
+|----------|---------|-------------|
+| `welcome.tsx` | User signup | Welcome message |
+| `password-reset.tsx` | Password reset request | Reset link |
+| `payment-confirmation.tsx` | Successful payment | Receipt |
+
+## Next Steps
+
+- [Domain Events](/docs/guides/domain-events)
+- [Billing Guide](/docs/guides/billing)
+- [Authentication](/docs/guides/authentication)

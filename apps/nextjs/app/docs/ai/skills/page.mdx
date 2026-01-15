@@ -1,0 +1,350 @@
+# AI Skills
+
+Interactive workflows that guide you through complex development tasks.
+
+## Overview
+
+Skills are Claude Code commands that provide structured, step-by-step guidance for specific tasks. Unlike simple prompts, skills:
+
+- **Guide interactively** - Ask questions to understand your needs
+- **Generate structured output** - Produce consistent, usable artifacts
+- **Chain together** - Output from one skill feeds into another
+
+## Available Skills
+
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| EventStorming | `/eventstorming` | Domain discovery session |
+| Feature PRD | `/feature-prd` | Generate product requirements |
+| Gen Domain | `/gen-domain` | Generate domain layer code |
+| Gen UseCase | `/gen-usecase` | Generate application layer |
+| Gen Tests | `/gen-tests` | Generate BDD-style tests |
+
+## Workflow Pipeline
+
+```
+/eventstorming → /feature-prd → /gen-domain → /gen-usecase → /gen-tests
+```
+
+Each skill outputs data that the next skill can consume.
+
+## EventStorming
+
+Facilitates a DDD EventStorming session to discover your domain model.
+
+### Usage
+
+```
+/eventstorming
+```
+
+### Process
+
+1. **Domain Events** (Orange) - What happens? `UserRegistered`, `OrderPlaced`
+2. **Commands** (Blue) - What triggers events? `RegisterUser → UserRegistered`
+3. **Aggregates** (Yellow) - Which entity owns events? User, Order, Subscription
+4. **Policies** (Purple) - What reactions occur? `PaymentFailed → SendReminder`
+5. **Read Models** (Green) - What views are needed? Dashboard, Reports
+
+### Output
+
+```yaml
+feature: Subscription Management
+description: Handle user subscriptions with Stripe
+
+aggregates:
+  - name: Subscription
+    events:
+      - name: SubscriptionCreated
+        command: CreateSubscription
+        fields:
+          - userId: UUID
+          - planId: string
+    policies:
+      - when: PaymentFailed
+        then: SendPaymentFailedEmail
+
+external_systems:
+  - name: Stripe
+    integration: Payment processing via webhooks
+```
+
+## Feature PRD
+
+Generates a structured PRD from EventStorming output or a feature description.
+
+### Usage
+
+```
+/feature-prd
+```
+
+Or provide the EventStorming YAML output directly.
+
+### Output Sections
+
+1. **Overview** - Business value, success metrics
+2. **Domain Model** - Aggregates, VOs, events
+3. **Use Cases** - Input/output DTOs, business rules
+4. **API Endpoints** - Routes, request/response schemas
+5. **Event Handlers** - Policies as handlers
+6. **Implementation Checklist** - File-by-file tasks
+
+### Example Output
+
+```markdown
+# PRD: Subscription Management
+
+## Domain Model
+
+### Subscription Aggregate
+Located at: `src/domain/subscription/`
+
+**Properties:**
+- id: SubscriptionId (UUID)
+- userId: UserId
+- planId: PlanId
+- status: SubscriptionStatus
+- currentPeriodEnd: Date
+
+**Domain Events:**
+- SubscriptionCreatedEvent - triggered when user subscribes
+- SubscriptionCancelledEvent - triggered when cancelled
+```
+
+## Gen Domain
+
+Generates production-ready domain layer code following project patterns.
+
+### Usage
+
+```
+/gen-domain Subscription with status, planId, currentPeriodEnd
+```
+
+### Generated Files
+
+```
+src/domain/subscription/
+├── subscription.id.ts           # Typed UUID
+├── subscription.aggregate.ts    # Aggregate with create/reconstitute
+├── value-objects/
+│   ├── subscription-status.vo.ts
+│   └── plan-id.vo.ts
+└── events/
+    ├── subscription-created.event.ts
+    └── subscription-cancelled.event.ts
+```
+
+### Aggregate Template
+
+```typescript
+export class Subscription extends Aggregate<ISubscriptionProps> {
+  get id(): SubscriptionId {
+    return SubscriptionId.create(this._id);
+  }
+
+  static create(props: CreateSubscriptionProps, id?: UUID): Subscription {
+    const subscription = new Subscription(
+      { ...props, createdAt: new Date() },
+      id ?? new UUID()
+    );
+    subscription.addEvent(new SubscriptionCreatedEvent(...));
+    return subscription;
+  }
+
+  static reconstitute(props: ISubscriptionProps, id: UUID): Subscription {
+    return new Subscription(props, id);
+  }
+
+  cancel(reason: string): Result<void> {
+    if (this.get("status").isCancelled) {
+      return Result.fail("Already cancelled");
+    }
+    this.addEvent(new SubscriptionCancelledEvent(...));
+    return Result.ok();
+  }
+}
+```
+
+## Gen UseCase
+
+Generates application layer code including use cases, DTOs, and ports.
+
+### Usage
+
+```
+/gen-usecase CreateSubscription for Subscription:
+- Input: userId, planId, paymentMethodId
+- Output: subscriptionId, status
+- Rules: User must not have active subscription
+- Events: SubscriptionCreated
+```
+
+### Generated Files
+
+```
+src/application/
+├── dto/subscription/
+│   └── create-subscription.dto.ts
+├── ports/
+│   └── subscription.repository.port.ts
+└── use-cases/subscription/
+    └── create-subscription.use-case.ts
+```
+
+### UseCase Template
+
+```typescript
+export class CreateSubscriptionUseCase
+  implements UseCase<ICreateSubscriptionInputDto, ICreateSubscriptionOutputDto>
+{
+  constructor(
+    private readonly subscriptionRepo: ISubscriptionRepository,
+    private readonly eventDispatcher: IEventDispatcher,
+  ) {}
+
+  async execute(input): Promise<Result<Output>> {
+    // 1. Validate input
+    const validationResult = this.validateInput(input);
+    if (validationResult.isFailure) return Result.fail(...);
+
+    // 2. Check business rules
+    const rulesResult = await this.checkBusinessRules(...);
+    if (rulesResult.isFailure) return Result.fail(...);
+
+    // 3. Create entity
+    const entity = Subscription.create({ ... });
+
+    // 4. Persist
+    const saveResult = await this.subscriptionRepo.create(entity);
+    if (saveResult.isFailure) return Result.fail(...);
+
+    // 5. Dispatch events
+    await this.eventDispatcher.dispatchAll(entity.domainEvents);
+    entity.clearEvents();
+
+    // 6. Return DTO
+    return Result.ok(this.toDto(saveResult.getValue()));
+  }
+}
+```
+
+## Gen Tests
+
+Generates comprehensive BDD-style tests for use cases and domain entities.
+
+### Usage
+
+```
+/gen-tests CreateSubscriptionUseCase
+```
+
+### Test Categories Generated
+
+1. **Happy Path** - Success scenarios
+2. **Validation Errors** - Invalid input handling
+3. **Business Rules** - Domain rule violations
+4. **Error Handling** - Repository/provider failures
+5. **Event Emission** - Domain events verification
+6. **DTO Mapping** - Output format verification
+
+### Generated Test Structure
+
+```typescript
+describe("CreateSubscriptionUseCase", () => {
+  describe("execute()", () => {
+    describe("happy path", () => {
+      it("should create subscription when input is valid");
+      it("should call repository with correct arguments");
+      it("should dispatch domain events on success");
+    });
+
+    describe("validation errors", () => {
+      it("should fail when planId is invalid");
+      it("should fail when userId is empty");
+    });
+
+    describe("business rules", () => {
+      it("should fail when user already has subscription");
+    });
+
+    describe("error handling", () => {
+      it("should fail when repository returns error");
+      it("should not dispatch events when save fails");
+    });
+  });
+});
+```
+
+## Complete Workflow Example
+
+```bash
+# 1. Discover domain
+/eventstorming
+
+# Claude guides you through domain discovery
+# Output: EventStorming YAML
+
+# 2. Generate PRD
+/feature-prd
+
+# Claude creates detailed PRD from EventStorming output
+# Output: Implementation-ready specification
+
+# 3. Generate domain
+/gen-domain Subscription with status, planId, userId, currentPeriodEnd
+
+# Claude creates aggregate, VOs, events
+# Output: Domain layer files
+
+# 4. Generate use cases
+/gen-usecase CreateSubscription for Subscription
+
+# Claude creates use case, DTOs, ports
+# Output: Application layer files
+
+# 5. Generate tests
+/gen-tests CreateSubscriptionUseCase
+
+# Claude creates comprehensive test suite
+# Output: Test files with full coverage
+```
+
+## Best Practices
+
+1. **Start with EventStorming** - Don't skip domain discovery
+2. **Review PRD before coding** - Ensure requirements are correct
+3. **Generate domain first** - Domain is the foundation
+4. **Use case after domain** - Application layer depends on domain
+5. **Tests last** - Tests verify the implementation
+
+## Creating Custom Skills
+
+Skills are Markdown files in `.claude/skills/`:
+
+```markdown
+---
+name: my-skill
+description: What this skill does
+---
+
+# My Skill
+
+Instructions for Claude to follow...
+
+## Process
+
+1. Step one
+2. Step two
+
+## Output Format
+
+Expected output structure...
+```
+
+## Next Steps
+
+- [AI Agents](/docs/ai/agents)
+- [Domain Events Guide](/docs/guides/domain-events)
+- [Testing Guide](/docs/guides/testing)
