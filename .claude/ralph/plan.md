@@ -304,7 +304,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test static prompt definitions exist",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-impl",
@@ -315,7 +315,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Implement render() method",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application",

@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 16/65
-**Current Task:** [TDD] Write DomainPrompt tests FIRST
+**Tasks Completed:** 18/65
+**Current Task:** Create LLM port interfaces
 
 ---
 
@@ -442,4 +442,48 @@ const role = message.get("role");
 - All LLMUsage domain tests pass
 - Type check passes
 - Implementation complete per plan requirements
+
+### 2026-01-15 - Task 17: [TDD] Write DomainPrompt tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, implementation pending)
+
+**Changes:**
+- Created `src/domain/llm/prompts/__tests__/domain-prompt.test.ts` (15 tests)
+  - Tests for render() with single/multiple/repeated variables
+  - Tests for missing variable failure
+  - Tests for templates with no variables
+  - Tests for ignoring extra variables
+  - Tests for getVariables() extraction
+  - Tests for properties (key, template)
+  - Tests for static prompts (SYSTEM_DEFAULT, ERROR_GENERIC, CONVERSATION_TITLE_GENERATOR)
+
+**Commands Run:**
+- `pnpm test` - Tests fail as expected (RED phase)
+
+**Verification:**
+- Tests written first following TDD workflow
+- Ready for GREEN phase (Task 18)
+
+### 2026-01-15 - Task 18: [IMPL] Implement DomainPrompt (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Created `src/domain/llm/prompts/domain-prompt.ts`
+  - DomainPrompt class with key, template properties
+  - getVariables() method using regex to extract {{variable}} patterns
+  - render() method with variable substitution and missing variable validation
+  - Static prompts: SYSTEM_DEFAULT, ERROR_GENERIC, CONVERSATION_TITLE_GENERATOR
+
+**Commands Run:**
+- `pnpm test` - 629 tests PASSED (15 new tests)
+
+**Verification:**
+- All 15 DomainPrompt tests pass
+- No regressions on existing tests
+- Domain layer complete
 
