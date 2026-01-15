@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 20/65
-**Current Task:** [TDD] Write SendCompletionUseCase tests FIRST
+**Tasks Completed:** 21/65
+**Current Task:** [IMPL] Implement SendCompletionUseCase (GREEN)
 
 ---
 
@@ -550,4 +550,36 @@ const role = message.get("role");
 - All 16 DTOs created with Zod schemas
 - Type check passes
 - Ready for use case implementation
+
+### 2026-01-15 - Task 21: [TDD] Write SendCompletionUseCase tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, implementation pending)
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/send-completion-use-case.test.ts` (~25 tests)
+  - Happy path tests (5 tests): model selection, LLM call, usage recording, event dispatch
+  - Budget checks tests (3 tests): budget validation, threshold warnings
+  - Model selection error tests (2 tests): no capable model, capabilities mismatch
+  - Provider error tests (2 tests): LLM call failures, timeout handling
+  - Validation error tests (2 tests): empty prompt, invalid options
+  - Variable substitution tests (1 test): {{variable}} replacement
+  - Cost calculation tests (1 test): token-based cost computation
+  - Repository error tests (2 tests): usage save failures
+
+**Mocks Created:**
+- mockLLMProvider (ILLMProvider)
+- mockModelRouter (IModelRouter)
+- mockUsageRepository (ILLMUsageRepository)
+- mockEventDispatcher (IEventDispatcher)
+
+**Commands Run:**
+- `pnpm test` - 1 FAILED as expected (RED phase)
+  - Error: "Cannot find package '@/application/use-cases/llm/send-completion.use-case'"
+
+**Verification:**
+- Tests written first following TDD workflow
+- Tests fail because SendCompletionUseCase doesn't exist yet
+- Ready for GREEN phase (Task 22)
 
