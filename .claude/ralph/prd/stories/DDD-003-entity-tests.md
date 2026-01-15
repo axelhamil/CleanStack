@@ -8,15 +8,15 @@
 
 ## Acceptance Criteria
 
-- [ ] Test entity creation with props
-- [ ] Test `_id` getter
-- [ ] Test `_props` access
-- [ ] Test `get('prop')` method
-- [ ] Test `getProps()` returns all props
-- [ ] Test `toObject()` serialization
-- [ ] Test `clone()` with overrides
-- [ ] Test equality comparison
-- [ ] Coverage > 95% on Entity.ts
+- [x] Test entity creation with props
+- [x] Test `_id` getter
+- [x] Test `_props` access
+- [x] Test `get('prop')` method
+- [x] Test `getProps()` returns all props
+- [x] Test `toObject()` serialization
+- [x] Test `clone()` with overrides
+- [x] Test equality comparison
+- [x] Coverage > 95% on Entity.ts (100%)
 
 ## Test Cases
 
@@ -104,6 +104,6 @@ describe('Entity', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass (28 tests)
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered

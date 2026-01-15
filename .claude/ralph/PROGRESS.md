@@ -15,7 +15,7 @@
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
-| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🟡 2/10 |
+| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🟡 3/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E1 - ddd-kit Tests & npm
-**Story**: DDD-003 - Entity tests
-**File**: `.claude/ralph/prd/stories/DDD-003-entity-tests.md`
+**Story**: DDD-004 - Aggregate tests
+**File**: `.claude/ralph/prd/stories/DDD-004-aggregate-tests.md`
 
 ---
 
@@ -47,7 +47,8 @@
 
 ### E1 - ddd-kit Tests & npm 🟡
 - [x] DDD-001 - Result tests (100% coverage) - 9323ef2
-- [x] DDD-002 - Option tests (100% coverage)
+- [x] DDD-002 - Option tests (100% coverage) - 5cf7c43
+- [x] DDD-003 - Entity tests (100% coverage)
 
 ---
 
@@ -93,8 +94,12 @@ None
 
 ### Validation Commands
 ```bash
-pnpm test           # Run all tests
-pnpm type-check     # TypeScript check
-pnpm fix            # Lint + format
-pnpm build          # Build all
+pnpm test              # Run all tests
+pnpm test:coverage     # Run tests with coverage
+pnpm type-check        # TypeScript check
+pnpm check             # Biome lint check
+pnpm fix               # Biome lint + format (auto-fix)
+pnpm check:duplication # jscpd code duplication check
+pnpm check:unused      # knip unused code detection
+pnpm build             # Build all packages
 ```
