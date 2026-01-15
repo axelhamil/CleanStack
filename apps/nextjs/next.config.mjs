@@ -13,15 +13,6 @@ const nextConfig = {
       { hostname: "lh3.googleusercontent.com" },
     ],
   },
-  webpack: (config) => {
-    config.resolve.extensions = [
-      ".web.tsx",
-      ".web.ts",
-      ".web.js",
-      ...config.resolve.extensions,
-    ];
-    return config;
-  },
 };
 
 const withNextIntl = createNextIntlPlugin("./common/i18n/request.ts");
