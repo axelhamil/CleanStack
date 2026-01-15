@@ -25,14 +25,31 @@ Study these files:
 ## Commands
 
 ```bash
-pnpm dev          # Dev (runs db:generate)
-pnpm build        # Build all
-pnpm type-check   # Type check
-pnpm fix          # Lint/format
-pnpm db           # Start PostgreSQL
-pnpm db:push      # Push schema
-pnpm test         # Run tests
-pnpm ui:add       # Add shadcn component
+# Development
+pnpm dev              # Dev server (Next.js)
+pnpm dev:expo         # Dev server (Expo)
+pnpm build            # Build all
+
+# Quality
+pnpm type-check       # TypeScript check
+pnpm check            # Biome lint + format check
+pnpm fix              # Auto-fix lint/format issues
+pnpm check:duplication # Code duplication check
+pnpm check:unused     # Unused code check (knip)
+pnpm check:all        # Run all checks + tests
+
+# Testing
+pnpm test             # Run tests
+pnpm test:watch       # Watch mode
+pnpm test:coverage    # With coverage
+
+# Database
+pnpm db               # Start PostgreSQL
+pnpm db:push          # Push schema
+pnpm db:generate      # Generate migrations
+
+# UI
+pnpm ui:add           # Add shadcn component
 ```
 
 ## Architecture

@@ -21,6 +21,7 @@
     "ci:check": "biome ci .",
     "check:duplication": "jscpd ./packages ./apps/nextjs/src",
     "check:unused": "knip",
+    "check:all": "pnpm type-check && pnpm check && pnpm check:duplication && pnpm check:unused && pnpm test",
     "clean": "turbo clean && rm -rf node_modules",
     "type-check": "turbo type-check",
     "test": "turbo test",
