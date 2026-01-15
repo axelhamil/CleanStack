@@ -16,8 +16,8 @@
 |------|-------------|---------|--------|
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
-| E2 | Domain Events | EVT-001 to EVT-006 | 🟡 5/6 |
-| E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
+| E2 | Domain Events | EVT-001 to EVT-006 | ✅ 6/6 |
+| E7 | Tests Coverage | TST-001 to TST-007 | 🟡 2/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | 🔴 0/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | 🔴 0/8 |
@@ -29,9 +29,9 @@
 
 ## Current Story
 
-**Epic**: E2 - Domain Events
-**Story**: EVT-006 - Event System Tests
-**File**: `.claude/ralph/prd/stories/EVT-006-event-tests.md`
+**Epic**: E7 - Tests Coverage
+**Story**: TST-004 - Adapters Tests
+**File**: `.claude/ralph/prd/stories/TST-004-adapters.md`
 
 ---
 
@@ -57,12 +57,17 @@
 - [x] DDD-009 - BaseRepository tests (30 tests)
 - [x] DDD-010 - npm package setup (tsup, README, CHANGELOG)
 
-### E2 - Domain Events 🟡
+### E2 - Domain Events ✅
 - [x] EVT-001 - IDomainEvent<T> interface + BaseDomainEvent + tests (10 tests)
 - [x] EVT-002 - IEventDispatcher port + InMemoryEventDispatcher + tests (25 tests)
 - [x] EVT-003 - IEventHandler interface + LogUserCreatedHandler + tests (3 tests)
 - [x] EVT-004 - UseCase Event Dispatch + DI setup + tests (6 tests)
 - [x] EVT-005 - User Domain Events (UserCreatedEvent, UserEmailVerifiedEvent, UserSignedInEvent)
+- [x] EVT-006 - Event System Tests (17 event tests + 6 dispatcher tests) - 2c8c77a
+
+### E7 - Tests Coverage 🟡
+- [x] TST-001 - Domain User Tests (46 tests, 100% coverage) - fe107c9
+- [x] TST-003 - Auth Use Cases Tests (51 tests, 99% coverage)
 
 ---
 
@@ -70,6 +75,8 @@
 
 - `136737f` - feat(tooling): add jscpd for code duplication detection
 - `b4fc9ef` - feat(tooling): add knip for unused code detection
+- `2c8c77a` - test(events): add comprehensive event system tests
+- `fe107c9` - test(domain): add comprehensive user domain tests
 
 ---
 
@@ -82,9 +89,11 @@ None
 ## Metrics
 
 ### Test Coverage (current → target)
-- ddd-kit: ~20% → 90%
-- Domain: 0% → 90%
-- Application: 0% → 90%
+- ddd-kit: ~92% → 90% ✅
+- Domain (user/events): 100% ✅
+- Domain (user/aggregate): 100% ✅
+- Domain (user/value-objects): 100% ✅
+- Application (use-cases/auth): 99% ✅
 - Adapters: 0% → 80%
 
 ### Code Quality

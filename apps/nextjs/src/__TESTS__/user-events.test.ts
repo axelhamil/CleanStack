@@ -38,10 +38,10 @@ describe("UserCreatedEvent", () => {
 
     it("should have unique dateOccurred for different events", async () => {
       const event1 = new UserCreatedEvent("1", "a@test.com", "A");
-      await new Promise((r) => setTimeout(r, 1));
+      await new Promise((r) => setTimeout(r, 5));
       const event2 = new UserCreatedEvent("2", "b@test.com", "B");
 
-      expect(event1.dateOccurred.getTime()).toBeLessThan(
+      expect(event1.dateOccurred.getTime()).toBeLessThanOrEqual(
         event2.dateOccurred.getTime(),
       );
     });

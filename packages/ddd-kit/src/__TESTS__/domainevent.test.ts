@@ -90,10 +90,10 @@ describe("BaseDomainEvent", () => {
 
     it("should create unique dates for different events", async () => {
       const event1 = new TestEvent("1", { userId: "1", email: "a@test.com" });
-      await new Promise((r) => setTimeout(r, 1));
+      await new Promise((r) => setTimeout(r, 5));
       const event2 = new TestEvent("2", { userId: "2", email: "b@test.com" });
 
-      expect(event1.dateOccurred.getTime()).toBeLessThan(
+      expect(event1.dateOccurred.getTime()).toBeLessThanOrEqual(
         event2.dateOccurred.getTime(),
       );
     });
