@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 10/65
-**Current Task:** [IMPL] Make Conversation domain tests pass (GREEN)
+**Tasks Completed:** 12/65
+**Current Task:** [TDD] Write ManagedPrompt aggregate tests FIRST
 
 ---
 
@@ -278,5 +278,58 @@ const role = message.get("role");
 
 **Verification:**
 - All domain event tests pass
+- No regressions on existing tests
+
+### 2026-01-15 - Task 11: [IMPL] Make Conversation domain tests pass (GREEN)
+
+**Completed:** ✅
+
+**Note:** This task was already completed during the TDD cycles (Tasks 7-10). All fixes were made during the RED→GREEN phases:
+- Task 7: Fixed ConversationTitle (trim), ConversationMetadata (equals override)
+- Task 8: Fixed TokenUsage (equals override), Cost (equals override)
+- Tasks 9-10: All tests passed immediately
+
+**Commands Run:**
+- `pnpm test` - 433 tests PASSED
+
+**Verification:**
+- All conversation domain tests pass
+- No implementation fixes needed
+
+### 2026-01-15 - Task 12: [TDD] Write ManagedPrompt VO tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED → GREEN
+
+**Changes:**
+- Created 6 Value Object implementations in `src/domain/llm/prompt/value-objects/`:
+  - `prompt-key.vo.ts` - Slug format validation (lowercase, hyphens, max 100 chars)
+  - `prompt-name.vo.ts` - Display name (1-200 chars, trimmed)
+  - `prompt-description.vo.ts` - Optional description (max 1000 chars)
+  - `prompt-template.vo.ts` - Template with {{variables}}, extractVariables(), render()
+  - `prompt-variable.vo.ts` - Variable definition (name, type, required, defaultValue)
+  - `prompt-environment.vo.ts` - Enum: development | staging | production
+- Created 6 test files in `src/domain/llm/prompt/__tests__/`:
+  - `prompt-key.vo.test.ts` (16 tests)
+  - `prompt-name.vo.test.ts` (11 tests)
+  - `prompt-description.vo.test.ts` (11 tests)
+  - `prompt-template.vo.test.ts` (22 tests)
+  - `prompt-variable.vo.test.ts` (18 tests)
+  - `prompt-environment.vo.test.ts` (17 tests)
+
+**RED Phase (16 failing tests):**
+- All VOs used `result.error.errors[0].message` but Zod can have undefined errors
+- Pattern mismatch with existing codebase VOs
+
+**GREEN Phase Fixes:**
+- Changed all VOs to use `result.error.issues[0]?.message ?? "default message"` pattern
+- Follows existing codebase convention (email.vo, password.vo, cost.vo, etc.)
+
+**Commands Run:**
+- `pnpm test` - 528 tests PASSED (95 new tests)
+
+**Verification:**
+- All ManagedPrompt VO tests pass
 - No regressions on existing tests
 

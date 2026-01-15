@@ -193,7 +193,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Fix domain events to pass tests",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-tdd",
@@ -216,7 +216,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test enum values (development, staging, production)",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-tdd",
