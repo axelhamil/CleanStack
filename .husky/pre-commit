@@ -9,15 +9,10 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Utility functions
 print_header() {
     echo "\n${BOLD}${BLUE}════════════════════════════════════════════${NC}"
-    echo "${BOLD}${BLUE}   🔍 PRE-COMMIT CHECKS STARTED${NC}"
+    echo "${BOLD}${BLUE}   🔍 PRE-COMMIT CHECKS${NC}"
     echo "${BOLD}${BLUE}════════════════════════════════════════════${NC}\n"
-}
-
-print_section() {
-    echo "${CYAN}▶ $1...${NC}"
 }
 
 print_success() {
@@ -27,9 +22,7 @@ print_success() {
 print_error() {
     echo "\n${RED}────────────────────────────────────────${NC}"
     echo "${RED}${BOLD}✕ $1${NC}"
-    echo "${RED}────────────────────────────────────────${NC}"
-    echo "$2\n"
-    exit 1
+    echo "${RED}────────────────────────────────────────${NC}\n"
 }
 
 print_footer() {
@@ -43,58 +36,31 @@ print_footer() {
     echo "${BOLD}════════════════════════════════════════════${NC}\n"
 }
 
-# Start script
 print_header
 
-# Get staged files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ts\|\.tsx\|\.js\|\.jsx\|\.json\|\.md\|\.css\|\.scss\|\.html\|\.yml\|\.yaml$' || true)
+# Run lint-staged
+echo "${CYAN}▶ Running lint-staged...${NC}"
+pnpm lint-staged
+lint_staged_exit_code=$?
 
-if [ -z "$STAGED_FILES" ]; then
-    echo "${YELLOW}No relevant files staged for commit. Skipping checks.${NC}"
-    print_footer 0
-    exit 0
-fi
-
-# Run formatter and linter with auto-fixing on STAGED files
-print_section "Formatting and linting staged files"
-echo "${CYAN}Running 'pnpm biome check --write' on staged files...${NC}"
-pnpm biome check --write --no-errors-on-unmatched $STAGED_FILES
-fix_exit_code=$?
-
-if [ $fix_exit_code -ne 0 ]; then
-    print_error "Biome check failed." "Please review the errors above and fix them manually."
+if [ $lint_staged_exit_code -ne 0 ]; then
+    print_error "lint-staged failed"
     print_footer 1
     exit 1
 fi
+print_success "Code is formatted and linted"
 
-# Add any changes made by the formatter/linter
-if [ -n "$(git diff --name-only)" ]; then
-    git add .
-    echo "${GREEN}✓ Formatted files have been staged.${NC}"
-fi
-
-print_success "Code is clean and formatted."
-
-# Type checking with file listing on error
-print_section "Checking types"
-echo "${CYAN}Running type check...${NC}"
+# Type checking
+echo "${CYAN}▶ Checking types...${NC}"
 pnpm type-check
 type_check_exit_code=$?
 
-if [ $type_check_exit_code -eq 0 ]; then
-    print_success "Types are valid"
-else
-    type_check_output=$(pnpm type-check 2>&1)
-    echo "\n${RED}────────────────────────────────────────${NC}"
-    echo "${RED}${BOLD}Type check failed with the following errors:${NC}"
-    echo "${RED}────────────────────────────────────────${NC}"
-    echo "$type_check_output"
-    
-    echo "\n${RED}Files with type errors:${NC}"
-    echo "$type_check_output" | grep -E "^[^ ]+\.[t|j]sx?:[0-9]+:[0-9]+" | sort | uniq
+if [ $type_check_exit_code -ne 0 ]; then
+    print_error "Type check failed"
     print_footer 1
     exit 1
 fi
+print_success "Types are valid"
 
 print_footer 0
 exit 0

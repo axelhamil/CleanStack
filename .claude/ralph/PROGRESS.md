@@ -14,7 +14,7 @@
 
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
-| E0 | Tooling & CI | TOOL-001 to TOOL-006 | 🟡 1/6 |
+| E0 | Tooling & CI | TOOL-001 to TOOL-006 | 🟡 4/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🔴 0/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
@@ -30,20 +30,24 @@
 ## Current Story
 
 **Epic**: E0 - Tooling & CI
-**Story**: TOOL-002 - knip (unused code detection)
-**File**: `.claude/ralph/prd/stories/TOOL-002-knip.md`
+**Story**: TOOL-005 - npm scripts
+**File**: `.claude/ralph/prd/stories/TOOL-005-scripts.md`
 
 ---
 
 ## Completed Stories
 
 - [x] TOOL-001 - jscpd (code duplication) - 136737f
+- [x] TOOL-002 - knip (unused code detection) - b4fc9ef
+- [x] TOOL-003 - Biome config (already configured, verified)
+- [x] TOOL-004 - Husky + lint-staged + commitlint
 
 ---
 
 ## Commits Log
 
 - `136737f` - feat(tooling): add jscpd for code duplication detection
+- `b4fc9ef` - feat(tooling): add knip for unused code detection
 
 ---
 
@@ -63,8 +67,8 @@ None
 
 ### Code Quality
 - Duplication: 2.18% ✅ (target < 3%)
-- Unused code: ? → 0
-- Lint errors: ? → 0
+- Unused code: 0 ✅
+- Lint errors: 0 ✅
 
 ---
 
