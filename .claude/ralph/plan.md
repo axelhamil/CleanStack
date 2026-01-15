@@ -146,7 +146,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test Cost VO (positive amount, valid currency)",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-tdd",

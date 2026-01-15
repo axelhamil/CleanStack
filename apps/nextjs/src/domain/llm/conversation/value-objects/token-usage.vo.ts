@@ -45,4 +45,12 @@ export class TokenUsage extends ValueObject<TokenUsageValue> {
   get totalTokens(): number {
     return this.value.totalTokens;
   }
+
+  equals(other: ValueObject<TokenUsageValue>): boolean {
+    return (
+      this.value.inputTokens === other.value.inputTokens &&
+      this.value.outputTokens === other.value.outputTokens &&
+      this.value.totalTokens === other.value.totalTokens
+    );
+  }
 }

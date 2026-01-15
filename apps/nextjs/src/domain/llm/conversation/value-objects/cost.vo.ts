@@ -34,4 +34,11 @@ export class Cost extends ValueObject<CostValue> {
   static zero(currency = "USD"): Result<Cost> {
     return Cost.create({ amount: 0, currency });
   }
+
+  equals(other: ValueObject<CostValue>): boolean {
+    return (
+      this.value.amount === other.value.amount &&
+      this.value.currency === other.value.currency
+    );
+  }
 }

@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 7/65
-**Current Task:** [TDD] Write Message VO tests
+**Tasks Completed:** 8/65
+**Current Task:** [TDD] Write Conversation aggregate tests FIRST
 
 ---
 
@@ -192,5 +192,35 @@ const role = message.get("role");
 **Verification:**
 - All 18 Conversation VO tests pass
 - No regressions on existing 292 tests
+- Type check passes
+
+### 2026-01-15 - Task 8: [TDD] Write Message entity tests + Fix implementations
+
+**Completed:** ✅
+
+**TDD Workflow:** RED → GREEN → REFACTOR
+
+**Changes:**
+- Created `src/domain/llm/conversation/__tests__/message-role.vo.test.ts` (11 tests)
+- Created `src/domain/llm/conversation/__tests__/message-content.vo.test.ts` (8 tests)
+- Created `src/domain/llm/conversation/__tests__/token-usage.vo.test.ts` (12 tests)
+- Created `src/domain/llm/conversation/__tests__/cost.vo.test.ts` (13 tests)
+- Created `src/domain/llm/conversation/__tests__/message.entity.test.ts` (13 tests)
+
+**RED Phase (2 failing tests):**
+1. TokenUsage.equals() - fails for objects (reference comparison)
+2. Cost.equals() - fails for objects (reference comparison)
+
+**GREEN Phase Fixes:**
+- `TokenUsage`: Override `equals()` method for field-by-field comparison
+- `Cost`: Override `equals()` method for field-by-field comparison
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+- `pnpm test` - 367 tests PASSED (57 new tests)
+
+**Verification:**
+- All 57 Message entity/VO tests pass
+- No regressions on existing tests
 - Type check passes
 
