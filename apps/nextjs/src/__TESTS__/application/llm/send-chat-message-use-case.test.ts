@@ -389,8 +389,8 @@ describe("SendChatMessageUseCase", () => {
 
       // LLM should receive messages including history
       expect(mockLLMProvider.generateText).toHaveBeenCalledOnce();
-      const llmCall = mockLLMProvider.generateText.mock.calls[0][0];
-      expect(llmCall.messages.length).toBeGreaterThan(1);
+      const llmCall = mockLLMProvider.generateText.mock.calls[0]?.[0];
+      expect(llmCall?.messages.length).toBeGreaterThan(1);
     });
   });
 
@@ -562,9 +562,9 @@ describe("SendChatMessageUseCase", () => {
       });
 
       expect(mockLLMProvider.generateText).toHaveBeenCalledOnce();
-      const llmCall = mockLLMProvider.generateText.mock.calls[0][0];
+      const llmCall = mockLLMProvider.generateText.mock.calls[0]?.[0];
       expect(
-        llmCall.messages.some((m: { role: string }) => m.role === "system"),
+        llmCall?.messages.some((m: { role: string }) => m.role === "system"),
       ).toBe(true);
     });
   });
