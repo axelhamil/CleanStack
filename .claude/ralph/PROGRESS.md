@@ -21,7 +21,7 @@
 | E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
-| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 12/17 |
+| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 13/17 |
 | E6 | Docs & Release | REL-001 to REL-006 | 🔴 0/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | 🔴 0/5 |
 
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E8 - Starter Features
-**Story**: FTR-012 - Landing Page
-**File**: `.claude/ralph/prd/stories/FTR-012-landing-page.md`
+**Story**: FTR-013 - Settings Pages
+**File**: `.claude/ralph/prd/stories/FTR-013-settings-pages.md`
 
 ---
 
@@ -110,6 +110,7 @@
 - [x] FTR-009 - Pricing Components (BrutalistPricingCard, Toggle, Table) - 8bc4f04
 - [x] FTR-010 - Pricing Page (/pricing with checkout integration) - 81521a8
 - [x] FTR-011 - Dashboard Layout (Sidebar, Header, UserMenu, MobileNav) - 7fc029d
+- [x] FTR-012 - Landing Page (Footer component) - 6a65fc2
 
 ---
 
@@ -134,6 +135,7 @@
 - `8bc4f04` - feat(ui): add brutalist pricing components
 - `81521a8` - feat(pricing): add pricing page with checkout integration
 - `7fc029d` - feat(dashboard): add sidebar layout with navigation
+- `6a65fc2` - feat(landing): add footer component with navigation
 
 ---
 
