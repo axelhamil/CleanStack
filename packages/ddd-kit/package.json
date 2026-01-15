@@ -1,25 +1,64 @@
 {
-  "name": "@packages/ddd-kit",
+  "name": "ddd-kit",
   "version": "0.0.0",
-  "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "description": "DDD primitives for TypeScript: Result, Option, Entity, Aggregate, ValueObject",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "result",
+    "option",
+    "entity",
+    "aggregate",
+    "value-object",
+    "typescript",
+    "clean-architecture"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/axmusic/nextjs-clean-architecture-starter",
+    "directory": "packages/ddd-kit"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "pnpm build && pnpm test"
   },
-  "dependencies": {
-    "@packages/drizzle": "workspace:*"
+  "peerDependencies": {
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@packages/drizzle": "workspace:*",
     "@packages/test": "workspace:*",
     "@packages/typescript-config": "workspace:*",
     "@vitest/coverage-v8": "^4.0.17",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }
