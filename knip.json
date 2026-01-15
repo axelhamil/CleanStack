@@ -5,11 +5,16 @@
     "apps/nextjs": {
       "entry": ["app/**/*.tsx", "src/**/*.ts", "common/**/*.ts"],
       "project": ["**/*.ts", "**/*.tsx"],
-      "ignore": ["**/*.test.ts", "**/*.spec.ts", "vitest.config.ts"]
+      "ignore": [
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "vitest.config.ts",
+        "emails/templates/**"
+      ]
     },
     "packages/ddd-kit": {
       "project": ["src/**/*.ts"],
-      "ignore": ["**/*.test.ts", "**/*.spec.ts"]
+      "ignore": ["**/*.test.ts", "**/*.spec.ts", "**/stubs/**"]
     },
     "packages/drizzle": {
       "project": ["src/**/*.ts"]

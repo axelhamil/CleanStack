@@ -21,17 +21,17 @@
 | E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
-| E8 | Starter Features | FTR-001 to FTR-017 | 🟡 13/17 |
-| E6 | Docs & Release | REL-001 to REL-006 | 🔴 0/6 |
+| E8 | Starter Features | FTR-001 to FTR-017 | ✅ 17/17 |
+| E6 | Docs & Release | REL-001 to REL-006 | ✅ 6/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | 🔴 0/5 |
 
 ---
 
 ## Current Story
 
-**Epic**: E8 - Starter Features
-**Story**: FTR-013 - Settings Pages
-**File**: `.claude/ralph/prd/stories/FTR-013-settings-pages.md`
+**Epic**: E9 - DX & Validation
+**Story**: DX-001 - NPM Scripts
+**File**: `.claude/ralph/prd/stories/DX-001-npm-scripts.md`
 
 ---
 
@@ -98,7 +98,7 @@
 - [x] DOC-007 - AI Guidance - 0155182
 - [x] DOC-008 - Domain Events - 0155182
 
-### E8 - Starter Features 🟡
+### E8 - Starter Features ✅
 - [x] FTR-001 - Verify Existing Auth (verified, 187 tests passing)
 - [x] FTR-002 - OAuth Providers (Google + GitHub, auth-client, OAuth buttons) - a1db840
 - [x] FTR-003 - Auth UI Polish (loading states, forgot/reset password flow) - ed3dd7c
@@ -111,6 +111,19 @@
 - [x] FTR-010 - Pricing Page (/pricing with checkout integration) - 81521a8
 - [x] FTR-011 - Dashboard Layout (Sidebar, Header, UserMenu, MobileNav) - 7fc029d
 - [x] FTR-012 - Landing Page (Footer component) - 6a65fc2
+- [x] FTR-013 - Settings Pages (layout, profile, navigation) - 334627c
+- [x] FTR-014 - Email Setup (IEmailService, ResendEmailService, welcome email handler) - bff5ca0
+- [x] FTR-015 - Email Templates (React Email templates for welcome, password reset, payment) - 7e2d15d
+- [x] FTR-016 - Vercel Deployment (vercel.json, standalone build, env config) - 4ee0c5c
+- [x] FTR-017 - Sentry Monitoring (error tracking, global-error, env config) - 262a250
+
+### E6 - Docs & Release ✅
+- [x] REL-001 - README Documentation (AI skills/agents, production features) - 24467af
+- [x] REL-002 - CHANGELOG (Keep a Changelog format, v1.0.0 release notes) - 71ceb7b
+- [x] REL-003 - GitHub Setup (CODEOWNERS, gitignore update) - 228ba34
+- [x] REL-004 - Issue Templates (improved bug/feature/PR templates, config.yml) - ded1d38
+- [x] REL-005 - Release (v1.0.0 preparation, version bumps, jscpd fix) - f3f264a
+- [x] REL-006 - Tutorial Docs (quick start, architecture, tutorial, AI workflow, deployment, troubleshooting, FAQ) - 2e7aeb7
 
 ---
 
@@ -136,6 +149,17 @@
 - `81521a8` - feat(pricing): add pricing page with checkout integration
 - `7fc029d` - feat(dashboard): add sidebar layout with navigation
 - `6a65fc2` - feat(landing): add footer component with navigation
+- `334627c` - feat(settings): add settings pages with profile and billing
+- `bff5ca0` - feat(email): add email service with resend integration
+- `7e2d15d` - feat(email): add react email templates for transactional emails
+- `4ee0c5c` - feat(deploy): add vercel deployment configuration
+- `262a250` - feat(monitoring): add sentry error tracking integration
+- `24467af` - docs(readme): add ai-powered development and production features sections
+- `71ceb7b` - docs: add changelog following keep a changelog format
+- `228ba34` - chore: add codeowners and update gitignore
+- `ded1d38` - chore: improve issue and pr templates
+- `f3f264a` - chore: prepare v1.0.0 release
+- `2e7aeb7` - docs: add comprehensive tutorial documentation
 
 ---
 
