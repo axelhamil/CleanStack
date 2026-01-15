@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 12/65
-**Current Task:** [TDD] Write ManagedPrompt aggregate tests FIRST
+**Tasks Completed:** 13/65
+**Current Task:** [IMPL] Implement ManagedPrompt VOs and aggregate (GREEN)
 
 ---
 
@@ -332,4 +332,36 @@ const role = message.get("role");
 **Verification:**
 - All ManagedPrompt VO tests pass
 - No regressions on existing tests
+
+### 2026-01-15 - Task 13: [TDD] Write ManagedPrompt aggregate tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** All tests passed immediately (GREEN)
+
+**Changes:**
+- Created `src/domain/llm/prompt/managed-prompt-id.ts` - ID class extending UUID
+- Created 4 domain events in `src/domain/llm/prompt/events/`:
+  - `managed-prompt-created.event.ts` - Emitted on create()
+  - `managed-prompt-updated.event.ts` - Emitted on updateContent() with version tracking
+  - `managed-prompt-activated.event.ts` - Emitted on activate()
+  - `managed-prompt-deactivated.event.ts` - Emitted on deactivate()
+- Created `src/domain/llm/prompt/managed-prompt.aggregate.ts` - Full aggregate with:
+  - create() / reconstitute() static methods
+  - updateContent() - increments version, emits event
+  - activate() / deactivate() - toggle isActive with events
+  - render() - variable substitution with validation
+  - changeEnvironment() - environment switching
+- Created `src/domain/llm/prompt/__tests__/managed-prompt.aggregate.test.ts` (28 tests)
+  - Tests for create(), reconstitute(), updateContent(), activate(), deactivate()
+  - Tests for render() with required/optional variables and defaults
+  - Tests for changeEnvironment()
+
+**Commands Run:**
+- `pnpm test` - 556 tests PASSED (28 new tests)
+
+**Verification:**
+- All ManagedPrompt aggregate tests pass
+- No regressions on existing tests
+- Implementation follows existing aggregate patterns (User, Conversation)
 
