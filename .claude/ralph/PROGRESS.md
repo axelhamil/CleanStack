@@ -17,7 +17,7 @@
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | ✅ 6/6 |
-| E7 | Tests Coverage | TST-001 to TST-007 | 🟡 2/7 |
+| E7 | Tests Coverage | TST-001 to TST-007 | 🟡 3/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | 🔴 0/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | 🔴 0/8 |
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E7 - Tests Coverage
-**Story**: TST-004 - Adapters Tests
-**File**: `.claude/ralph/prd/stories/TST-004-adapters.md`
+**Story**: TST-006 - Coverage in CI
+**File**: `.claude/ralph/prd/stories/TST-006-coverage-ci.md`
 
 ---
 
@@ -67,7 +67,10 @@
 
 ### E7 - Tests Coverage 🟡
 - [x] TST-001 - Domain User Tests (46 tests, 100% coverage) - fe107c9
-- [x] TST-003 - Auth Use Cases Tests (51 tests, 99% coverage)
+- [~] TST-002 - Blocked (Billing domain doesn't exist - depends on E8)
+- [x] TST-003 - Auth Use Cases Tests (51 tests, 99% coverage) - cb17de4
+- [~] TST-004 - Blocked (Billing use cases don't exist - depends on E8)
+- [x] TST-005 - Mappers + Event Dispatcher Tests (27+31 tests, 100%/91% coverage)
 
 ---
 
@@ -77,6 +80,7 @@
 - `b4fc9ef` - feat(tooling): add knip for unused code detection
 - `2c8c77a` - test(events): add comprehensive event system tests
 - `fe107c9` - test(domain): add comprehensive user domain tests
+- `cb17de4` - test(auth): add comprehensive auth use cases tests
 
 ---
 
@@ -94,7 +98,8 @@ None
 - Domain (user/aggregate): 100% ✅
 - Domain (user/value-objects): 100% ✅
 - Application (use-cases/auth): 99% ✅
-- Adapters: 0% → 80%
+- Adapters (mappers): 100% ✅
+- Adapters (events): 91% ✅
 
 ### Code Quality
 - Duplication: 2.18% ✅ (target < 3%)
