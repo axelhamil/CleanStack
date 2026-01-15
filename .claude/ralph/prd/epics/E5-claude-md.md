@@ -46,8 +46,10 @@ Restructurer CLAUDE.md pour être le guide ultime du vibe coding.
 
 ## Acceptance Criteria
 
-- [ ] CLAUDE.md restructuré
-- [ ] Quick Start testé (clone → feature)
-- [ ] Templates fonctionnels
-- [ ] Decision trees clairs
-- [ ] Exemples à jour avec code
+- [x] CLAUDE.md restructuré
+- [x] Quick Start testé (clone → feature)
+- [x] Templates fonctionnels
+- [x] Decision trees clairs
+- [x] Exemples à jour avec code
+
+## Status: ✅ COMPLET (8/8 stories)

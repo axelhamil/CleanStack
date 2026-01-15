@@ -43,8 +43,10 @@ Compléter la test coverage de ddd-kit et préparer le package pour publication 
 
 ## Acceptance Criteria
 
-- [ ] Coverage > 90% sur ddd-kit
-- [ ] `pnpm build` fonctionne dans packages/ddd-kit
-- [ ] Types exportés correctement
-- [ ] README avec exemples
-- [ ] Prêt pour `npm publish`
+- [x] Coverage > 90% sur ddd-kit (92% atteint)
+- [x] `pnpm build` fonctionne dans packages/ddd-kit
+- [x] Types exportés correctement
+- [x] README avec exemples
+- [x] Prêt pour `npm publish`
+
+## Status: ✅ COMPLET (10/10 stories)

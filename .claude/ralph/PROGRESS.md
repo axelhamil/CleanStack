@@ -4,8 +4,8 @@
 🟢 Complete
 
 ## PRD Stats
-- **10 Epics** (E0-E9)
-- **75 User Stories**
+- **11 Epics** (E0-E10)
+- **82 User Stories**
 - **Target**: v1.0.0 production ready
 
 ---
@@ -17,13 +17,14 @@
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | ✅ 10/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | ✅ 6/6 |
-| E7 | Tests Coverage | TST-001 to TST-007 | ✅ 6/7 |
+| E7 | Tests Coverage | TST-001 to TST-007 | ✅ 7/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | ✅ 6/6 |
 | E4 | Agents Claude | AGT-001 to AGT-004 | ✅ 4/4 |
 | E5 | CLAUDE.md | DOC-001 to DOC-008 | ✅ 8/8 |
 | E8 | Starter Features | FTR-001 to FTR-017 | ✅ 17/17 |
 | E6 | Docs & Release | REL-001 to REL-006 | ✅ 6/6 |
 | E9 | DX & Validation | DX-001 to DX-005 | ✅ 5/5 |
+| E10 | QA & Final Review | QA-001 to QA-007 | ✅ 7/7 |
 
 ---
 
@@ -65,14 +66,14 @@
 - [x] EVT-005 - User Domain Events (UserCreatedEvent, UserEmailVerifiedEvent, UserSignedInEvent)
 - [x] EVT-006 - Event System Tests (17 event tests + 6 dispatcher tests) - 2c8c77a
 
-### E7 - Tests Coverage ✅ (6/7 - TST-002/004 blocked)
+### E7 - Tests Coverage ✅
 - [x] TST-001 - Domain User Tests (46 tests, 100% coverage) - fe107c9
-- [~] TST-002 - Blocked (Billing domain doesn't exist - depends on E8)
+- [x] TST-002 - Billing Domain Tests (61 tests, billing-domain.test.ts) - e857147
 - [x] TST-003 - Auth Use Cases Tests (51 tests, 99% coverage) - cb17de4
-- [~] TST-004 - Blocked (Billing use cases don't exist - depends on E8)
+- [x] TST-004 - Billing Use Cases Tests (26 tests: checkout 7, webhook 10, portal 9)
 - [x] TST-005 - Mappers + Event Dispatcher Tests (27+31 tests, 100%/91% coverage)
 - [x] TST-006 - Coverage in CI (Codecov + PR reports) - 878946b
-- [x] TST-007 - Playwright E2E Tests (11 tests, CI integration)
+- [x] TST-007 - Playwright E2E Tests (11 tests, hors CI volontairement)
 
 ### E3 - Skills Claude ✅
 - [x] SKL-001 - EventStorming skill - fc3c432
@@ -169,6 +170,15 @@
 - `2e7aeb7` - docs: add comprehensive tutorial documentation
 - `8ab825d` - chore(dx): add vitest ui script for visual test debugging
 - `af20790` - chore(dx): add developer experience improvements
+
+### E10 - QA & Final Review ✅
+- [x] QA-001 - Full Codebase Review (architecture, patterns, quality)
+- [x] QA-002 - E2E Tests Validation (11 Playwright tests, hors CI)
+- [x] QA-003 - Documentation Review (README, CLAUDE.md, CHANGELOG)
+- [x] QA-004 - Security Review (auth, secrets, validation)
+- [x] QA-005 - Performance Validation (build, tests, bundle)
+- [x] QA-006 - Release Checklist (pre-release complete)
+- [x] QA-007 - App Docs Review (AI section updated with skills/agents)
 
 ---
 

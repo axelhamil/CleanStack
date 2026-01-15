@@ -31,6 +31,7 @@ Epic finale de validation complète avant release v1.0.0. Review systématique d
 | [QA-004](../stories/QA-004-security.md) | Security review | Critical |
 | [QA-005](../stories/QA-005-performance.md) | Performance validation | High |
 | [QA-006](../stories/QA-006-release-checklist.md) | Release checklist | Critical |
+| [QA-007](../stories/QA-007-docs-app-review.md) | App docs review | High |
 
 ## Quality Gates
 
@@ -44,14 +45,16 @@ pnpm check:security      # No vulnerabilities (npm audit)
 
 ## Acceptance Criteria
 
-- [ ] Tous les epics E0-E9 complétés (100%)
-- [ ] Coverage >= 90% global
-- [ ] Zero lint errors
-- [ ] Zero type errors
-- [ ] Zero duplication > 3%
-- [ ] Zero unused code
-- [ ] Zero security vulnerabilities
-- [ ] Documentation complète
-- [ ] E2E tests passent
-- [ ] Performance acceptable
-- [ ] Release notes prêtes
+- [x] Tous les epics E0-E9 complétés (100%)
+- [x] Coverage >= 90% global (92%+)
+- [x] Zero lint errors
+- [x] Zero type errors
+- [x] Zero duplication > 3% (2.61%)
+- [x] Zero unused code
+- [x] Zero security vulnerabilities
+- [x] Documentation complète
+- [x] E2E tests passent (11 tests, hors CI volontairement)
+- [x] Performance acceptable
+- [x] Release notes prêtes
+
+## Status: ✅ COMPLET (7/7 stories)
