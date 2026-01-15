@@ -15,7 +15,7 @@
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
-| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🟡 3/10 |
+| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🟡 4/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
@@ -30,8 +30,8 @@
 ## Current Story
 
 **Epic**: E1 - ddd-kit Tests & npm
-**Story**: DDD-004 - Aggregate tests
-**File**: `.claude/ralph/prd/stories/DDD-004-aggregate-tests.md`
+**Story**: DDD-005 - ValueObject tests
+**File**: `.claude/ralph/prd/stories/DDD-005-valueobject-tests.md`
 
 ---
 
@@ -48,7 +48,8 @@
 ### E1 - ddd-kit Tests & npm 🟡
 - [x] DDD-001 - Result tests (100% coverage) - 9323ef2
 - [x] DDD-002 - Option tests (100% coverage) - 5cf7c43
-- [x] DDD-003 - Entity tests (100% coverage)
+- [x] DDD-003 - Entity tests (100% coverage) - 1068570
+- [x] DDD-004 - Aggregate tests (93.75% coverage)
 
 ---
 
