@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import { signInAction } from "@/adapters/actions/auth.actions";
+import { OAuthButtons, OAuthDivider } from "./oauth-buttons";
 
 const loginSchema = z.object({
   email: z.email("Invalid email address"),
@@ -58,6 +59,8 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
+      <OAuthButtons />
+      <OAuthDivider />
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}

@@ -18,6 +18,10 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import { signUpAction } from "@/adapters/actions/auth.actions";
+import {
+  OAuthButtons,
+  OAuthDivider,
+} from "@/app/(auth)/login/_components/oauth-buttons";
 
 const registerSchema = z
   .object({
@@ -68,6 +72,8 @@ export function RegisterForm() {
 
   return (
     <Form {...form}>
+      <OAuthButtons />
+      <OAuthDivider />
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
