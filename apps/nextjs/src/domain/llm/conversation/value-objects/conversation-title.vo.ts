@@ -3,11 +3,17 @@ import { z } from "zod";
 
 const conversationTitleSchema = z
   .string()
-  .min(1, "Title is required")
-  .max(200, "Title must be less than 200 characters")
-  .transform((v) => v.trim());
+  .transform((v) => v.trim())
+  .refine((v) => v.length >= 1, { message: "Title is required" })
+  .refine((v) => v.length <= 200, {
+    message: "Title must be less than 200 characters",
+  });
 
 export class ConversationTitle extends ValueObject<string> {
+  constructor(value: string) {
+    super(value.trim());
+  }
+
   protected validate(value: string): Result<string> {
     const result = conversationTitleSchema.safeParse(value);
 

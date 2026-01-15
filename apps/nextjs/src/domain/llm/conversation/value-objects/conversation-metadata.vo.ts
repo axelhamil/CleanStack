@@ -23,4 +23,14 @@ export class ConversationMetadata extends ValueObject<ConversationMetadataValue>
 
     return Result.ok(result.data);
   }
+
+  equals(other: ValueObject<ConversationMetadataValue>): boolean {
+    if (this.value === null && other.value === null) {
+      return true;
+    }
+    if (this.value === null || other.value === null) {
+      return false;
+    }
+    return JSON.stringify(this.value) === JSON.stringify(other.value);
+  }
 }

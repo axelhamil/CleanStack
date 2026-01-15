@@ -21,26 +21,6 @@ export class Conversation extends Aggregate<IConversationProps> {
     return ConversationId.create(this._id);
   }
 
-  get userId(): string {
-    return this._props.userId;
-  }
-
-  get title(): Option<ConversationTitle> {
-    return this._props.title;
-  }
-
-  get metadata(): Option<ConversationMetadata> {
-    return this._props.metadata;
-  }
-
-  get createdAt(): Date {
-    return this._props.createdAt;
-  }
-
-  get updatedAt(): Date | undefined {
-    return this._props.updatedAt;
-  }
-
   static create(
     props: Omit<IConversationProps, "createdAt" | "updatedAt">,
     id?: UUID<string | number>,

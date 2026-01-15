@@ -1,6 +1,6 @@
 import { createModule } from "@evyweb/ioctopus";
-import { StripePaymentProvider } from "@/adapters/payment/stripe-payment.provider";
 import { InMemorySubscriptionRepository } from "@/adapters/repositories/subscription.repository";
+import { StripePaymentProvider } from "@/adapters/services/payment/stripe-payment.provider";
 import { CreateCheckoutSessionUseCase } from "@/application/use-cases/billing/create-checkout-session.use-case";
 import { CreatePortalSessionUseCase } from "@/application/use-cases/billing/create-portal-session.use-case";
 import { HandleStripeWebhookUseCase } from "@/application/use-cases/billing/handle-stripe-webhook.use-case";

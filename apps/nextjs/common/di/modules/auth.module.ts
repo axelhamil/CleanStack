@@ -1,6 +1,6 @@
 import { createModule } from "@evyweb/ioctopus";
-import { BetterAuthService } from "@/adapters/auth/better-auth.service";
 import { DrizzleUserRepository } from "@/adapters/repositories/user.repository";
+import { BetterAuthService } from "@/adapters/services/auth/better-auth.service";
 import { GetSessionUseCase } from "@/application/use-cases/auth/get-session.use-case";
 import { SignInUseCase } from "@/application/use-cases/auth/sign-in.use-case";
 import { SignOutUseCase } from "@/application/use-cases/auth/sign-out.use-case";

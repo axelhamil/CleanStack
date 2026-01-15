@@ -1,5 +1,5 @@
 import { createModule } from "@evyweb/ioctopus";
-import { ResendEmailService } from "@/adapters/email/resend-email.service";
+import { ResendEmailService } from "@/adapters/services/email/resend-email.service";
 import { DI_SYMBOLS } from "../types";
 
 export const createEmailModule = () => {

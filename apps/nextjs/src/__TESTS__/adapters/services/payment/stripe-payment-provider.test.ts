@@ -48,7 +48,7 @@ vi.mock("stripe", () => ({
   default: MockStripe,
 }));
 
-import { StripePaymentProvider } from "@/adapters/payment/stripe-payment.provider";
+import { StripePaymentProvider } from "@/adapters/services/payment/stripe-payment.provider";
 
 const originalEnv = process.env;
 

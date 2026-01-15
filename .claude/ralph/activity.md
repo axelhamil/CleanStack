@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 5/57
-**Current Task:** None
+**Tasks Completed:** 7/65
+**Current Task:** [TDD] Write Message VO tests
 
 ---
 
@@ -133,5 +133,64 @@
 - `pnpm type-check` - PASSED
 
 **Verification:**
+- Type check passes
+
+### 2026-01-15 - Refactoring: Services folder + Minimal getters pattern
+
+**Completed:** ✅
+
+**Changes:**
+- Moved adapter services (auth, email, payment, llm) into `adapters/services/` folder
+- Updated CLAUDE.md with new services folder structure
+- Updated DI modules import paths (auth.module.ts, email.module.ts, billing.module.ts)
+- Documented "Only `get id()` getter" pattern in CLAUDE.md
+- Refactored LLM domain events to use `entity.get('propName')` instead of custom getters
+- Updated events: message-added, completion-received, conversation-created, conversation-deleted
+
+**Pattern Change:**
+```typescript
+// Before: custom getters
+get role(): MessageRole { return this._props.role; }
+
+// After: use inherited get() method
+const role = message.get("role");
+```
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All imports updated
+- Type check passes
+- CLAUDE.md updated with rule 9 and Entity & Aggregate section
+
+### 2026-01-15 - Task 7: [TDD] Write Conversation VO tests + Fix implementations
+
+**Completed:** ✅
+
+**TDD Workflow:** RED → GREEN → REFACTOR
+
+**Changes:**
+- Created `src/domain/llm/conversation/__tests__/conversation-title.vo.test.ts` (9 tests)
+- Created `src/domain/llm/conversation/__tests__/conversation-metadata.vo.test.ts` (9 tests)
+- Fixed TypeScript type inference issues with `as string` and `as ConversationMetadataValue` assertions
+
+**RED Phase (4 failing tests):**
+1. ConversationTitle - trim not applied to stored value
+2. ConversationTitle - whitespace-only passes validation
+3. ConversationMetadata - equals() fails for objects (reference comparison)
+4. ConversationMetadata - equals() fails for empty objects
+
+**GREEN Phase Fixes:**
+- `ConversationTitle`: Override constructor to trim before storing, reorder Zod schema to transform→refine
+- `ConversationMetadata`: Override `equals()` method for deep JSON comparison
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+- `pnpm test` - 310 tests PASSED (18 new tests)
+
+**Verification:**
+- All 18 Conversation VO tests pass
+- No regressions on existing 292 tests
 - Type check passes
 

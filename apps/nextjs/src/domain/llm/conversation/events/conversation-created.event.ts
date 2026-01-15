@@ -14,13 +14,14 @@ export class ConversationCreatedEvent extends BaseDomainEvent<ConversationCreate
 
   constructor(conversation: Conversation) {
     super();
+    const userId = conversation.get("userId");
+    const title = conversation.get("title");
+
     this.aggregateId = conversation.id.value.toString();
     this.payload = {
       conversationId: conversation.id.value.toString(),
-      userId: conversation.userId,
-      title: conversation.title.isSome()
-        ? conversation.title.unwrap().value
-        : null,
+      userId,
+      title: title.isSome() ? title.unwrap().value : null,
     };
   }
 }

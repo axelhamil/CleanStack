@@ -19,17 +19,19 @@ export class CompletionReceivedEvent extends BaseDomainEvent<CompletionReceivedP
 
   constructor(message: Message) {
     super();
-    this.aggregateId = message.conversationId;
+    const conversationId = message.get("conversationId");
+    const model = message.get("model");
+    const tokenUsageOpt = message.get("tokenUsage");
+    const costOpt = message.get("cost");
 
-    const tokenUsage = message.tokenUsage.isSome()
-      ? message.tokenUsage.unwrap()
-      : null;
-    const cost = message.cost.isSome() ? message.cost.unwrap() : null;
+    const tokenUsage = tokenUsageOpt.isSome() ? tokenUsageOpt.unwrap() : null;
+    const cost = costOpt.isSome() ? costOpt.unwrap() : null;
 
+    this.aggregateId = conversationId.value.toString();
     this.payload = {
-      conversationId: message.conversationId,
+      conversationId: conversationId.value.toString(),
       messageId: message.id.value.toString(),
-      model: message.model.isSome() ? message.model.unwrap() : null,
+      model: model.isSome() ? model.unwrap() : null,
       inputTokens: tokenUsage?.inputTokens ?? null,
       outputTokens: tokenUsage?.outputTokens ?? null,
       totalTokens: tokenUsage?.totalTokens ?? null,

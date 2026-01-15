@@ -60,7 +60,7 @@ Study these files:
 - `src/domain/user/` - Aggregate, VOs, events
 - `src/application/use-cases/auth/` - All auth use cases
 - `src/application/ports/` - IAuthProvider, IUserRepository
-- `src/adapters/auth/` - BetterAuth service
+- `src/adapters/services/auth/` - BetterAuth service
 - `src/adapters/guards/` - requireAuth()
 - `app/(auth)/` + `app/(protected)/` - Pages
 
@@ -116,18 +116,26 @@ apps/nextjs/
 │   │   ├── ports/        # Interfaces (IXxxRepository, IXxxProvider)
 │   │   └── dto/          # Zod schemas
 │   └── adapters/
-│       ├── auth/         # Auth provider impl
 │       ├── actions/      # Server actions
 │       ├── controllers/  # HTTP handlers
 │       ├── guards/       # Auth middleware
 │       ├── repositories/ # DB impl
 │       ├── mappers/      # Domain ↔ DB
-│       └── queries/      # CQRS reads
+│       ├── queries/      # CQRS reads
+│       └── services/     # External service implementations
+│           ├── auth/     # Auth provider (BetterAuth)
+│           ├── llm/      # LLM provider (AI SDK)
+│           └── email/    # Email service
 ├── common/
 │   ├── auth.ts           # BetterAuth config
 │   └── di/               # DI container + modules
 └── app/api/auth/[...all]/ # BetterAuth route
 ```
+
+**Adapters organization:**
+- `services/` - All external service implementations grouped together (auth, llm, email, etc.)
+- Each service in its own subfolder under `services/`
+- Avoids proliferation of top-level adapter folders
 
 ### CQRS
 
@@ -185,7 +193,7 @@ export class UserId extends UUID<string | number> {
 }
 
 export class User extends Aggregate<IUserProps> {
-  get id(): UserId { return UserId.create(this._id) }
+  get id(): UserId { return UserId.create(this._id) }  // Only getter needed!
 
   static create(props, id?): User {
     return new User({ ...props, createdAt: new Date() }, id ?? new UUID());
@@ -197,13 +205,16 @@ export class User extends Aggregate<IUserProps> {
   }
 }
 
-// Entity API
-entity._id / entity._props / entity.get('prop')
+// Entity API - use get() for property access, NOT custom getters
+entity.get('propertyName')  // Returns typed property value
+entity._id / entity._props  // Direct access (internal use)
 entity.getProps() / entity.toObject() / entity.clone({...})
 
 // Aggregate API
 aggregate.domainEvents / aggregate.addEvent(e) / aggregate.clearEvents()
 ```
+
+**Minimal getters pattern:** Only define `get id()` getter. Access all other properties via `entity.get('propName')` method inherited from Entity/Aggregate base class.
 
 ### BaseRepository<T>
 
@@ -335,6 +346,7 @@ export async function requireAuth(redirectTo = "/login"): Promise<IGetSessionOut
 6. **All deps injected** via DI
 7. **No index.ts barrels** → import directly
 8. **No comments** → self-documenting code
+9. **Only `get id()` getter** → Use `entity.get('propName')` method for all property access. No other getters needed.
 
 ## Templates
 
@@ -357,7 +369,7 @@ export class {Name} extends Aggregate<I{Name}Props> {
     return {Name}Id.create(this._id);
   }
 
-  // Add getters for props
+  // No other getters - use this.get('propName') or entity.get('propName')
 
   static create(
     props: Omit<I{Name}Props, "createdAt" | "updatedAt">,

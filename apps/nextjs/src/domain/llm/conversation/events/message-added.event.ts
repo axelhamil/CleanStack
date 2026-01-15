@@ -16,13 +16,18 @@ export class MessageAddedEvent extends BaseDomainEvent<MessageAddedPayload> {
 
   constructor(message: Message) {
     super();
-    this.aggregateId = message.conversationId;
+    const conversationId = message.get("conversationId");
+    const role = message.get("role");
+    const content = message.get("content");
+    const model = message.get("model");
+
+    this.aggregateId = conversationId.value.toString();
     this.payload = {
-      conversationId: message.conversationId,
+      conversationId: conversationId.value.toString(),
       messageId: message.id.value.toString(),
-      role: message.role.value,
-      content: message.content.value,
-      model: message.model.isSome() ? message.model.unwrap() : null,
+      role: role.value,
+      content: content.value,
+      model: model.isSome() ? model.unwrap() : null,
     };
   }
 }
