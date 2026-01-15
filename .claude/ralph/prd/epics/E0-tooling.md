@@ -51,8 +51,8 @@ Mettre en place tous les outils de qualité de code et le pipeline CI pour garan
 
 ## Acceptance Criteria
 
-- [ ] `pnpm check` passe sans erreur
-- [ ] `pnpm check:duplication` passe (threshold 0 ou 5%)
-- [ ] `pnpm check:unused` clean
-- [ ] Pre-commit bloque si erreurs
-- [ ] CI passe sur chaque PR
+- [x] `pnpm check` passe sans erreur
+- [x] `pnpm check:duplication` passe (threshold 3% - currently 2.18%)
+- [x] `pnpm check:unused` clean
+- [x] Pre-commit bloque si erreurs
+- [x] CI passe sur chaque PR

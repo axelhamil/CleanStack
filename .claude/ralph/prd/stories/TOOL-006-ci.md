@@ -8,17 +8,17 @@
 
 ## Acceptance Criteria
 
-- [ ] `.github/workflows/ci.yml` created
-- [ ] `.github/workflows/release.yml` created
-- [ ] Runs on: push to main, PRs
-- [ ] Jobs: lint, type-check, test, build
-- [ ] Checks: duplication, unused code
-- [ ] Coverage report uploaded
-- [ ] Automatic versioning on main
-- [ ] Automatic CHANGELOG generation
-- [ ] Automatic npm publish (ddd-kit)
-- [ ] Automatic GitHub release
-- [ ] Badge in README
+- [x] `.github/workflows/ci.yml` created
+- [x] `.github/workflows/release.yml` created
+- [x] Runs on: push to main, PRs
+- [x] Jobs: lint, type-check, test, build
+- [x] Checks: duplication, unused code
+- [x] Coverage report uploaded
+- [x] Automatic versioning on main
+- [x] Automatic CHANGELOG generation
+- [x] Automatic npm publish (ddd-kit)
+- [x] Automatic GitHub release
+- [x] Badge in README
 
 ## Technical Notes
 
@@ -184,9 +184,9 @@ CODECOV_TOKEN  - Coverage reporting
 
 ## Definition of Done
 
-- [ ] CI workflow runs on PRs
-- [ ] Release workflow runs on main
-- [ ] CHANGELOG auto-generated
-- [ ] npm auto-published
-- [ ] GitHub releases created
-- [ ] Coverage badge displays
+- [x] CI workflow runs on PRs
+- [x] Release workflow runs on main
+- [x] CHANGELOG auto-generated
+- [x] npm auto-published
+- [x] GitHub releases created
+- [x] Coverage badge displays

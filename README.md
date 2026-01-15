@@ -2,6 +2,8 @@
 
 Production-ready monorepo boilerplate, optimized for AI and human development through Clean Architecture and DDD.
 
+[![CI](https://github.com/axmusic/nextjs-clean-architecture-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/axmusic/nextjs-clean-architecture-starter/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/axmusic/nextjs-clean-architecture-starter/branch/main/graph/badge.svg)](https://codecov.io/gh/axmusic/nextjs-clean-architecture-starter)
 [![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)](https://typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)

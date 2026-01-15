@@ -8,14 +8,14 @@
 
 ## Acceptance Criteria
 
-- [ ] Husky installed and initialized
-- [ ] lint-staged installed
-- [ ] commitlint configured for Conventional Commits
-- [ ] Pre-commit hook runs: lint-staged
-- [ ] Commit-msg hook validates commit message
-- [ ] Pre-push hook runs: type-check + tests
-- [ ] Commits blocked if checks fail
-- [ ] Easy bypass with `--no-verify` (documented)
+- [x] Husky installed and initialized
+- [x] lint-staged installed
+- [x] commitlint configured for Conventional Commits
+- [x] Pre-commit hook runs: lint-staged
+- [x] Commit-msg hook validates commit message
+- [x] Pre-push hook runs: type-check + tests
+- [x] Commits blocked if checks fail
+- [x] Easy bypass with `--no-verify` (documented)
 
 ## Technical Notes
 
@@ -108,8 +108,8 @@ chore(deps): update dependencies
 
 ## Definition of Done
 
-- [ ] Husky hooks installed
-- [ ] Commitlint validates messages
-- [ ] Pre-commit runs lint-staged
-- [ ] Pre-push runs type-check + tests
-- [ ] Team uses conventional commits
+- [x] Husky hooks installed
+- [x] Commitlint validates messages
+- [x] Pre-commit runs lint-staged
+- [x] Pre-push runs type-check + tests
+- [x] Team uses conventional commits

@@ -8,11 +8,11 @@
 
 ## Acceptance Criteria
 
-- [ ] jscpd installed as dev dependency
-- [ ] `.jscpd.json` config file created
-- [ ] Threshold set to max 3% duplication
-- [ ] Ignores: node_modules, dist, .next, coverage
-- [ ] npm script: `pnpm check:duplication`
+- [x] jscpd installed as dev dependency
+- [x] `.jscpd.json` config file created
+- [x] Threshold set to max 3% duplication
+- [x] Ignores: node_modules, dist, .next, coverage
+- [x] npm script: `pnpm check:duplication`
 - [ ] Fails CI if duplication > 3%
 
 ## Technical Notes
@@ -33,6 +33,6 @@ pnpm add -D jscpd
 
 ## Definition of Done
 
-- [ ] Tool installed and configured
-- [ ] Script runs successfully
-- [ ] Current codebase passes check
+- [x] Tool installed and configured
+- [x] Script runs successfully
+- [x] Current codebase passes check (2.18% < 3%)

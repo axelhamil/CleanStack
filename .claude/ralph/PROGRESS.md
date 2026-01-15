@@ -14,7 +14,7 @@
 
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
-| E0 | Tooling & CI | TOOL-001 to TOOL-006 | 🟡 5/6 |
+| E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
 | E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🔴 0/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
@@ -29,19 +29,21 @@
 
 ## Current Story
 
-**Epic**: E0 - Tooling & CI
-**Story**: TOOL-006 - GitHub Actions CI
-**File**: `.claude/ralph/prd/stories/TOOL-006-ci.md`
+**Epic**: E1 - ddd-kit Tests & npm
+**Story**: DDD-001 - Result tests
+**File**: `.claude/ralph/prd/stories/DDD-001-result-tests.md`
 
 ---
 
 ## Completed Stories
 
+### E0 - Tooling & CI ✅
 - [x] TOOL-001 - jscpd (code duplication) - 136737f
 - [x] TOOL-002 - knip (unused code detection) - b4fc9ef
 - [x] TOOL-003 - Biome config (already configured, verified)
 - [x] TOOL-004 - Husky + lint-staged + commitlint - 8d18180
 - [x] TOOL-005 - npm scripts consolidation
+- [x] TOOL-006 - GitHub Actions CI + Semantic Release
 
 ---
 

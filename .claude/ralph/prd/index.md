@@ -25,7 +25,7 @@ Créer le **boilerplate DDD ultime** pour le vibe coding avec Claude. Une DX niv
 
 | ID | Epic | Stories | Status |
 |----|------|---------|--------|
-| E0 | [Tooling & CI](./epics/E0-tooling.md) | TOOL-* | 🔴 |
+| E0 | [Tooling & CI](./epics/E0-tooling.md) | TOOL-* | ✅ |
 | E1 | [ddd-kit Tests & npm](./epics/E1-ddd-kit.md) | DDD-* | 🔴 |
 | E2 | [Domain Events](./epics/E2-domain-events.md) | EVT-* | 🔴 |
 | E3 | [Skills Claude](./epics/E3-skills.md) | SKL-* | 🔴 |
@@ -35,6 +35,7 @@ Créer le **boilerplate DDD ultime** pour le vibe coding avec Claude. Une DX niv
 | E7 | [Tests Coverage](./epics/E7-tests.md) | TST-* | 🔴 |
 | E8 | [Starter Features](./epics/E8-starter.md) | FTR-* | 🔴 |
 | E9 | [DX & Validation](./epics/E9-dx.md) | DX-* | 🔴 |
+| E10 | [QA & Final Review](./epics/E10-qa.md) | QA-* | 🔴 |
 
 ---
 
@@ -52,6 +53,7 @@ Créer le **boilerplate DDD ultime** pour le vibe coding avec Claude. Une DX niv
 | TST | E7 | Test coverage global |
 | FTR | E8 | Starter features |
 | DX | E9 | Developer experience |
+| QA | E10 | QA review et validation finale |
 
 ---
 

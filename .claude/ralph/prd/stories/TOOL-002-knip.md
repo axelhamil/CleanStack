@@ -8,11 +8,11 @@
 
 ## Acceptance Criteria
 
-- [ ] knip installed as dev dependency
-- [ ] `knip.json` config file created
-- [ ] Configured for monorepo structure
-- [ ] npm script: `pnpm check:unused`
-- [ ] Reports unused: files, exports, dependencies, types
+- [x] knip installed as dev dependency
+- [x] `knip.json` config file created
+- [x] Configured for monorepo structure
+- [x] npm script: `pnpm check:unused`
+- [x] Reports unused: files, exports, dependencies, types
 - [ ] Fails CI if unused code detected
 
 ## Technical Notes
@@ -40,6 +40,6 @@ pnpm add -D knip
 
 ## Definition of Done
 
-- [ ] Tool installed and configured
-- [ ] Script runs successfully
-- [ ] All unused code identified and removed
+- [x] Tool installed and configured
+- [x] Script runs successfully
+- [x] All unused code identified and removed

@@ -8,11 +8,11 @@
 
 ## Acceptance Criteria
 
-- [ ] Biome configured (may already exist)
-- [ ] `biome.json` has strict rules
-- [ ] npm scripts: `pnpm lint`, `pnpm format`, `pnpm fix`
-- [ ] Zero lint errors in codebase
-- [ ] Integrates with IDE (VSCode settings)
+- [x] Biome configured (may already exist)
+- [x] `biome.json` has strict rules
+- [x] npm scripts: `pnpm lint`, `pnpm format`, `pnpm fix`
+- [x] Zero lint errors in codebase
+- [x] Integrates with IDE (VSCode settings)
 
 ## Technical Notes
 
@@ -37,6 +37,6 @@
 
 ## Definition of Done
 
-- [ ] Biome fully configured
-- [ ] All files pass lint check
-- [ ] Fix script auto-corrects issues
+- [x] Biome fully configured
+- [x] All files pass lint check
+- [x] Fix script auto-corrects issues

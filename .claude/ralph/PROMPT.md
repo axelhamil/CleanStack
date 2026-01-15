@@ -25,8 +25,9 @@ Transform this project into a production-ready v1.0.0 release with:
 │   ├── E6-docs.md              # REL-* stories
 │   ├── E7-tests.md             # TST-* stories
 │   ├── E8-starter.md           # FTR-* stories
-│   └── E9-dx.md                # DX-* stories
-└── stories/                    # 75 User Stories
+│   ├── E9-dx.md                # DX-* stories
+│   └── E10-qa.md               # QA-* stories (Final Review)
+└── stories/                    # 81 User Stories (75 + 6 QA)
 ```
 
 ## Instructions
@@ -59,6 +60,7 @@ Transform this project into a production-ready v1.0.0 release with:
 | 8 | E8 | FTR-001 to FTR-017 | Starter Features |
 | 9 | E6 | REL-001 to REL-006 | Docs & Release |
 | 10 | E9 | DX-001 to DX-005 | DX Polish & Validation |
+| 11 | E10 | QA-001 to QA-006 | QA & Final Review |
 
 ## Rules
 
@@ -128,6 +130,14 @@ Output `<promise>PRODUCTION READY</promise>` ONLY when ALL of these are true:
 - [ ] EventStorming → PRD automated via skill
 - [ ] Ralph workflow optimized
 - [ ] Upgradable architecture documented
+
+### QA (E10 - Final Gate)
+- [ ] Full codebase review completed
+- [ ] E2E tests pass
+- [ ] Documentation review completed
+- [ ] Security review completed
+- [ ] Performance validation passed
+- [ ] Release checklist completed
 
 ### Starter Features
 - [ ] Auth complete (all flows working)

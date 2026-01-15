@@ -8,10 +8,10 @@
 
 ## Acceptance Criteria
 
-- [ ] All scripts documented in CLAUDE.md
-- [ ] Scripts follow naming convention
-- [ ] Composite scripts for common workflows
-- [ ] Scripts work from root (turbo) and app level
+- [x] All scripts documented in CLAUDE.md
+- [x] Scripts follow naming convention
+- [x] Composite scripts for common workflows
+- [x] Scripts work from root (turbo) and app level
 
 ## Scripts to Define
 
@@ -51,6 +51,6 @@
 
 ## Definition of Done
 
-- [ ] All scripts defined and working
-- [ ] Scripts documented
-- [ ] `pnpm check:all` passes
+- [x] All scripts defined and working
+- [x] Scripts documented
+- [x] `pnpm check:all` passes
