@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 21/65
-**Current Task:** [IMPL] Implement SendCompletionUseCase (GREEN)
+**Tasks Completed:** 22/65
+**Current Task:** [TDD] Write StreamCompletionUseCase tests FIRST
 
 ---
 
@@ -582,4 +582,42 @@ const role = message.get("role");
 - Tests written first following TDD workflow
 - Tests fail because SendCompletionUseCase doesn't exist yet
 - Ready for GREEN phase (Task 22)
+
+### 2026-01-15 - Task 22: [IMPL] Implement SendCompletionUseCase (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Created `src/application/use-cases/llm/send-completion.use-case.ts`
+  - Constructor with 4 dependencies: llmProvider, modelRouter, usageRepository, eventDispatcher
+  - execute() method implementing full completion flow:
+    1. validateInput() - checks prompt is non-empty
+    2. selectModel() - uses modelRouter with capabilities/budget/providers
+    3. getModelConfig() - retrieves pricing config for cost calculation
+    4. checkBudget() - validates user hasn't exceeded daily budget (if userId provided)
+    5. substituteVariables() - replaces {{variables}} in prompt
+    6. buildMessages() - creates system + user message array
+    7. llmProvider.generateText() - calls LLM
+    8. calculateCost() - computes cost from tokens and model config
+    9. recordUsage() - creates LLMUsage aggregate and persists
+    10. toDto() - maps response to output DTO
+
+**Implementation Details:**
+- DEFAULT_MAX_BUDGET = 100 (daily budget in USD)
+- Uses match() from ddd-kit for Option handling
+- Creates LLMUsage aggregate with all value objects (ProviderIdentifier, ModelIdentifier, TokenCount, Cost)
+- Dispatches domain events after successful save
+- Proper error handling at each step with Result pattern
+
+**Commands Run:**
+- `pnpm test` - 647 tests PASSED (all 18 SendCompletionUseCase tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 18 SendCompletionUseCase tests pass
+- No regressions on existing tests
+- Type check passes
+- Ready for Task 23 (StreamCompletionUseCase TDD RED)
 
