@@ -9,6 +9,7 @@ import type { SignOutUseCase } from "@/application/use-cases/auth/sign-out.use-c
 import type { SignUpUseCase } from "@/application/use-cases/auth/sign-up.use-case";
 import type { VerifyEmailUseCase } from "@/application/use-cases/auth/verify-email.use-case";
 import type { CreateCheckoutSessionUseCase } from "@/application/use-cases/billing/create-checkout-session.use-case";
+import type { CreatePortalSessionUseCase } from "@/application/use-cases/billing/create-portal-session.use-case";
 import type { HandleStripeWebhookUseCase } from "@/application/use-cases/billing/handle-stripe-webhook.use-case";
 
 export const DI_SYMBOLS = {
@@ -23,6 +24,7 @@ export const DI_SYMBOLS = {
   GetSessionUseCase: Symbol.for("GetSessionUseCase"),
   VerifyEmailUseCase: Symbol.for("VerifyEmailUseCase"),
   CreateCheckoutSessionUseCase: Symbol.for("CreateCheckoutSessionUseCase"),
+  CreatePortalSessionUseCase: Symbol.for("CreatePortalSessionUseCase"),
   HandleStripeWebhookUseCase: Symbol.for("HandleStripeWebhookUseCase"),
 };
 
@@ -38,5 +40,6 @@ export interface DI_RETURN_TYPES {
   GetSessionUseCase: GetSessionUseCase;
   VerifyEmailUseCase: VerifyEmailUseCase;
   CreateCheckoutSessionUseCase: CreateCheckoutSessionUseCase;
+  CreatePortalSessionUseCase: CreatePortalSessionUseCase;
   HandleStripeWebhookUseCase: HandleStripeWebhookUseCase;
 }
