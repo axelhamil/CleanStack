@@ -179,7 +179,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test event includes token and cost info",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "domain-impl",

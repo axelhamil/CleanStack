@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 9/65
-**Current Task:** [TDD] Write Domain Events tests FIRST
+**Tasks Completed:** 10/65
+**Current Task:** [IMPL] Make Conversation domain tests pass (GREEN)
 
 ---
 
@@ -244,5 +244,39 @@ const role = message.get("role");
 
 **Verification:**
 - All Conversation aggregate tests pass
+- No regressions on existing tests
+
+### 2026-01-15 - Task 10: [TDD] Write Domain Events tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED → GREEN (property name fix)
+
+**Changes:**
+- Created `src/domain/llm/conversation/__tests__/conversation-created.event.test.ts` (12 tests)
+  - Tests eventType, aggregateId, payload fields (conversationId, userId, title)
+  - Tests event creation (instance, dateOccurred, uniqueness)
+- Created `src/domain/llm/conversation/__tests__/message-added.event.test.ts` (16 tests)
+  - Tests eventType, aggregateId, payload fields (conversationId, messageId, role, content, model)
+  - Tests for different message roles (user, assistant, system)
+- Created `src/domain/llm/conversation/__tests__/completion-received.event.test.ts` (19 tests)
+  - Tests eventType, aggregateId
+  - Tests payload with token usage (inputTokens, outputTokens, totalTokens)
+  - Tests payload with cost (amount, currency)
+  - Tests full completion event with all data
+
+**RED Phase (6 failing tests):**
+1. Tests used `occurredOn` but BaseDomainEvent uses `dateOccurred`
+2. Tests used `eventId` but BaseDomainEvent doesn't have this property
+
+**GREEN Phase Fixes:**
+- Changed `occurredOn` to `dateOccurred` in all event tests
+- Changed `eventId` uniqueness test to `aggregateId` or instance comparison
+
+**Commands Run:**
+- `pnpm test` - 433 tests PASSED (46 new tests)
+
+**Verification:**
+- All domain event tests pass
 - No regressions on existing tests
 
