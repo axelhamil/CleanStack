@@ -29,6 +29,7 @@
     "@packages/drizzle": "workspace:*",
     "@packages/ui": "workspace:*",
     "@react-email/components": "^1.0.4",
+    "@sentry/nextjs": "^10.34.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@vercel/analytics": "^1.6.1",
     "better-auth": "^1.4.10",

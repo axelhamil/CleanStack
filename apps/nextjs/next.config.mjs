@@ -1,4 +1,5 @@
 import createMDX from "@next/mdx";
+import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from "next-intl/plugin";
 
 /** @type {import('next').NextConfig} */
@@ -32,4 +33,15 @@ const withMDX = createMDX({
   },
 });
 
-export default withNextIntl(withMDX(nextConfig));
+const sentryWebpackPluginOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  hideSourceMaps: true,
+  disableLogger: true,
+};
+
+export default withSentryConfig(
+  withNextIntl(withMDX(nextConfig)),
+  sentryWebpackPluginOptions,
+);
