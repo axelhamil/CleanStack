@@ -73,19 +73,17 @@ src/domain/note/
 // note.aggregate.ts
 export class Note extends Aggregate<INoteProps> {
   get id(): NoteId { return NoteId.create(this._id); }
-  get title(): NoteTitle { return this._props.title; }
-  get content(): NoteContent { return this._props.content; }
-  get userId(): UserId { return this._props.userId; }
 
   static create(props: INoteCreateProps, id?: UUID): Note {
     const note = new Note(
       { ...props, createdAt: new Date(), updatedAt: new Date() },
       id ?? new UUID()
     );
-    note.addEvent(new NoteCreatedEvent({
-      noteId: note.id.value,
-      userId: note.userId.value,
-    }));
+    if(!id)
+      note.addEvent(new NoteCreatedEvent({
+        noteId: note.id.value,
+        userId: note.userId.value,
+      }));
     return note;
   }
 
