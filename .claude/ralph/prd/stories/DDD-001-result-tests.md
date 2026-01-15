@@ -8,14 +8,14 @@
 
 ## Acceptance Criteria
 
-- [ ] Test `Result.ok(value)` - creates success
-- [ ] Test `Result.fail(error)` - creates failure
-- [ ] Test `Result.combine([])` - returns first failure or ok
-- [ ] Test `isSuccess` / `isFailure` properties
-- [ ] Test `getValue()` - throws on failure
-- [ ] Test `getError()` - throws on success
-- [ ] Test `map()` / `flatMap()` if implemented
-- [ ] Coverage > 95% on Result.ts
+- [x] Test `Result.ok(value)` - creates success
+- [x] Test `Result.fail(error)` - creates failure
+- [x] Test `Result.combine([])` - returns first failure or ok
+- [x] Test `isSuccess` / `isFailure` properties
+- [x] Test `getValue()` - throws on failure
+- [x] Test `getError()` - throws on success
+- [x] Test `map()` / `flatMap()` if implemented (not implemented)
+- [x] Coverage > 95% on Result.ts (100%)
 
 ## Test Cases
 
@@ -70,6 +70,6 @@ describe('Result', () => {
 
 ## Definition of Done
 
-- [ ] All test cases pass
-- [ ] Coverage > 95%
-- [ ] Edge cases covered
+- [x] All test cases pass
+- [x] Coverage > 95% (100%)
+- [x] Edge cases covered

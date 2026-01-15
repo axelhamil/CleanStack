@@ -15,7 +15,7 @@
 | Epic | Description | Stories | Status |
 |------|-------------|---------|--------|
 | E0 | Tooling & CI | TOOL-001 to TOOL-006 | ✅ 6/6 |
-| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🔴 0/10 |
+| E1 | ddd-kit Tests & npm | DDD-001 to DDD-010 | 🟡 1/10 |
 | E2 | Domain Events | EVT-001 to EVT-006 | 🔴 0/6 |
 | E7 | Tests Coverage | TST-001 to TST-007 | 🔴 0/7 |
 | E3 | Skills Claude | SKL-001 to SKL-006 | 🔴 0/6 |
