@@ -28,7 +28,7 @@
     "test:watch": "turbo test:watch",
     "test:coverage": "turbo test:coverage",
     "test:ui": "vitest --ui",
-    "test:e2e": "pnpm --filter=nextjs test:e2e",
+    "test:e2e": "turbo test:e2e",
     "setup": "pnpm install && pnpm db && pnpm db:push",
     "validate": "pnpm type-check && pnpm check && pnpm test",
     "quick-check": "pnpm type-check && pnpm check",

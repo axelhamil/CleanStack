@@ -40,6 +40,11 @@
       "outputs": ["coverage/**"],
       "cache": false
     },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": ["next-env.d.ts", ".next/types/**"]
