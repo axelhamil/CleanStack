@@ -14,7 +14,11 @@
       "@/adapters/*": ["./src/adapters/*"],
       "@/shared/*": ["./src/shared/*"],
       "@/common/*": ["./common/*"],
-      "@/emails/*": ["./emails/*"]
+      "@/emails/*": ["./emails/*"],
+      "@packages/ddd-kit": ["../../packages/ddd-kit/src/index.ts"],
+      "@packages/drizzle": ["../../packages/drizzle/src/index.ts"],
+      "@packages/drizzle/*": ["../../packages/drizzle/src/*"],
+      "@packages/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [
