@@ -353,7 +353,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Create check-budget.dto.ts",
       "Verify with pnpm type-check"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application-tdd",

@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 19/65
-**Current Task:** Create all DTOs
+**Tasks Completed:** 20/65
+**Current Task:** [TDD] Write SendCompletionUseCase tests FIRST
 
 ---
 
@@ -16,7 +16,7 @@
 |----------|--------|
 | Setup | ✅ Complete |
 | Domain | 🔄 In Progress |
-| Application | ⏳ Pending |
+| Application | 🔄 In Progress |
 | Adapters | ⏳ Pending |
 | Infrastructure | 🔄 In Progress |
 | UI | ⏳ Pending |
@@ -516,4 +516,38 @@ const role = message.get("role");
 - All 6 port interfaces created
 - Type check passes
 - Application layer ports ready for use cases
+
+### 2026-01-15 - Task 20: Create all DTOs
+
+**Completed:** ✅
+
+**Changes:**
+- Created `src/application/dto/llm/common.dto.ts`
+  - Shared schemas: providerSchema, messageRoleSchema, environmentSchema, capabilitySchema
+  - Shared DTOs: usageDtoSchema, costDtoSchema, messageDtoSchema, paginationInputSchema, paginationOutputSchema, promptVariableSchema
+- Created 16 DTO files in `src/application/dto/llm/`:
+  - `send-completion.dto.ts` - SendCompletion input/output
+  - `stream-completion.dto.ts` - StreamCompletion input/output (with ReadableStream)
+  - `send-chat-message.dto.ts` - SendChatMessage input/output
+  - `get-conversation.dto.ts` - GetConversation input/output
+  - `list-conversations.dto.ts` - ListConversations input/output with pagination
+  - `list-messages.dto.ts` - ListMessages input/output with pagination
+  - `delete-conversation.dto.ts` - DeleteConversation input/output
+  - `estimate-cost.dto.ts` - EstimateCost input/output
+  - `select-optimal-model.dto.ts` - SelectOptimalModel input/output
+  - `create-managed-prompt.dto.ts` - CreateManagedPrompt input/output
+  - `update-managed-prompt.dto.ts` - UpdateManagedPrompt input/output
+  - `get-managed-prompt.dto.ts` - GetManagedPrompt input/output
+  - `list-managed-prompts.dto.ts` - ListManagedPrompts input/output with pagination
+  - `test-managed-prompt.dto.ts` - TestManagedPrompt input/output
+  - `get-usage-stats.dto.ts` - GetUsageStats input/output with breakdown
+  - `check-budget.dto.ts` - CheckBudget input/output
+
+**Commands Run:**
+- `pnpm type-check` - PASSED (after fixing z.record() signature)
+
+**Verification:**
+- All 16 DTOs created with Zod schemas
+- Type check passes
+- Ready for use case implementation
 
