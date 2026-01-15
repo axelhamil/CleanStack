@@ -18,10 +18,10 @@ class TestEvent extends BaseDomainEvent<TestPayload> {
   }
 }
 
-class EmptyPayloadEvent extends BaseDomainEvent<void> {
+class EmptyPayloadEvent extends BaseDomainEvent<undefined> {
   readonly eventType = "test.empty";
   readonly aggregateId: string;
-  readonly payload: void = undefined;
+  readonly payload: undefined = undefined;
 
   constructor(aggregateId: string) {
     super();

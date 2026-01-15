@@ -17,7 +17,6 @@ export async function handleStripeWebhookController(request: Request) {
   const result = await useCase.execute({ payload: body, signature });
 
   if (result.isFailure) {
-    console.error("Webhook error:", result.getError());
     return Response.json({ error: result.getError() }, { status: 400 });
   }
 

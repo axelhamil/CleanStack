@@ -29,13 +29,8 @@ export class SendWelcomeEmailHandler
     });
 
     if (result.isFailure) {
-      console.error(
-        `[Event] Failed to send welcome email to ${event.payload.email}: ${result.getError()}`,
-      );
       return result;
     }
-
-    console.log(`[Event] Welcome email sent to ${event.payload.email}`);
     return Result.ok();
   }
 }

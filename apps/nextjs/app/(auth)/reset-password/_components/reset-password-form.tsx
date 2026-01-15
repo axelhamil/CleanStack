@@ -70,7 +70,7 @@ function ResetPasswordFormContent() {
     startTransition(async () => {
       const { error } = await authClient.resetPassword({
         newPassword: values.password,
-        token: token!,
+        token: token as string,
       });
 
       if (error) {
