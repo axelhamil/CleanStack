@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 15/65
-**Current Task:** [IMPL] Implement LLMUsage domain (GREEN)
+**Tasks Completed:** 16/65
+**Current Task:** [TDD] Write DomainPrompt tests FIRST
 
 ---
 
@@ -414,4 +414,32 @@ const role = message.get("role");
 - All LLMUsage tests pass
 - No regressions on existing tests
 - Type check passes
+
+### 2026-01-15 - Task 16: [IMPL] Implement LLMUsage domain (GREEN)
+
+**Completed:** ✅
+
+**Note:** Most implementation was already done during Task 15. This task completed the remaining items.
+
+**Changes:**
+- Verified existing files in `src/domain/llm/usage/`:
+  - `llm-usage-id.ts` - LLMUsageId class extending UUID ✓
+  - `value-objects/provider-identifier.vo.ts` - openai, anthropic, google ✓
+  - `value-objects/model-identifier.vo.ts` - model string validation ✓
+  - `value-objects/token-count.vo.ts` - non-negative integers ✓
+  - `value-objects/duration.vo.ts` - milliseconds duration ✓
+  - `llm-usage.aggregate.ts` - LLMUsage aggregate ✓
+  - `events/usage-recorded.event.ts` - UsageRecordedEvent ✓
+- Created 2 new budget events in `src/domain/llm/usage/events/`:
+  - `budget-threshold-reached.event.ts` - emitted when usage approaches budget threshold
+  - `budget-exceeded.event.ts` - emitted when budget is exceeded
+
+**Commands Run:**
+- `pnpm type-check` - PASSED
+- `pnpm test` - 614 tests PASSED (GREEN)
+
+**Verification:**
+- All LLMUsage domain tests pass
+- Type check passes
+- Implementation complete per plan requirements
 
