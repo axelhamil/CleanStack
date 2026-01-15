@@ -1,6 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreWorkspaces": ["apps/expo"],
   "workspaces": {
     "apps/nextjs": {
       "entry": ["app/**/*.tsx", "src/**/*.ts", "common/**/*.ts"],

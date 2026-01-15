@@ -4,10 +4,6 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --filter=nextjs",
-    "dev:expo": "turbo dev --filter=expo",
-    "android": "pnpm --filter expo android",
-    "ios": "pnpm --filter expo ios",
-    "dev:all": "turbo dev",
     "db": "docker compose up -d postgres",
     "db:migrate": "turbo db:migrate",
     "db:generate": "turbo db:generate",

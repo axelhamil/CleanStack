@@ -141,7 +141,7 @@ Visit [localhost:3000](http://localhost:3000)
 
 ## Stack
 
-Next.js 16 (App Router) • Expo (React Native) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Stripe • Resend • Sentry • shadcn/ui • Tailwind CSS 4
+Next.js 16 (App Router) • TypeScript • Drizzle ORM • PostgreSQL • BetterAuth • Stripe • Resend • Sentry • shadcn/ui • Tailwind CSS 4
 
 ## AI-Powered Development
 
@@ -273,17 +273,9 @@ export class Email extends ValueObject<string> {
 ## Monorepo
 
 - `apps/nextjs/` - Web + API (Clean Architecture in src/)
-- `apps/expo/` - Mobile (Expo Router + NativeWind + React Query)
 - `packages/ddd-kit/` - DDD primitives (Result, Option, Entity, etc.)
 - `packages/drizzle/` - DB schema and ORM
-- `packages/ui/` - Shared components (`.web.tsx` / `.native.tsx`)
-
-## UI Components
-
-Create reusable components in `packages/ui/`:
-- `.web.tsx` - Next.js (auto-resolved)
-- `.native.tsx` - Expo (auto-resolved)
-- `.tsx` - Fallback
+- `packages/ui/` - Shared components
 
 ## Key Rules
 

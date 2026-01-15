@@ -56,7 +56,7 @@ pnpm check:all
 
 Production-ready monorepo: Clean Architecture + DDD. Optimized for AI development.
 
-**Stack**: Next.js 16 • Expo • TypeScript • Drizzle • PostgreSQL • BetterAuth • shadcn/ui • Tailwind 4
+**Stack**: Next.js 16 • TypeScript • Drizzle • PostgreSQL • BetterAuth • shadcn/ui • Tailwind 4
 
 ### Reference Implementation
 
@@ -75,7 +75,6 @@ Study these files:
 ```bash
 # Development
 pnpm dev              # Dev server (Next.js)
-pnpm dev:expo         # Dev server (Expo)
 pnpm build            # Build all
 
 # Quality
@@ -558,16 +557,14 @@ export default async function DashboardPage() {
 
 ```
 packages/ui/src/components/ui/  # shadcn (auto-generated)
-apps/expo/src/components/       # Native (NativeWind)
 ```
 
 ## Monorepo
 
 - `apps/nextjs/` - Web + API
-- `apps/expo/` - Mobile
 - `packages/ddd-kit/` - DDD primitives
 - `packages/drizzle/` - DB schema
-- `packages/ui/` - Web components
+- `packages/ui/` - Shared components
 
 ## Environment
 
