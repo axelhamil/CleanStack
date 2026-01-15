@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 25/65
-**Current Task:** [IMPL] Implement SendChatMessageUseCase (GREEN)
+**Tasks Completed:** 28/65
+**Current Task:** [TDD] Write CreateManagedPromptUseCase tests FIRST
 
 ---
 
@@ -742,4 +742,123 @@ const role = message.get("role");
 - Tests written first following TDD workflow
 - Tests fail because SendChatMessageUseCase doesn't exist yet
 - Ready for GREEN phase (Task 26)
+
+### 2026-01-15 - Task 26: [IMPL] Implement SendChatMessageUseCase (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Created `src/application/use-cases/llm/send-chat-message.use-case.ts`
+  - Constructor with 6 dependencies: llmProvider, modelRouter, conversationRepository, messageRepository, usageRepository, eventDispatcher
+  - execute() method implementing chat message flow:
+    1. validateInput() - checks message is non-empty
+    2. getOrCreateConversation() - retrieves existing or creates new conversation
+    3. verifyOwnership() - validates userId matches conversation owner
+    4. selectModel() - uses modelRouter with chat capability
+    5. getModelConfig() - retrieves pricing config
+    6. checkBudget() - validates user hasn't exceeded daily budget
+    7. Saves user message to repository
+    8. Builds LLM messages array with system prompt and history
+    9. llmProvider.generateText() - calls LLM
+    10. Saves assistant response message
+    11. Records usage and calculates cost
+    12. Dispatches domain events
+    13. Returns conversation with messages
+
+**Commands Run:**
+- `pnpm test` - 688 tests PASSED (all SendChatMessageUseCase tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All SendChatMessageUseCase tests pass
+- No regressions on existing tests
+- Type check passes
+- Ready for Task 27 (conversation management use cases TDD RED)
+
+### 2026-01-15 - Task 27: [TDD] Write conversation management use case tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, stub implementations)
+
+**Changes:**
+- Created 4 test files in `src/__TESTS__/application/llm/`:
+  - `get-conversation-use-case.test.ts` (10 tests)
+    - Happy path: returns conversation with messages
+    - Not found: returns error when conversation doesn't exist
+    - Ownership: validates userId matches conversation owner
+    - Repository errors: propagates database errors
+  - `list-conversations-use-case.test.ts` (10 tests)
+    - Happy path: returns paginated list with message counts
+    - Pagination: uses provided page/limit params
+    - Filters by userId
+    - Repository errors: propagates database errors
+  - `list-messages-use-case.test.ts` (10 tests)
+    - Happy path: returns paginated messages for conversation
+    - Not found: returns error when conversation doesn't exist
+    - Ownership: validates userId matches conversation owner
+    - Pagination: uses provided page/limit params
+  - `delete-conversation-use-case.test.ts` (10 tests)
+    - Happy path: deletes conversation
+    - Not found: returns error when conversation doesn't exist
+    - Ownership: validates userId matches conversation owner
+    - Event dispatch: emits ConversationDeletedEvent
+- Created 4 stub use case files in `src/application/use-cases/llm/`:
+  - `get-conversation.use-case.ts` - throws "Not implemented"
+  - `list-conversations.use-case.ts` - throws "Not implemented"
+  - `list-messages.use-case.ts` - throws "Not implemented"
+  - `delete-conversation.use-case.ts` - throws "Not implemented"
+
+**Commands Run:**
+- `pnpm test` - 40 FAILED as expected (RED phase)
+  - All tests fail with "Not implemented" error
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- Tests written first following TDD workflow
+- Stub implementations allow type-check to pass
+- Tests fail because implementations throw "Not implemented"
+- Ready for GREEN phase (Task 28)
+
+### 2026-01-15 - Task 28: [IMPL] Implement conversation management use cases (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Implemented `src/application/use-cases/llm/get-conversation.use-case.ts`
+  - Uses getWithMessages() from conversation repository
+  - Verifies ownership before returning data
+  - Maps conversation and messages to DTO
+- Implemented `src/application/use-cases/llm/list-conversations.use-case.ts`
+  - Calls findByUserId() with pagination
+  - Fetches message count for each conversation
+  - Returns paginated list of conversation summaries
+- Implemented `src/application/use-cases/llm/list-messages.use-case.ts`
+  - Validates conversation exists and ownership
+  - Calls messageRepository.findByConversationId() with pagination
+  - Returns paginated messages
+- Implemented `src/application/use-cases/llm/delete-conversation.use-case.ts`
+  - Validates conversation exists and ownership
+  - Deletes conversation via repository
+  - Dispatches ConversationDeletedEvent
+
+**Bug Fix Applied:**
+- Changed `conversation.get("updatedAt")` to `conversation.getProps().updatedAt`
+- The `.get()` method throws DomainException when property is undefined
+- `updatedAt` is optional in IConversationProps, so must use `.getProps()` accessor
+- Applied fix to both GetConversationUseCase and ListConversationsUseCase
+
+**Commands Run:**
+- `pnpm test` - 99 tests PASSED (all 40 conversation management tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All conversation management use case tests pass
+- No regressions on existing tests
+- Type check passes
+- Ready for Task 29 (CreateManagedPromptUseCase TDD RED)
 
