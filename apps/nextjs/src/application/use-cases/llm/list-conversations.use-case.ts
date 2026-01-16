@@ -8,6 +8,7 @@ import type {
 import type { IConversationRepository } from "@/application/ports/conversation.repository.port";
 import type { IMessageRepository } from "@/application/ports/message.repository.port";
 import type { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
+import { mapConversationToBaseDto } from "./_shared/conversation.helper";
 
 export class ListConversationsUseCase
   implements UseCase<IListConversationsInputDto, IListConversationsOutputDto>
@@ -44,16 +45,10 @@ export class ListConversationsUseCase
     conversation: Conversation,
   ): Promise<IConversationSummaryDto> {
     const messageCount = await this.getMessageCount(conversation);
-    const title = conversation.get("title");
-    const props = conversation.getProps();
-
     return {
-      id: conversation.id.value.toString(),
-      title: title.isSome() ? title.unwrap().value : null,
+      ...mapConversationToBaseDto(conversation),
       lastMessage: null,
       messageCount,
-      createdAt: conversation.get("createdAt").toISOString(),
-      updatedAt: props.updatedAt ? props.updatedAt.toISOString() : null,
     };
   }
 

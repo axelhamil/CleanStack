@@ -12,7 +12,6 @@ import type {
   IGenerateTextResponse,
   ILLMMessage,
   ILLMProvider,
-  IModelConfig,
 } from "@/application/ports/llm.provider.port";
 import type { ILLMUsageRepository } from "@/application/ports/llm-usage.repository.port";
 import type { IMessageRepository } from "@/application/ports/message.repository.port";
@@ -30,12 +29,13 @@ import {
   type MessageRoleType,
 } from "@/domain/llm/conversation/value-objects/message-role.vo";
 import { TokenUsage } from "@/domain/llm/conversation/value-objects/token-usage.vo";
-import { LLMUsage } from "@/domain/llm/usage/llm-usage.aggregate";
-import { ModelIdentifier } from "@/domain/llm/usage/value-objects/model-identifier.vo";
-import { ProviderIdentifier } from "@/domain/llm/usage/value-objects/provider-identifier.vo";
-import { TokenCount } from "@/domain/llm/usage/value-objects/token-count.vo";
-
-const DEFAULT_MAX_BUDGET = 100;
+import {
+  calculateCompletionCost,
+  checkUserBudget,
+  getModelConfigOrFail,
+  selectModelForCompletion,
+} from "./_shared/completion.helper";
+import { recordLLMUsage } from "./_shared/llm-usage.helper";
 
 export class SendChatMessageUseCase
   implements UseCase<ISendChatMessageInputDto, ISendChatMessageOutputDto>
@@ -65,19 +65,29 @@ export class SendChatMessageUseCase
     const { conversation, existingMessages, isNew } =
       conversationResult.getValue();
 
-    const selectedModelResult = this.selectModel(input);
+    const selectedModelResult = selectModelForCompletion(this.modelRouter, {
+      maxBudget: input.options?.maxBudget,
+      providers: input.options?.providers,
+    });
     if (selectedModelResult.isFailure) {
       return Result.fail(selectedModelResult.getError());
     }
     const selectedModel = selectedModelResult.getValue();
 
-    const modelConfigResult = this.getModelConfig(selectedModel);
+    const modelConfigResult = getModelConfigOrFail(
+      this.modelRouter,
+      selectedModel,
+    );
     if (modelConfigResult.isFailure) {
       return Result.fail(modelConfigResult.getError());
     }
     const modelConfig = modelConfigResult.getValue();
 
-    const budgetCheckResult = await this.checkBudget(input);
+    const budgetCheckResult = await checkUserBudget(
+      input.userId,
+      this.usageRepository,
+      input.options?.maxBudget,
+    );
     if (budgetCheckResult.isFailure) {
       return Result.fail(budgetCheckResult.getError());
     }
@@ -98,7 +108,7 @@ export class SendChatMessageUseCase
     }
 
     const llmResponse = llmResult.getValue();
-    const cost = this.calculateCost(llmResponse.usage, modelConfig);
+    const cost = calculateCompletionCost(llmResponse.usage, modelConfig);
 
     const saveResult = await this.saveConversationAndMessages(
       conversation,
@@ -115,12 +125,17 @@ export class SendChatMessageUseCase
 
     const { assistantMessage } = saveResult.getValue();
 
-    await this.recordUsage(
-      input,
-      String(conversation.id.value),
-      selectedModel,
-      llmResponse,
-      cost,
+    await recordLLMUsage(
+      {
+        userId: input.userId,
+        conversationId: String(conversation.id.value),
+        selectedModel,
+        inputTokens: llmResponse.usage.inputTokens,
+        outputTokens: llmResponse.usage.outputTokens,
+        cost,
+      },
+      this.usageRepository,
+      this.eventDispatcher,
     );
 
     return Result.ok({
@@ -142,49 +157,6 @@ export class SendChatMessageUseCase
     if (!input.message || input.message.trim().length === 0) {
       return Result.fail("message is required and cannot be empty");
     }
-    return Result.ok(undefined);
-  }
-
-  private selectModel(input: ISendChatMessageInputDto): Result<ISelectedModel> {
-    return this.modelRouter.selectOptimalModel({
-      capabilities: ["text"],
-      maxBudget: input.options?.maxBudget,
-      preferredProviders: input.options?.providers,
-      strategy: "cheapest",
-    });
-  }
-
-  private getModelConfig(selectedModel: ISelectedModel): Result<IModelConfig> {
-    const configOption = this.modelRouter.getModelConfig(
-      selectedModel.provider,
-      selectedModel.model,
-    );
-
-    return match<IModelConfig, Result<IModelConfig>>(configOption, {
-      Some: (config) => Result.ok(config),
-      None: () => Result.fail("Model config not found"),
-    });
-  }
-
-  private async checkBudget(
-    input: ISendChatMessageInputDto,
-  ): Promise<Result<void>> {
-    const maxBudget = input.options?.maxBudget ?? DEFAULT_MAX_BUDGET;
-
-    const costResult = await this.usageRepository.getTotalCostByUser(
-      input.userId,
-      "day",
-    );
-
-    if (costResult.isFailure) {
-      return Result.fail(costResult.getError());
-    }
-
-    const currentCost = costResult.getValue();
-    if (currentCost >= maxBudget) {
-      return Result.fail("Daily budget exceeded");
-    }
-
     return Result.ok(undefined);
   }
 
@@ -264,18 +236,6 @@ export class SendChatMessageUseCase
     messages.push({ role: "user", content: userMessage });
 
     return messages;
-  }
-
-  private calculateCost(
-    usage: IGenerateTextResponse["usage"],
-    modelConfig: IModelConfig,
-  ): { amount: number; currency: string } {
-    const inputCost = (usage.inputTokens / 1000) * modelConfig.costPer1kIn;
-    const outputCost = (usage.outputTokens / 1000) * modelConfig.costPer1kOut;
-    return {
-      amount: inputCost + outputCost,
-      currency: "USD",
-    };
   }
 
   private async saveConversationAndMessages(
@@ -365,58 +325,5 @@ export class SendChatMessageUseCase
     conversation.clearEvents();
 
     return Result.ok({ userMessage, assistantMessage });
-  }
-
-  private async recordUsage(
-    input: ISendChatMessageInputDto,
-    conversationId: string,
-    selectedModel: ISelectedModel,
-    llmResponse: IGenerateTextResponse,
-    cost: { amount: number; currency: string },
-  ): Promise<void> {
-    const providerResult = ProviderIdentifier.create(
-      selectedModel.provider as "openai" | "anthropic" | "google",
-    );
-    const modelResult = ModelIdentifier.create(selectedModel.model);
-    const inputTokensResult = TokenCount.create(llmResponse.usage.inputTokens);
-    const outputTokensResult = TokenCount.create(
-      llmResponse.usage.outputTokens,
-    );
-    const costResult = Cost.create({
-      amount: cost.amount,
-      currency: cost.currency,
-    });
-
-    const combined = Result.combine([
-      providerResult,
-      modelResult,
-      inputTokensResult,
-      outputTokensResult,
-      costResult,
-    ]);
-
-    if (combined.isFailure) {
-      return;
-    }
-
-    const usage = LLMUsage.create({
-      userId: Option.some(input.userId),
-      conversationId: Option.some(conversationId),
-      provider: providerResult.getValue(),
-      model: modelResult.getValue(),
-      inputTokens: inputTokensResult.getValue(),
-      outputTokens: outputTokensResult.getValue(),
-      cost: costResult.getValue(),
-      requestDuration: Option.none(),
-      promptKey: Option.none(),
-    });
-
-    const saveResult = await this.usageRepository.create(usage);
-    if (saveResult.isFailure) {
-      return;
-    }
-
-    await this.eventDispatcher.dispatchAll(usage.domainEvents);
-    usage.clearEvents();
   }
 }

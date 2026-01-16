@@ -11,6 +11,7 @@ import type { IUserRepository } from "@/application/ports/user.repository.port";
 import type { User } from "@/domain/user/user.aggregate";
 import { Email } from "@/domain/user/value-objects/email.vo";
 import { Password } from "@/domain/user/value-objects/password.vo";
+import { mapUserToDto } from "./_shared/auth-dto.helper";
 
 export class SignInUseCase
   implements UseCase<ISignInInputDto, ISignInOutputDto>
@@ -56,13 +57,7 @@ export class SignInUseCase
   private toDto(authResponse: AuthResponse): ISignInOutputDto {
     const { user, token } = authResponse;
     return {
-      user: {
-        id: String(user.id.value),
-        email: user.get("email").value,
-        name: user.get("name").value,
-        emailVerified: user.get("emailVerified"),
-        image: user.get("image").toNull(),
-      },
+      user: mapUserToDto(user),
       token,
     };
   }

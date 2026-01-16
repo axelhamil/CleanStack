@@ -1,17 +1,16 @@
 import type { UseCase } from "@packages/ddd-kit";
 import {
   DEFAULT_PAGINATION,
-  match,
   type PaginatedResult,
   Result,
 } from "@packages/ddd-kit";
 import type {
   IListManagedPromptsInputDto,
   IListManagedPromptsOutputDto,
-  IManagedPromptSummaryDto,
 } from "@/application/dto/llm/list-managed-prompts.dto";
 import type { IManagedPromptRepository } from "@/application/ports/managed-prompt.repository.port";
 import type { ManagedPrompt } from "@/domain/llm/prompt/managed-prompt.aggregate";
+import { mapToBaseDto } from "./_shared/managed-prompt-dto.helper";
 
 export class ListManagedPromptsUseCase
   implements UseCase<IListManagedPromptsInputDto, IListManagedPromptsOutputDto>
@@ -50,32 +49,8 @@ export class ListManagedPromptsUseCase
 
     const paginatedData = result.getValue();
     return Result.ok({
-      prompts: paginatedData.data.map((prompt) => this.toSummaryDto(prompt)),
+      prompts: paginatedData.data.map((prompt) => mapToBaseDto(prompt)),
       pagination: paginatedData.pagination,
     });
-  }
-
-  private toSummaryDto(prompt: ManagedPrompt): IManagedPromptSummaryDto {
-    const props = prompt.getProps();
-    return {
-      id: prompt.id.value.toString(),
-      key: props.key.value,
-      name: props.name.value,
-      description: match<string, string | null>(
-        props.description.map((d) => d.value),
-        {
-          Some: (d) => d,
-          None: () => null,
-        },
-      ),
-      version: props.version,
-      isActive: props.isActive,
-      environment: props.environment.value,
-      createdAt: props.createdAt.toISOString(),
-      updatedAt: match<Date, string | null>(props.updatedAt, {
-        Some: (d) => d.toISOString(),
-        None: () => null,
-      }),
-    };
   }
 }

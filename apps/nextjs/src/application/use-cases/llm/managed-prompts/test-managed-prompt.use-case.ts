@@ -1,5 +1,5 @@
 import type { UseCase } from "@packages/ddd-kit";
-import { match, Result, UUID } from "@packages/ddd-kit";
+import { Result } from "@packages/ddd-kit";
 import type {
   ITestManagedPromptInputDto,
   ITestManagedPromptOutputDto,
@@ -9,7 +9,7 @@ import type {
   IModelConfig,
 } from "@/application/ports/llm.provider.port";
 import type { IManagedPromptRepository } from "@/application/ports/managed-prompt.repository.port";
-import { ManagedPromptId } from "@/domain/llm/prompt/managed-prompt-id";
+import { findPromptById } from "./_shared/managed-prompt-dto.helper";
 
 export class TestManagedPromptUseCase
   implements UseCase<ITestManagedPromptInputDto, ITestManagedPromptOutputDto>
@@ -22,32 +22,14 @@ export class TestManagedPromptUseCase
   async execute(
     input: ITestManagedPromptInputDto,
   ): Promise<Result<ITestManagedPromptOutputDto>> {
-    if (!input.promptId || input.promptId.trim() === "") {
-      return Result.fail("Prompt ID is required");
+    const promptResult = await findPromptById(
+      input.promptId,
+      this.promptRepository,
+    );
+    if (promptResult.isFailure) {
+      return Result.fail(promptResult.getError());
     }
-
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(input.promptId)) {
-      return Result.fail("Prompt ID must be a valid UUID");
-    }
-
-    const promptId = ManagedPromptId.create(new UUID<string>(input.promptId));
-
-    const findResult = await this.promptRepository.findById(promptId);
-    if (findResult.isFailure) {
-      return findResult as unknown as Result<ITestManagedPromptOutputDto>;
-    }
-
-    const promptOption = findResult.getValue();
-    const prompt = match(promptOption, {
-      Some: (p) => p,
-      None: () => null,
-    });
-
-    if (!prompt) {
-      return Result.fail(`Prompt with ID '${input.promptId}' not found`);
-    }
+    const prompt = promptResult.getValue();
 
     const renderResult = prompt.render(input.variables);
     if (renderResult.isFailure) {

@@ -1,4 +1,4 @@
-import { match, Option, Result, type UseCase, UUID } from "@packages/ddd-kit";
+import { match, Option, Result, type UseCase } from "@packages/ddd-kit";
 import type {
   IUpdateManagedPromptInputDto,
   IUpdateManagedPromptOutputDto,
@@ -6,15 +6,15 @@ import type {
 import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { IManagedPromptRepository } from "@/application/ports/managed-prompt.repository.port";
 import type { ManagedPrompt } from "@/domain/llm/prompt/managed-prompt.aggregate";
-import { ManagedPromptId } from "@/domain/llm/prompt/managed-prompt-id";
 import { PromptDescription } from "@/domain/llm/prompt/value-objects/prompt-description.vo";
 import { PromptName } from "@/domain/llm/prompt/value-objects/prompt-name.vo";
 import { PromptTemplate } from "@/domain/llm/prompt/value-objects/prompt-template.vo";
+import type { PromptVariable } from "@/domain/llm/prompt/value-objects/prompt-variable.vo";
 import {
-  PromptVariable,
-  type PromptVariableType,
-  type PromptVariableValue,
-} from "@/domain/llm/prompt/value-objects/prompt-variable.vo";
+  createVariablesFromInput,
+  parsePromptId,
+  unwrapPromptOption,
+} from "./_shared/managed-prompt-dto.helper";
 
 export class UpdateManagedPromptUseCase
   implements
@@ -28,29 +28,25 @@ export class UpdateManagedPromptUseCase
   async execute(
     input: IUpdateManagedPromptInputDto,
   ): Promise<Result<IUpdateManagedPromptOutputDto>> {
-    const uuidResult = this.parsePromptId(input.promptId);
-    if (uuidResult.isFailure) {
-      return Result.fail(uuidResult.getError());
+    const promptIdResult = parsePromptId(input.promptId);
+    if (promptIdResult.isFailure) {
+      return Result.fail(promptIdResult.getError());
     }
 
     const findResult = await this.promptRepository.findById(
-      uuidResult.getValue(),
+      promptIdResult.getValue(),
     );
     if (findResult.isFailure) {
       return Result.fail(findResult.getError());
     }
 
-    const promptResult = match<ManagedPrompt, Result<ManagedPrompt>>(
+    const promptResult = unwrapPromptOption(
       findResult.getValue(),
-      {
-        Some: (prompt) => Result.ok(prompt),
-        None: () => Result.fail(`Prompt with id '${input.promptId}' not found`),
-      },
+      input.promptId,
     );
     if (promptResult.isFailure) {
       return Result.fail(promptResult.getError());
     }
-
     const prompt = promptResult.getValue();
 
     const updateValuesResult = this.validateAndCreateUpdateValues(
@@ -82,16 +78,6 @@ export class UpdateManagedPromptUseCase
     return Result.ok(this.toDto(prompt));
   }
 
-  private parsePromptId(promptId: string): Result<ManagedPromptId> {
-    const uuidPattern =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(promptId)) {
-      return Result.fail(`Invalid prompt id: '${promptId}'`);
-    }
-    const uuid = new UUID<string>(promptId);
-    return Result.ok(ManagedPromptId.create(uuid));
-  }
-
   private validateAndCreateUpdateValues(
     input: IUpdateManagedPromptInputDto,
     existingPrompt: ManagedPrompt,
@@ -115,15 +101,7 @@ export class UpdateManagedPromptUseCase
     }
 
     if (input.variables !== undefined) {
-      variables = input.variables.map((v) => {
-        const result = PromptVariable.create({
-          name: v.name,
-          type: v.type as PromptVariableType,
-          required: v.required,
-          defaultValue: v.defaultValue,
-        } as PromptVariableValue);
-        return result.getValue();
-      });
+      variables = createVariablesFromInput(input.variables, template);
     }
 
     if (input.name !== undefined) {

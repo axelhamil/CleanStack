@@ -30,6 +30,21 @@ export const messageDtoSchema = z.object({
   createdAt: z.string(),
 });
 
+export const completionOptionsSchema = z.object({
+  maxBudget: z.number().positive().optional(),
+  providers: z.array(providerSchema).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().positive().optional(),
+});
+
+export const completionBaseInputSchema = z.object({
+  prompt: z.string().min(1),
+  systemPrompt: z.string().optional(),
+  variables: z.record(z.string(), z.string()).optional(),
+  userId: z.string().optional(),
+  conversationId: z.string().optional(),
+});
+
 export const paginationInputSchema = z.object({
   page: z.number().int().positive(),
   limit: z.number().int().positive().max(100),
@@ -61,3 +76,5 @@ export type IMessageDto = z.infer<typeof messageDtoSchema>;
 export type IPaginationInput = z.infer<typeof paginationInputSchema>;
 export type IPaginationOutput = z.infer<typeof paginationOutputSchema>;
 export type IPromptVariable = z.infer<typeof promptVariableSchema>;
+export type ICompletionOptions = z.infer<typeof completionOptionsSchema>;
+export type ICompletionBaseInput = z.infer<typeof completionBaseInputSchema>;

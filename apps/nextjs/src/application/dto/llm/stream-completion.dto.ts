@@ -1,20 +1,11 @@
 import z from "zod";
-import { providerSchema } from "./common.dto";
+import {
+  completionBaseInputSchema,
+  completionOptionsSchema,
+} from "./common.dto";
 
-export const streamCompletionInputDtoSchema = z.object({
-  prompt: z.string().min(1),
-  systemPrompt: z.string().optional(),
-  variables: z.record(z.string(), z.string()).optional(),
-  options: z
-    .object({
-      maxBudget: z.number().positive().optional(),
-      providers: z.array(providerSchema).optional(),
-      temperature: z.number().min(0).max(2).optional(),
-      maxTokens: z.number().positive().optional(),
-    })
-    .optional(),
-  userId: z.string().optional(),
-  conversationId: z.string().optional(),
+export const streamCompletionInputDtoSchema = completionBaseInputSchema.extend({
+  options: completionOptionsSchema.optional(),
 });
 
 export const streamCompletionOutputDtoSchema = z.object({

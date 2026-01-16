@@ -11,11 +11,8 @@ import { PromptEnvironment } from "@/domain/llm/prompt/value-objects/prompt-envi
 import { PromptKey } from "@/domain/llm/prompt/value-objects/prompt-key.vo";
 import { PromptName } from "@/domain/llm/prompt/value-objects/prompt-name.vo";
 import { PromptTemplate } from "@/domain/llm/prompt/value-objects/prompt-template.vo";
-import {
-  PromptVariable,
-  type PromptVariableType,
-  type PromptVariableValue,
-} from "@/domain/llm/prompt/value-objects/prompt-variable.vo";
+import type { PromptVariable } from "@/domain/llm/prompt/value-objects/prompt-variable.vo";
+import { createVariablesFromInput } from "./_shared/managed-prompt-dto.helper";
 
 export class CreateManagedPromptUseCase
   implements
@@ -109,45 +106,16 @@ export class CreateManagedPromptUseCase
       description = Option.some(descResult.getValue());
     }
 
-    const variables = this.createVariables(
-      input.variables,
-      templateResult.getValue(),
-    );
+    const template = templateResult.getValue();
+    const variables = createVariablesFromInput(input.variables, template);
 
     return Result.ok({
       key: keyResult.getValue(),
       name: nameResult.getValue(),
       description,
-      template: templateResult.getValue(),
+      template,
       variables,
       environment: environmentResult.getValue(),
-    });
-  }
-
-  private createVariables(
-    inputVariables: ICreateManagedPromptInputDto["variables"],
-    template: PromptTemplate,
-  ): PromptVariable[] {
-    if (inputVariables && inputVariables.length > 0) {
-      return inputVariables.map((v) => {
-        const result = PromptVariable.create({
-          name: v.name,
-          type: v.type as PromptVariableType,
-          required: v.required,
-          defaultValue: v.defaultValue,
-        } as PromptVariableValue);
-        return result.getValue();
-      });
-    }
-
-    const extractedVars = template.extractVariables();
-    return extractedVars.map((name) => {
-      const result = PromptVariable.create({
-        name,
-        type: "string",
-        required: true,
-      } as PromptVariableValue);
-      return result.getValue();
     });
   }
 

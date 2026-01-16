@@ -7,6 +7,7 @@ import {
   createEventsModule,
   registerEventHandlers,
 } from "./modules/events.module";
+import { createLLMModule } from "./modules/llm.module";
 import { type DI_RETURN_TYPES, DI_SYMBOLS } from "./types";
 
 let _container: Container | null = null;
@@ -20,6 +21,7 @@ function getContainer(): Container {
     _container.load(Symbol("AuthModule"), createAuthModule());
     _container.load(Symbol("BillingModule"), createBillingModule());
     _container.load(Symbol("EmailModule"), createEmailModule());
+    _container.load(Symbol("LLMModule"), createLLMModule());
   }
 
   if (!_initialized) {

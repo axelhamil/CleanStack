@@ -13,6 +13,7 @@ import { User } from "@/domain/user/user.aggregate";
 import { Email } from "@/domain/user/value-objects/email.vo";
 import { Name } from "@/domain/user/value-objects/name.vo";
 import { Password } from "@/domain/user/value-objects/password.vo";
+import { mapUserToDto } from "./_shared/auth-dto.helper";
 
 export class SignUpUseCase
   implements UseCase<ISignUpInputDto, ISignUpOutputDto>
@@ -65,13 +66,7 @@ export class SignUpUseCase
   private toDto(authResponse: AuthResponse): ISignUpOutputDto {
     const { user, token } = authResponse;
     return {
-      user: {
-        id: String(user.id.value),
-        email: user.get("email").value,
-        name: user.get("name").value,
-        emailVerified: user.get("emailVerified"),
-        image: user.get("image").toNull(),
-      },
+      user: mapUserToDto(user),
       token,
     };
   }

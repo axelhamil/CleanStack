@@ -1,5 +1,5 @@
 import type { UseCase } from "@packages/ddd-kit";
-import { match, Result as R, type Result, UUID } from "@packages/ddd-kit";
+import { match, Result as R, type Result } from "@packages/ddd-kit";
 import type {
   IGetConversationInputDto,
   IGetConversationOutputDto,
@@ -8,9 +8,12 @@ import type {
   IConversationRepository,
   IConversationWithMessages,
 } from "@/application/ports/conversation.repository.port";
-import type { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
-import { ConversationId } from "@/domain/llm/conversation/conversation-id";
-import type { Message } from "@/domain/llm/conversation/entities/message.entity";
+import {
+  mapConversationToBaseDto,
+  mapMessageToDto,
+  parseConversationId,
+  verifyConversationOwnership,
+} from "./_shared/conversation.helper";
 
 export class GetConversationUseCase
   implements UseCase<IGetConversationInputDto, IGetConversationOutputDto>
@@ -22,15 +25,14 @@ export class GetConversationUseCase
   async execute(
     input: IGetConversationInputDto,
   ): Promise<Result<IGetConversationOutputDto>> {
-    const conversationIdResult = this.parseConversationId(input.conversationId);
+    const conversationIdResult = parseConversationId(input.conversationId);
     if (conversationIdResult.isFailure) {
       return R.fail(conversationIdResult.getError());
     }
 
-    const conversationId = conversationIdResult.getValue();
-
-    const result =
-      await this.conversationRepository.getWithMessages(conversationId);
+    const result = await this.conversationRepository.getWithMessages(
+      conversationIdResult.getValue(),
+    );
     if (result.isFailure) {
       return R.fail(result.getError());
     }
@@ -39,7 +41,7 @@ export class GetConversationUseCase
       result.getValue(),
       {
         Some: (data) => {
-          if (!this.verifyOwnership(data.conversation, input.userId)) {
+          if (!verifyConversationOwnership(data.conversation, input.userId)) {
             return R.fail("Conversation access unauthorized");
           }
           return R.ok(this.toDto(data));
@@ -49,41 +51,11 @@ export class GetConversationUseCase
     );
   }
 
-  private parseConversationId(id: string): Result<ConversationId> {
-    try {
-      const uuid = new UUID<string>(id);
-      return R.ok(ConversationId.create(uuid));
-    } catch {
-      return R.fail("Invalid conversation ID");
-    }
-  }
-
-  private verifyOwnership(conversation: Conversation, userId: string): boolean {
-    return conversation.get("userId") === userId;
-  }
-
   private toDto(data: IConversationWithMessages): IGetConversationOutputDto {
-    const { conversation, messages } = data;
-    const title = conversation.get("title");
-    const props = conversation.getProps();
-
+    const baseDto = mapConversationToBaseDto(data.conversation);
     return {
-      id: conversation.id.value.toString(),
-      title: title.isSome() ? title.unwrap().value : null,
-      messages: messages.map((m) => this.messageToDto(m)),
-      createdAt: conversation.get("createdAt").toISOString(),
-      updatedAt: props.updatedAt ? props.updatedAt.toISOString() : null,
-    };
-  }
-
-  private messageToDto(
-    message: Message,
-  ): IGetConversationOutputDto["messages"][number] {
-    return {
-      id: message.id.value.toString(),
-      role: message.get("role").value,
-      content: message.get("content").value,
-      createdAt: message.get("createdAt").toISOString(),
+      ...baseDto,
+      messages: data.messages.map(mapMessageToDto),
     };
   }
 }

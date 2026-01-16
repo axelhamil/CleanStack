@@ -4,6 +4,7 @@ import type {
   AuthSession,
   IAuthProvider,
 } from "@/application/ports/auth.service.port";
+import { mapSessionToDto, mapUserToDto } from "./_shared/auth-dto.helper";
 
 export class SignOutUseCase implements UseCase<Headers, ISignOutOutputDto> {
   constructor(private readonly authProvider: IAuthProvider) {}
@@ -35,18 +36,8 @@ export class SignOutUseCase implements UseCase<Headers, ISignOutOutputDto> {
   private toDto(authSession: AuthSession): ISignOutOutputDto {
     const { user, session } = authSession;
     return {
-      user: {
-        id: String(user.id.value),
-        email: user.get("email").value,
-        name: user.get("name").value,
-        emailVerified: user.get("emailVerified"),
-        image: user.get("image").toNull(),
-      },
-      session: {
-        id: session.id,
-        token: session.token,
-        expiresAt: session.expiresAt,
-      },
+      user: mapUserToDto(user),
+      session: mapSessionToDto(session),
     };
   }
 }
