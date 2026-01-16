@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-16
-**Tasks Completed:** 38/65
-**Current Task:** [TDD] Write repository tests FIRST (RED)
+**Tasks Completed:** 39/65
+**Current Task:** [IMPL] Implement repositories (GREEN)
 
 ---
 
@@ -1323,4 +1323,67 @@ const role = message.get("role");
 - No regressions
 - Type check passes
 - Ready for Task 39 (Repository tests TDD RED)
+
+### 2026-01-16 - Task 39: [TDD] Write repository tests FIRST (RED)
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, repository implementations pending)
+
+**Changes:**
+- Created `src/adapters/repositories/llm/__tests__/conversation.repository.test.ts` (17 tests)
+  - create(): creates conversation and returns Result.ok
+  - update(): updates conversation with markUpdated()
+  - delete(): deletes conversation and returns id
+  - findById(): returns Option.some/none based on existence
+  - findByUserId(): returns paginated conversations for user
+  - getWithMessages(): returns conversation with associated messages
+  - findAll(): returns paginated list of all conversations
+  - exists(): returns true/false based on existence
+  - count(): returns total count of conversations
+  - Error handling for all database operations
+
+- Created `src/adapters/repositories/llm/__tests__/message.repository.test.ts` (15 tests)
+  - create(), update(), delete() with Result pattern
+  - findById(): returns Option.some/none
+  - findByConversationId(): paginated messages for conversation
+  - countByConversationId(): count messages in conversation
+  - findAll(), exists(), count() base repository methods
+  - Error handling for all database operations
+
+- Created `src/adapters/repositories/llm/__tests__/managed-prompt.repository.test.ts` (18 tests)
+  - create(), update(), delete() with Result pattern
+  - findById(): returns Option.some/none
+  - findByKey(): finds prompt by key and environment
+  - findActiveByKey(): finds active prompt version
+  - getVersionHistory(): returns prompt versions ordered by version desc
+  - activateVersion(): activates specific version, deactivates others
+  - findAll(), exists(), count() base repository methods
+  - Error handling for all database operations
+
+- Created `src/adapters/repositories/llm/__tests__/llm-usage.repository.test.ts` (19 tests)
+  - create(), update(), delete() with Result pattern
+  - findById(): returns Option.some/none
+  - getTotalCostByUser(): total cost for user in day/month period
+  - getTotalCostGlobal(): global total cost for period
+  - getUsageStats(): usage stats with breakdown by provider/model/day
+  - Filter stats by userId and date range
+  - findAll(), exists(), count() base repository methods
+  - Error handling for all database operations
+
+**Test Structure:**
+- All tests use vi.mock() for Drizzle mocking
+- Tests mock `@packages/drizzle` (db, eq, and, desc, etc.)
+- Tests mock `@packages/drizzle/schema` (table definitions)
+- Tests cover CRUD operations and domain-specific repository methods
+- Total: 69 new tests across 4 repository test files
+
+**Commands Run:**
+- Tests fail with "Cannot find module" errors as expected (RED phase)
+- Repository implementations don't exist yet
+
+**Verification:**
+- Tests written first following TDD workflow
+- Tests fail because repository implementations don't exist
+- Ready for GREEN phase (Task 40 - Implement repositories)
 
