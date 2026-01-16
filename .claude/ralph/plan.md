@@ -565,7 +565,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test returns budget status",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application-impl",
@@ -577,7 +577,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Create CheckBudgetUseCase",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "adapters-tdd",

@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-16
-**Tasks Completed:** 34/65
-**Current Task:** [TDD] Write routing and cost use case tests FIRST
+**Tasks Completed:** 36/65
+**Current Task:** [TDD] Write mapper tests FIRST
 
 ---
 
@@ -1126,4 +1126,116 @@ const role = message.get("role");
 - No regressions
 - Type check passes
 - Ready for Task 35 (routing and cost use case tests TDD RED)
+
+### 2026-01-16 - Task 35: [TDD] Write routing and cost use case tests FIRST (RED)
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, stub implementations)
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/select-optimal-model-use-case.test.ts` (24 tests)
+  - Happy path: model selection with cheapest strategy
+  - Budget constraints: maxBudget validation
+  - Provider preferences: preferredProviders filtering
+  - Strategy selection: cheapest, fastest, round-robin strategies
+  - Error handling: no capable model, budget exceeded, no preferred providers
+  - Validation errors: empty capabilities array
+  - Multiple capabilities: model supports all required capabilities
+
+- Created `src/__TESTS__/application/llm/estimate-cost-use-case.test.ts` (16 tests)
+  - Happy path: estimates cost for prompt
+  - Token estimation: uses estimateTokens() from provider
+  - Model selection: uses modelRouter.getModelConfig()
+  - Error handling: model not found, estimation failure
+  - Edge cases: empty prompt, very long prompt
+
+- Created `src/__TESTS__/application/llm/get-usage-stats-use-case.test.ts` (17 tests)
+  - Happy path: returns aggregated usage statistics
+  - Filtering: by userId, date range
+  - GroupBy options: day, week, month, provider, model
+  - Repository errors: propagates database errors
+  - Edge cases: empty results, missing filters
+
+- Created `src/__TESTS__/application/llm/check-budget-use-case.test.ts` (21 tests)
+  - Happy path: returns budget status with canProceed flag
+  - User budget: daily/monthly limits
+  - Global budget: system-wide limits
+  - Remaining budget calculation: current - used
+  - Budget exceeded: canProceed = false
+  - Estimated cost validation: check if operation fits budget
+  - Repository errors: propagates database errors
+
+- Created 4 stub use case files in `src/application/use-cases/llm/`:
+  - `select-optimal-model.use-case.ts` - throws "Not implemented"
+  - `estimate-cost.use-case.ts` - throws "Not implemented"
+  - `get-usage-stats.use-case.ts` - throws "Not implemented"
+  - `check-budget.use-case.ts` - throws "Not implemented"
+
+**Type Fixes Applied:**
+- Changed `private readonly` to `readonly _` prefix pattern for unused constructor params
+- Removed unused `Option` import from select-optimal-model test
+- Prefixed unused variables with `_` (mockModelConfig, mockAnthropicModel)
+- Changed invalid capability `"unsupported-capability"` to valid `"vision"`
+
+**Commands Run:**
+- `pnpm test` - 71 tests FAIL with "Not implemented" (RED phase confirmed)
+- `pnpm type-check` - PASSED
+- `pnpm check` - PASSED
+
+**Test Summary:**
+- Test Files: 5 failed | 52 passed (57)
+- Tests: 71 failed | 831 passed (902)
+
+**Verification:**
+- All 71 new tests fail with "Not implemented"
+- All 831 existing tests still pass
+- Type check passes
+- Ready for Task 36 (Implement routing and cost use cases GREEN)
+
+### 2026-01-16 - Task 36: [IMPL] Implement routing and cost use cases (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Implemented `src/application/use-cases/llm/select-optimal-model.use-case.ts`
+  - Validates capabilities array is not empty
+  - Delegates to modelRouter.selectOptimalModel() with strategy (default: "cheapest")
+  - Returns provider, model, estimatedCostPer1kTokens
+
+- Implemented `src/application/use-cases/llm/estimate-cost.use-case.ts`
+  - Validates text is not empty
+  - Uses llmProvider.estimateTokens() to count tokens
+  - If specific model: returns exact cost from modelRouter.getModelConfig()
+  - If no model: calculates min/max cost across all enabled models
+  - Returns estimatedTokens and cost range in USD
+
+- Implemented `src/application/use-cases/llm/get-usage-stats.use-case.ts`
+  - Validates date range (start <= end, valid format)
+  - Uses usageRepository.getUsageStats() with filtering and groupBy
+  - Fetches budget status (daily/monthly used vs limits)
+  - Returns totalCost, totalTokens, requestCount, breakdown, budgetStatus
+
+- Implemented `src/application/use-cases/llm/check-budget.use-case.ts`
+  - Validates estimatedCost is not negative
+  - Fetches daily/monthly usage from repository
+  - Calculates remaining budget and canProceed flag
+  - Returns budget status, limits, usage, remainingBudget
+
+**Bug Fixes Applied:**
+- Fixed SelectOptimalModelUseCase error message: "capabilities array cannot be empty" (test expected "capabilities")
+- Fixed GetUsageStatsUseCase test: mocked `getTotalCostGlobal` instead of `getTotalCostByUser` for date range filter test without userId
+- Fixed TestManagedPromptUseCase: added UUID regex validation before repository call (invalid UUID was returning undefined)
+
+**Commands Run:**
+- `pnpm test` - 902 tests PASSED (all 71 routing/cost tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 902 tests pass (71 new + 831 existing)
+- No regressions
+- Type check passes
+- Ready for Task 37 (mapper tests TDD RED)
 

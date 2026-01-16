@@ -117,6 +117,10 @@ export class SendCompletionUseCase
     input: ISendCompletionInputDto,
   ): Promise<Result<void>> {
     const userId = input.userId;
+    if (!userId) {
+      return Result.ok(undefined);
+    }
+
     const maxBudget = input.options?.maxBudget ?? DEFAULT_MAX_BUDGET;
 
     const costResult = await this.usageRepository.getTotalCostByUser(

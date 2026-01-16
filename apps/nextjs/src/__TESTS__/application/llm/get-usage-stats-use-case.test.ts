@@ -143,7 +143,7 @@ describe("GetUsageStatsUseCase", () => {
         vi.mocked(mockUsageRepository.getUsageStats).mockResolvedValue(
           Result.ok(mockUsageStats),
         );
-        vi.mocked(mockUsageRepository.getTotalCostByUser).mockResolvedValue(
+        vi.mocked(mockUsageRepository.getTotalCostGlobal).mockResolvedValue(
           Result.ok(2.5),
         );
 

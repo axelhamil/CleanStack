@@ -26,6 +26,12 @@ export class TestManagedPromptUseCase
       return Result.fail("Prompt ID is required");
     }
 
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(input.promptId)) {
+      return Result.fail("Prompt ID must be a valid UUID");
+    }
+
     const promptId = ManagedPromptId.create(new UUID<string>(input.promptId));
 
     const findResult = await this.promptRepository.findById(promptId);
