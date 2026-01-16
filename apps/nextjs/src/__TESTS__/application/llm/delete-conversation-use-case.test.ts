@@ -6,6 +6,7 @@ import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port
 import { DeleteConversationUseCase } from "@/application/use-cases/llm/delete-conversation.use-case";
 import { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
 import { ConversationDeletedEvent } from "@/domain/llm/conversation/events/conversation-deleted.event";
+import { UserId } from "@/domain/user/user-id";
 
 describe("DeleteConversationUseCase", () => {
   let useCase: DeleteConversationUseCase;
@@ -23,7 +24,7 @@ describe("DeleteConversationUseCase", () => {
   const createMockConversation = (ownerId: string = userId): Conversation => {
     return Conversation.create(
       {
-        userId: ownerId,
+        userId: UserId.create(new UUID(ownerId)),
         title: Option.none(),
         metadata: Option.none(),
       },

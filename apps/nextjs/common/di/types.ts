@@ -1,3 +1,4 @@
+import type { ITransactionManagerService } from "@packages/drizzle/services/transaction-manager.type";
 import type { IAuthProvider } from "@/application/ports/auth.service.port";
 import type { IConversationRepository } from "@/application/ports/conversation.repository.port";
 import type { IEmailService } from "@/application/ports/email.service.port";
@@ -74,6 +75,7 @@ export const DI_SYMBOLS = {
   EstimateCostUseCase: Symbol.for("EstimateCostUseCase"),
   GetUsageStatsUseCase: Symbol.for("GetUsageStatsUseCase"),
   CheckBudgetUseCase: Symbol.for("CheckBudgetUseCase"),
+  ITransactionManagerService: Symbol.for("ITransactionManagerService"),
 };
 
 export interface DI_RETURN_TYPES {
@@ -114,4 +116,5 @@ export interface DI_RETURN_TYPES {
   EstimateCostUseCase: EstimateCostUseCase;
   GetUsageStatsUseCase: GetUsageStatsUseCase;
   CheckBudgetUseCase: CheckBudgetUseCase;
+  ITransactionManagerService: ITransactionManagerService;
 }

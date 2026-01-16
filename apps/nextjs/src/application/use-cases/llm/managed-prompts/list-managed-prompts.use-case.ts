@@ -32,20 +32,16 @@ export class ListManagedPromptsUseCase
 
     if (hasFilters) {
       const criteria: Record<string, unknown> = {};
-      if (input.environment) {
-        criteria.environment = input.environment;
-      }
-      if (input.search) {
-        criteria.search = input.search;
-      }
+      if (input.environment) criteria.environment = input.environment;
+
+      if (input.search) criteria.search = input.search;
+
       result = await this.promptRepository.findMany(criteria, pagination);
     } else {
       result = await this.promptRepository.findAll(pagination);
     }
 
-    if (result.isFailure) {
-      return result as unknown as Result<IListManagedPromptsOutputDto>;
-    }
+    if (result.isFailure) return Result.fail(result.getError());
 
     const paginatedData = result.getValue();
     return Result.ok({

@@ -20,42 +20,35 @@ export class RollbackManagedPromptUseCase
   async execute(
     input: IRollbackManagedPromptInputDto,
   ): Promise<Result<IRollbackManagedPromptOutputDto>> {
-    if (input.targetVersion <= 0) {
+    if (input.targetVersion <= 0)
       return Result.fail("Target version must be a positive number");
-    }
 
     const promptResult = await findPromptById(
       input.promptId,
       this.promptRepository,
     );
-    if (promptResult.isFailure) {
-      return Result.fail(promptResult.getError());
-    }
+    if (promptResult.isFailure) return Result.fail(promptResult.getError());
+
     const prompt = promptResult.getValue();
+    const currentVersion = prompt.get("version");
 
-    const currentVersion = prompt.getProps().version;
-
-    if (input.targetVersion === currentVersion) {
+    if (input.targetVersion === currentVersion)
       return Result.fail(`Prompt is already at version ${input.targetVersion}`);
-    }
 
     const activateResult = await this.promptRepository.activateVersion(
       prompt.id,
       input.targetVersion,
     );
 
-    if (activateResult.isFailure) {
-      return activateResult as unknown as Result<IRollbackManagedPromptOutputDto>;
-    }
+    if (activateResult.isFailure) return Result.fail(activateResult.getError());
 
     await this.eventDispatcher.dispatchAll(prompt.domainEvents);
     prompt.clearEvents();
 
-    const props = prompt.getProps();
     return Result.ok({
       id: prompt.id.value.toString(),
-      key: props.key.value,
-      name: props.name.value,
+      key: prompt.get("key").value,
+      name: prompt.get("name").value,
       currentVersion: input.targetVersion,
       rolledBackFrom: currentVersion,
       updatedAt: new Date().toISOString(),

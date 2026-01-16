@@ -1,11 +1,13 @@
 import { Option, UUID } from "@packages/ddd-kit";
 import { beforeEach, describe, expect, it } from "vitest";
+import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { Cost } from "@/domain/llm/conversation/value-objects/cost.vo";
 import { LLMUsage } from "@/domain/llm/usage/llm-usage.aggregate";
 import { Duration } from "@/domain/llm/usage/value-objects/duration.vo";
 import { ModelIdentifier } from "@/domain/llm/usage/value-objects/model-identifier.vo";
 import { ProviderIdentifier } from "@/domain/llm/usage/value-objects/provider-identifier.vo";
 import { TokenCount } from "@/domain/llm/usage/value-objects/token-count.vo";
+import { UserId } from "@/domain/user/user-id";
 import { llmUsageToDomain, llmUsageToPersistence } from "../llm-usage.mapper";
 
 describe("LLMUsageMapper", () => {
@@ -214,8 +216,10 @@ describe("LLMUsageMapper", () => {
 
       usage = LLMUsage.create(
         {
-          userId: Option.some(testUserId),
-          conversationId: Option.some(testConversationId),
+          userId: Option.some(UserId.create(new UUID(testUserId))),
+          conversationId: Option.some(
+            ConversationId.create(new UUID(testConversationId)),
+          ),
           provider: providerResult.getValue(),
           model: modelResult.getValue(),
           inputTokens: inputTokensResult.getValue(),
@@ -291,8 +295,10 @@ describe("LLMUsageMapper", () => {
 
       const usageWithoutDuration = LLMUsage.create(
         {
-          userId: Option.some(testUserId),
-          conversationId: Option.some(testConversationId),
+          userId: Option.some(UserId.create(new UUID(testUserId))),
+          conversationId: Option.some(
+            ConversationId.create(new UUID(testConversationId)),
+          ),
           provider: providerResult.getValue(),
           model: modelResult.getValue(),
           inputTokens: inputTokensResult.getValue(),
@@ -327,8 +333,10 @@ describe("LLMUsageMapper", () => {
 
       const original = LLMUsage.create(
         {
-          userId: Option.some(testUserId),
-          conversationId: Option.some(testConversationId),
+          userId: Option.some(UserId.create(new UUID(testUserId))),
+          conversationId: Option.some(
+            ConversationId.create(new UUID(testConversationId)),
+          ),
           provider: providerResult.getValue(),
           model: modelResult.getValue(),
           inputTokens: inputTokensResult.getValue(),

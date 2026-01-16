@@ -5,49 +5,29 @@ import { checkBudgetInputDtoSchema } from "@/application/dto/llm/check-budget.dt
 import type { IGetUsageStatsOutputDto } from "@/application/dto/llm/get-usage-stats.dto";
 import { getUsageStatsInputDtoSchema } from "@/application/dto/llm/get-usage-stats.dto";
 import { getInjection } from "@/common/di/container";
-
-type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+import {
+  type ActionResult,
+  isParseError,
+  parseInput,
+  toActionResult,
+} from "./action.utils";
 
 export async function getUsageStatsAction(
   input: unknown,
 ): Promise<ActionResult<IGetUsageStatsOutputDto>> {
-  const parsed = getUsageStatsInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(getUsageStatsInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("GetUsageStatsUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function checkBudgetAction(
   input: unknown,
 ): Promise<ActionResult<ICheckBudgetOutputDto>> {
-  const parsed = checkBudgetInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(checkBudgetInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("CheckBudgetUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }

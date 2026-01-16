@@ -27,17 +27,14 @@ export class CreateManagedPromptUseCase
     input: ICreateManagedPromptInputDto,
   ): Promise<Result<ICreateManagedPromptOutputDto>> {
     const validationResult = this.validateAndCreateValueObjects(input);
-    if (validationResult.isFailure) {
+    if (validationResult.isFailure)
       return Result.fail(validationResult.getError());
-    }
 
     const { key, name, description, template, variables, environment } =
       validationResult.getValue();
 
     const existsResult = await this.checkDuplicateKey(key, environment);
-    if (existsResult.isFailure) {
-      return Result.fail(existsResult.getError());
-    }
+    if (existsResult.isFailure) return Result.fail(existsResult.getError());
 
     const prompt = ManagedPrompt.create({
       key,
@@ -50,16 +47,12 @@ export class CreateManagedPromptUseCase
     });
 
     const saveResult = await this.promptRepository.create(prompt);
-    if (saveResult.isFailure) {
-      return Result.fail(saveResult.getError());
-    }
+    if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
     const dispatchResult = await this.eventDispatcher.dispatchAll(
       prompt.domainEvents,
     );
-    if (dispatchResult.isFailure) {
-      return Result.fail(dispatchResult.getError());
-    }
+    if (dispatchResult.isFailure) return Result.fail(dispatchResult.getError());
     prompt.clearEvents();
 
     return Result.ok(this.toDto(prompt));
@@ -75,34 +68,24 @@ export class CreateManagedPromptUseCase
     variables: PromptVariable[];
     environment: PromptEnvironment;
   }> {
-    const keyResult = PromptKey.create(input.key as string);
-    if (keyResult.isFailure) {
-      return Result.fail(keyResult.getError());
-    }
+    const keyResult = PromptKey.create(input.key);
+    const nameResult = PromptName.create(input.name);
+    const templateResult = PromptTemplate.create(input.template);
+    const environmentResult = PromptEnvironment.create(input.environment);
 
-    const nameResult = PromptName.create(input.name as string);
-    if (nameResult.isFailure) {
-      return Result.fail(nameResult.getError());
-    }
-
-    const templateResult = PromptTemplate.create(input.template as string);
-    if (templateResult.isFailure) {
-      return Result.fail(templateResult.getError());
-    }
-
-    const environmentResult = PromptEnvironment.create(
-      input.environment as "development" | "staging" | "production",
-    );
-    if (environmentResult.isFailure) {
-      return Result.fail(environmentResult.getError());
-    }
+    const combinedResult = Result.combine([
+      keyResult,
+      nameResult,
+      templateResult,
+      environmentResult,
+    ]);
+    if (combinedResult.isFailure) return Result.fail(combinedResult.getError());
 
     let description: Option<PromptDescription> = Option.none();
     if (input.description) {
       const descResult = PromptDescription.create(input.description as string);
-      if (descResult.isFailure) {
-        return Result.fail(descResult.getError());
-      }
+      if (descResult.isFailure) return Result.fail(descResult.getError());
+
       description = Option.some(descResult.getValue());
     }
 
@@ -127,10 +110,7 @@ export class CreateManagedPromptUseCase
       key.value,
       environment.value,
     );
-
-    if (existsResult.isFailure) {
-      return Result.fail(existsResult.getError());
-    }
+    if (existsResult.isFailure) return Result.fail(existsResult.getError());
 
     return match<ManagedPrompt, Result<void>>(existsResult.getValue(), {
       Some: () =>

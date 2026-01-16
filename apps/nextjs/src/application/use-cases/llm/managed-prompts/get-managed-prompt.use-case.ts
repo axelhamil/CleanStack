@@ -21,9 +21,7 @@ export class GetManagedPromptUseCase
       input.environment,
     );
 
-    if (result.isFailure) {
-      return result as unknown as Result<IGetManagedPromptOutputDto>;
-    }
+    if (result.isFailure) return Result.fail(result.getError());
 
     return match<ManagedPrompt, Result<IGetManagedPromptOutputDto>>(
       result.getValue(),

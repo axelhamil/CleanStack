@@ -16,9 +16,36 @@ import type { IUserRepository } from "@/application/ports/user.repository.port";
 import type { User } from "@/domain/user/user.aggregate";
 import type { UserId } from "@/domain/user/user-id";
 
+type UserRecord = typeof userTable.$inferSelect;
+
 export class DrizzleUserRepository implements IUserRepository {
   private getDb(trx?: Transaction): DbClient | Transaction {
     return trx ?? db;
+  }
+
+  private mapSingleRecord(
+    record: UserRecord | undefined,
+  ): Result<Option<User>> {
+    if (!record) {
+      return Result.ok(Option.none());
+    }
+    const userResult = userToDomain(record);
+    if (userResult.isFailure) {
+      return Result.fail(userResult.getError());
+    }
+    return Result.ok(Option.some(userResult.getValue()));
+  }
+
+  private mapRecords(records: UserRecord[]): Result<User[]> {
+    const users: User[] = [];
+    for (const record of records) {
+      const userResult = userToDomain(record);
+      if (userResult.isFailure) {
+        return Result.fail(userResult.getError());
+      }
+      users.push(userResult.getValue());
+    }
+    return Result.ok(users);
   }
 
   async create(entity: User, trx?: Transaction): Promise<Result<User>> {
@@ -71,18 +98,7 @@ export class DrizzleUserRepository implements IUserRepository {
         .from(userTable)
         .where(eq(userTable.id, String(id.value)))
         .limit(1);
-
-      const record = result[0];
-      if (!record) {
-        return Result.ok(Option.none());
-      }
-
-      const userResult = userToDomain(record);
-      if (userResult.isFailure) {
-        return Result.fail(userResult.getError());
-      }
-
-      return Result.ok(Option.some(userResult.getValue()));
+      return this.mapSingleRecord(result[0]);
     } catch (error) {
       return Result.fail(`Failed to find user by id: ${error}`);
     }
@@ -95,18 +111,7 @@ export class DrizzleUserRepository implements IUserRepository {
         .from(userTable)
         .where(eq(userTable.email, email))
         .limit(1);
-
-      const record = result[0];
-      if (!record) {
-        return Result.ok(Option.none());
-      }
-
-      const userResult = userToDomain(record);
-      if (userResult.isFailure) {
-        return Result.fail(userResult.getError());
-      }
-
-      return Result.ok(Option.some(userResult.getValue()));
+      return this.mapSingleRecord(result[0]);
     } catch (error) {
       return Result.fail(`Failed to find user by email: ${error}`);
     }
@@ -127,17 +132,17 @@ export class DrizzleUserRepository implements IUserRepository {
         return Result.fail(countResult.getError());
       }
 
-      const users: User[] = [];
-      for (const record of records) {
-        const userResult = userToDomain(record);
-        if (userResult.isFailure) {
-          return Result.fail(userResult.getError());
-        }
-        users.push(userResult.getValue());
+      const usersResult = this.mapRecords(records);
+      if (usersResult.isFailure) {
+        return Result.fail(usersResult.getError());
       }
 
       return Result.ok(
-        createPaginatedResult(users, pagination, countResult.getValue()),
+        createPaginatedResult(
+          usersResult.getValue(),
+          pagination,
+          countResult.getValue(),
+        ),
       );
     } catch (error) {
       return Result.fail(`Failed to find all users: ${error}`);
@@ -163,15 +168,12 @@ export class DrizzleUserRepository implements IUserRepository {
         .limit(pagination.limit)
         .offset(offset);
 
-      const users: User[] = [];
-      for (const record of records) {
-        const userResult = userToDomain(record);
-        if (userResult.isFailure) {
-          return Result.fail(userResult.getError());
-        }
-        users.push(userResult.getValue());
+      const usersResult = this.mapRecords(records);
+      if (usersResult.isFailure) {
+        return Result.fail(usersResult.getError());
       }
 
+      const users = usersResult.getValue();
       return Result.ok(createPaginatedResult(users, pagination, users.length));
     } catch (error) {
       return Result.fail(`Failed to find users: ${error}`);

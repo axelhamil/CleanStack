@@ -12,6 +12,7 @@ import {
   MessageRole,
   type MessageRoleType,
 } from "@/domain/llm/conversation/value-objects/message-role.vo";
+import { UserId } from "@/domain/user/user-id";
 
 describe("ListMessagesUseCase", () => {
   let useCase: ListMessagesUseCase;
@@ -38,7 +39,7 @@ describe("ListMessagesUseCase", () => {
   const createMockConversation = (ownerId: string = userId): Conversation => {
     return Conversation.create(
       {
-        userId: ownerId,
+        userId: UserId.create(new UUID(ownerId)),
         title: Option.none(),
         metadata: Option.none(),
       },

@@ -1,5 +1,6 @@
 import { Option, UUID } from "@packages/ddd-kit";
 import { describe, expect, it } from "vitest";
+import { UserId } from "@/domain/user/user-id";
 import {
   Conversation,
   type IConversationProps,
@@ -14,7 +15,7 @@ import { ConversationTitle } from "../value-objects/conversation-title.vo";
 
 describe("Conversation Aggregate", () => {
   const createValidProps = () => ({
-    userId: "user-123",
+    userId: UserId.create(new UUID()),
     title: Option.some(
       ConversationTitle.create("Test Conversation" as string).getValue(),
     ),
@@ -29,7 +30,7 @@ describe("Conversation Aggregate", () => {
 
       expect(conversation).toBeInstanceOf(Conversation);
       expect(conversation.id).toBeInstanceOf(ConversationId);
-      expect(conversation.get("userId")).toBe("user-123");
+      expect(conversation.get("userId")).toBeInstanceOf(UserId);
       expect(conversation.get("title").isSome()).toBe(true);
       expect(conversation.get("title").unwrap().value).toBe(
         "Test Conversation",
@@ -158,8 +159,9 @@ describe("Conversation Aggregate", () => {
         key: "value",
       } as ConversationMetadataValue).getValue();
       const updatedAt = new Date("2024-01-02T00:00:00Z");
+      const userId = UserId.create(new UUID());
       const props: IConversationProps = {
-        userId: "user-456",
+        userId,
         title: Option.some(
           ConversationTitle.create("Old Title" as string).getValue(),
         ),
@@ -170,7 +172,7 @@ describe("Conversation Aggregate", () => {
 
       const conversation = Conversation.reconstitute(props, conversationId);
 
-      expect(conversation.get("userId")).toBe("user-456");
+      expect(conversation.get("userId")).toBe(userId);
       expect(conversation.get("title").unwrap().value).toBe("Old Title");
       expect(conversation.get("metadata").isSome()).toBe(true);
       expect(conversation.get("updatedAt")).toBe(updatedAt);

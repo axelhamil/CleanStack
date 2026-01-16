@@ -1,17 +1,12 @@
-import { Result, ValueObject } from "@packages/ddd-kit";
+import { type Result, ValueObject } from "@packages/ddd-kit";
 import { z } from "zod";
+import { validateWithZod } from "@/domain/_shared/validation.helper";
 
 const schema = z.string().min(1, "Prompt template must not be empty");
 
 export class PromptTemplate extends ValueObject<string> {
   protected validate(value: string): Result<string> {
-    const result = schema.safeParse(value);
-
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      return Result.fail(firstIssue?.message ?? "Invalid prompt template");
-    }
-    return Result.ok(result.data);
+    return validateWithZod(schema, value, "Invalid prompt template");
   }
 
   extractVariables(): string[] {

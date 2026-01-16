@@ -1,5 +1,6 @@
-import { Result, ValueObject } from "@packages/ddd-kit";
+import { type Result, ValueObject } from "@packages/ddd-kit";
 import { z } from "zod";
+import { validateWithZod } from "@/domain/_shared/validation.helper";
 
 const schema = z
   .string()
@@ -17,12 +18,6 @@ export class PromptName extends ValueObject<string> {
   }
 
   protected validate(value: string): Result<string> {
-    const result = schema.safeParse(value);
-
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      return Result.fail(firstIssue?.message ?? "Invalid prompt name");
-    }
-    return Result.ok(result.data);
+    return validateWithZod(schema, value, "Invalid prompt name");
   }
 }

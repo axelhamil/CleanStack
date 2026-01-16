@@ -1,4 +1,6 @@
 import { Aggregate, type Option, UUID } from "@packages/ddd-kit";
+import type { UserId } from "@/domain/user/user-id";
+import type { ConversationId } from "../conversation/conversation-id";
 import type { Cost } from "../conversation/value-objects/cost.vo";
 import { UsageRecordedEvent } from "./events/usage-recorded.event";
 import { LLMUsageId } from "./llm-usage-id";
@@ -8,8 +10,8 @@ import type { ProviderIdentifier } from "./value-objects/provider-identifier.vo"
 import type { TokenCount } from "./value-objects/token-count.vo";
 
 interface ILLMUsageProps {
-  userId: Option<string>;
-  conversationId: Option<string>;
+  userId: Option<UserId>;
+  conversationId: Option<ConversationId>;
   provider: ProviderIdentifier;
   model: ModelIdentifier;
   inputTokens: TokenCount;

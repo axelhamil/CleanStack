@@ -26,33 +26,26 @@ export class TestManagedPromptUseCase
       input.promptId,
       this.promptRepository,
     );
-    if (promptResult.isFailure) {
-      return Result.fail(promptResult.getError());
-    }
-    const prompt = promptResult.getValue();
+    if (promptResult.isFailure) return Result.fail(promptResult.getError());
 
-    const renderResult = prompt.render(input.variables);
-    if (renderResult.isFailure) {
-      return renderResult as unknown as Result<ITestManagedPromptOutputDto>;
-    }
+    const renderResult = promptResult.getValue().render(input.variables);
+    if (renderResult.isFailure) return Result.fail(renderResult.getError());
 
     const renderedPrompt = renderResult.getValue();
 
     const availableModels = this.llmProvider.getAvailableModels();
     const enabledModels = availableModels.filter((m) => m.enabled);
 
-    if (enabledModels.length === 0) {
+    if (enabledModels.length === 0)
       return Result.fail("No LLM models available");
-    }
 
     const selectedModelResult = this.selectModel(
       enabledModels,
       input.model,
       input.provider,
     );
-    if (selectedModelResult.isFailure) {
+    if (selectedModelResult.isFailure)
       return Result.fail(selectedModelResult.getError());
-    }
 
     const selectedModel = selectedModelResult.getValue();
 
@@ -60,10 +53,7 @@ export class TestManagedPromptUseCase
       model: selectedModel.model,
       messages: [{ role: "user", content: renderedPrompt }],
     });
-
-    if (generateResult.isFailure) {
-      return generateResult as unknown as Result<ITestManagedPromptOutputDto>;
-    }
+    if (generateResult.isFailure) return Result.fail(generateResult.getError());
 
     const response = generateResult.getValue();
 
@@ -99,29 +89,29 @@ export class TestManagedPromptUseCase
       const found = enabledModels.find(
         (m) => m.model === model && m.provider === provider,
       );
-      if (!found) {
+      if (!found)
         return Result.fail(
           `Model '${model}' from provider '${provider}' not found or not enabled`,
         );
-      }
+
       return Result.ok(found);
     }
 
     if (model) {
       const found = enabledModels.find((m) => m.model === model);
-      if (!found) {
+      if (!found)
         return Result.fail(`Model '${model}' not found or not enabled`);
-      }
+
       return Result.ok(found);
     }
 
     if (provider) {
       const found = enabledModels.find((m) => m.provider === provider);
-      if (!found) {
+      if (!found)
         return Result.fail(
           `No enabled models found for provider '${provider}'`,
         );
-      }
+
       return Result.ok(found);
     }
 

@@ -1,5 +1,7 @@
 import { Option, UUID } from "@packages/ddd-kit";
 import { describe, expect, it } from "vitest";
+import { UserId } from "@/domain/user/user-id";
+import { ConversationId } from "../../conversation/conversation-id";
 import { Cost } from "../../conversation/value-objects/cost.vo";
 import { UsageRecordedEvent } from "../events/usage-recorded.event";
 import { LLMUsage } from "../llm-usage.aggregate";
@@ -14,8 +16,8 @@ import { TokenCount } from "../value-objects/token-count.vo";
 describe("LLMUsage", () => {
   const createValidProps = () => {
     return {
-      userId: Option.some("user-123"),
-      conversationId: Option.some("conv-456"),
+      userId: Option.some(UserId.create(new UUID())),
+      conversationId: Option.some(ConversationId.create(new UUID())),
       provider: ProviderIdentifier.create("openai" as ProviderType).getValue(),
       model: ModelIdentifier.create("gpt-4o" as string).getValue(),
       inputTokens: TokenCount.create(100 as number).getValue(),
@@ -84,7 +86,7 @@ describe("LLMUsage", () => {
     it("should create with optional userId as None", () => {
       const props = {
         ...createValidProps(),
-        userId: Option.none<string>(),
+        userId: Option.none<UserId>(),
       };
 
       const usage = LLMUsage.create(props);
@@ -95,7 +97,7 @@ describe("LLMUsage", () => {
     it("should create with optional conversationId as None", () => {
       const props = {
         ...createValidProps(),
-        conversationId: Option.none<string>(),
+        conversationId: Option.none<ConversationId>(),
       };
 
       const usage = LLMUsage.create(props);

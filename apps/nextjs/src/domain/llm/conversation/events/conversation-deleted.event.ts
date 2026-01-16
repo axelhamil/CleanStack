@@ -16,7 +16,7 @@ export class ConversationDeletedEvent extends BaseDomainEvent<ConversationDelete
     this.aggregateId = conversation.id.value.toString();
     this.payload = {
       conversationId: conversation.id.value.toString(),
-      userId: conversation.get("userId"),
+      userId: conversation.get("userId").value.toString(),
     };
   }
 }

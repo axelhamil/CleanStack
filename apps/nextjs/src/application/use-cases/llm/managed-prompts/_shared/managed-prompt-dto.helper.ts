@@ -13,12 +13,12 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function parsePromptId(promptId: string): Result<ManagedPromptId> {
-  if (!promptId || promptId.trim() === "") {
+  if (!promptId || promptId.trim() === "")
     return Result.fail("Prompt ID is required");
-  }
-  if (!UUID_PATTERN.test(promptId)) {
+
+  if (!UUID_PATTERN.test(promptId))
     return Result.fail("Invalid prompt ID format");
-  }
+
   return Result.ok(ManagedPromptId.create(new UUID<string>(promptId)));
 }
 
@@ -101,9 +101,7 @@ export function unwrapPromptOption(
     None: () => null,
   });
 
-  if (!prompt) {
-    return Result.fail(`Prompt with ID '${promptId}' not found`);
-  }
+  if (!prompt) return Result.fail(`Prompt with ID '${promptId}' not found`);
 
   return Result.ok(prompt);
 }

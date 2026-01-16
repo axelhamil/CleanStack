@@ -3,6 +3,7 @@ import { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
 import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { ConversationMetadata } from "@/domain/llm/conversation/value-objects/conversation-metadata.vo";
 import { ConversationTitle } from "@/domain/llm/conversation/value-objects/conversation-title.vo";
+import { UserId } from "@/domain/user/user-id";
 
 export interface ConversationPersistence {
   id: string;
@@ -35,7 +36,7 @@ export function conversationToDomain(
 
   const conversation = Conversation.reconstitute(
     {
-      userId: record.userId,
+      userId: UserId.create(new UUID(record.userId)),
       title: titleOption,
       metadata: metadataOption,
       createdAt: record.createdAt,
@@ -56,7 +57,7 @@ export function conversationToPersistence(
 
   return {
     id: String(conversation.id.value),
-    userId: props.userId,
+    userId: String(props.userId.value),
     title: title.isSome() ? title.unwrap().value : null,
     metadata: metadata.isSome() ? metadata.unwrap().value : null,
     createdAt: props.createdAt,

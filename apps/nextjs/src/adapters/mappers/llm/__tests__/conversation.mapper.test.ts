@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
 import { ConversationMetadata } from "@/domain/llm/conversation/value-objects/conversation-metadata.vo";
 import { ConversationTitle } from "@/domain/llm/conversation/value-objects/conversation-title.vo";
+import { UserId } from "@/domain/user/user-id";
 import {
   conversationToDomain,
   conversationToPersistence,
@@ -33,7 +34,7 @@ describe("ConversationMapper", () => {
         expect(result.isSuccess).toBe(true);
         const conversation = result.getValue();
         expect(conversation.id.value).toBe(testId);
-        expect(conversation.get("userId")).toBe(testUserId);
+        expect(conversation.get("userId").value.toString()).toBe(testUserId);
         expect(conversation.get("title").isSome()).toBe(true);
         expect(conversation.get("metadata").isSome()).toBe(true);
         expect(conversation.get("createdAt")).toEqual(testCreatedAt);
@@ -122,7 +123,7 @@ describe("ConversationMapper", () => {
 
       conversation = Conversation.create(
         {
-          userId: testUserId,
+          userId: UserId.create(new UUID(testUserId)),
           title: Option.some(titleResult.getValue()),
           metadata: Option.some(metadataResult.getValue()),
         },
@@ -143,7 +144,7 @@ describe("ConversationMapper", () => {
     it("should convert Option.none() title to null", () => {
       const conversationWithoutTitle = Conversation.create(
         {
-          userId: testUserId,
+          userId: UserId.create(new UUID(testUserId)),
           title: Option.none(),
           metadata: Option.none(),
         },
@@ -158,7 +159,7 @@ describe("ConversationMapper", () => {
     it("should convert Option.none() metadata to null", () => {
       const conversationWithoutMetadata = Conversation.create(
         {
-          userId: testUserId,
+          userId: UserId.create(new UUID(testUserId)),
           title: Option.none(),
           metadata: Option.none(),
         },
@@ -189,7 +190,7 @@ describe("ConversationMapper", () => {
 
       const original = Conversation.create(
         {
-          userId: testUserId,
+          userId: UserId.create(new UUID(testUserId)),
           title: Option.some(titleResult.getValue()),
           metadata: Option.some(metadataResult.getValue()),
         },
@@ -205,7 +206,9 @@ describe("ConversationMapper", () => {
       expect(domainResult.isSuccess).toBe(true);
       const restored = domainResult.getValue();
       expect(restored.id.value).toBe(original.id.value);
-      expect(restored.get("userId")).toBe(original.get("userId"));
+      expect(restored.get("userId").value.toString()).toBe(
+        original.get("userId").value.toString(),
+      );
     });
   });
 });

@@ -26,17 +26,14 @@ export class UsageRecordedEvent extends BaseDomainEvent<IUsageRecordedEventPaylo
     this.aggregateId = usage.id.value.toString();
     this.payload = {
       usageId: usage.id.value.toString(),
-      userId: match<string, string | null>(usage.get("userId"), {
-        Some: (v) => v,
+      userId: match(usage.get("userId"), {
+        Some: (v) => v.value.toString(),
         None: () => null,
-      }),
-      conversationId: match<string, string | null>(
-        usage.get("conversationId"),
-        {
-          Some: (v) => v,
-          None: () => null,
-        },
-      ),
+      }) as string | null,
+      conversationId: match(usage.get("conversationId"), {
+        Some: (v) => v.value.toString(),
+        None: () => null,
+      }) as string | null,
       provider: usage.get("provider").value,
       model: usage.get("model").value,
       inputTokens: usage.get("inputTokens").value,

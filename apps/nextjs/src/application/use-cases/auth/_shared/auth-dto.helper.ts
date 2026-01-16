@@ -1,3 +1,4 @@
+import { extractUserBaseFields } from "@/adapters/mappers/user.mapper";
 import type { User } from "@/domain/user/user.aggregate";
 
 export interface IUserDto {
@@ -15,13 +16,7 @@ export interface ISessionDto {
 }
 
 export function mapUserToDto(user: User): IUserDto {
-  return {
-    id: String(user.id.value),
-    email: user.get("email").value,
-    name: user.get("name").value,
-    emailVerified: user.get("emailVerified"),
-    image: user.get("image").toNull(),
-  };
+  return extractUserBaseFields(user);
 }
 
 export function mapSessionToDto(session: {

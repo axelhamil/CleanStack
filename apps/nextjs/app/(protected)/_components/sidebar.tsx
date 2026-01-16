@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,7 +17,6 @@ const navigation = [
   { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Prompts", href: "/admin/prompts", icon: FileText },
   { name: "Usage", href: "/admin/usage", icon: BarChart3 },
-  { name: "Team", href: "/team", icon: Users },
   { name: "Billing", href: "/settings/billing", icon: CreditCard },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

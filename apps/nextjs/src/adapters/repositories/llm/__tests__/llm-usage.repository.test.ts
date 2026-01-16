@@ -7,6 +7,7 @@ import { Duration } from "@/domain/llm/usage/value-objects/duration.vo";
 import { ModelIdentifier } from "@/domain/llm/usage/value-objects/model-identifier.vo";
 import { ProviderIdentifier } from "@/domain/llm/usage/value-objects/provider-identifier.vo";
 import { TokenCount } from "@/domain/llm/usage/value-objects/token-count.vo";
+import { UserId } from "@/domain/user/user-id";
 import { DrizzleLLMUsageRepository } from "../llm-usage.repository";
 
 vi.mock("@packages/drizzle", () => ({
@@ -65,7 +66,7 @@ describe("DrizzleLLMUsageRepository", () => {
 
     return LLMUsage.create(
       {
-        userId: Option.some(testUserId),
+        userId: Option.some(UserId.create(new UUID(testUserId))),
         conversationId: Option.none(),
         provider,
         model,

@@ -12,7 +12,17 @@ type UserPersistence = Omit<UserRecord, "createdAt" | "updatedAt"> & {
   updatedAt?: Date;
 };
 
-export function userToDomain(record: UserRecord): Result<User> {
+interface UserData {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  image?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export function userToDomain(record: UserData): Result<User> {
   const emailResult = Email.create(record.email);
   const nameResult = Name.create(record.name);
 
@@ -36,13 +46,27 @@ export function userToDomain(record: UserRecord): Result<User> {
   );
 }
 
-export function userToPersistence(user: User): UserPersistence {
+interface UserBaseFields {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  image: string | null;
+}
+
+export function extractUserBaseFields(user: User): UserBaseFields {
   return {
     id: String(user.id.value),
     email: user.get("email").value,
     name: user.get("name").value,
     emailVerified: user.get("emailVerified"),
     image: user.get("image").toNull(),
+  };
+}
+
+export function userToPersistence(user: User): UserPersistence {
+  return {
+    ...extractUserBaseFields(user),
     createdAt: user.get("createdAt"),
     updatedAt: user.get("updatedAt"),
   };

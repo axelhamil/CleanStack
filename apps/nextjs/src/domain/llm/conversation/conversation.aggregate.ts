@@ -1,11 +1,12 @@
 import { Aggregate, type Option, UUID } from "@packages/ddd-kit";
+import type { UserId } from "@/domain/user/user-id";
 import { ConversationId } from "./conversation-id";
 import { ConversationCreatedEvent } from "./events/conversation-created.event";
 import type { ConversationMetadata } from "./value-objects/conversation-metadata.vo";
 import type { ConversationTitle } from "./value-objects/conversation-title.vo";
 
 export interface IConversationProps {
-  userId: string;
+  userId: UserId;
   title: Option<ConversationTitle>;
   metadata: Option<ConversationMetadata>;
   createdAt: Date;

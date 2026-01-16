@@ -306,7 +306,7 @@ export class DrizzleConversationRepository implements IConversationRepository {
       if (!userId) {
         return this.findAll(pagination);
       }
-      return this.findByUserId(userId, pagination);
+      return this.findByUserId(userId.value.toString(), pagination);
     } catch (error) {
       return Result.fail(`Failed to find conversations: ${error}`);
     }
@@ -324,7 +324,7 @@ export class DrizzleConversationRepository implements IConversationRepository {
       const result = await db
         .select()
         .from(conversationTable)
-        .where(eq(conversationTable.userId, userId))
+        .where(eq(conversationTable.userId, userId.value.toString()))
         .limit(1);
 
       const record = result[0];

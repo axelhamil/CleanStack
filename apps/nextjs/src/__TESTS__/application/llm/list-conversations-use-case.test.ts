@@ -6,6 +6,7 @@ import type { IMessageRepository } from "@/application/ports/message.repository.
 import { ListConversationsUseCase } from "@/application/use-cases/llm/list-conversations.use-case";
 import { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
 import { ConversationTitle } from "@/domain/llm/conversation/value-objects/conversation-title.vo";
+import { UserId } from "@/domain/user/user-id";
 
 describe("ListConversationsUseCase", () => {
   let useCase: ListConversationsUseCase;
@@ -32,7 +33,7 @@ describe("ListConversationsUseCase", () => {
   ): Conversation => {
     return Conversation.create(
       {
-        userId,
+        userId: UserId.create(new UUID(userId)),
         title: title
           ? Option.some(ConversationTitle.create(title).getValue())
           : Option.none(),

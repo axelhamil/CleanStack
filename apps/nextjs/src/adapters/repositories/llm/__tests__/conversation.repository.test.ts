@@ -4,6 +4,7 @@ import { Conversation } from "@/domain/llm/conversation/conversation.aggregate";
 import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { ConversationMetadata } from "@/domain/llm/conversation/value-objects/conversation-metadata.vo";
 import { ConversationTitle } from "@/domain/llm/conversation/value-objects/conversation-title.vo";
+import { UserId } from "@/domain/user/user-id";
 import { DrizzleConversationRepository } from "../conversation.repository";
 
 vi.mock("@packages/drizzle", () => ({
@@ -43,7 +44,7 @@ describe("DrizzleConversationRepository", () => {
 
     return Conversation.create(
       {
-        userId: testUserId,
+        userId: UserId.create(new UUID(testUserId)),
         title: Option.some(title),
         metadata: Option.some(metadata),
       },

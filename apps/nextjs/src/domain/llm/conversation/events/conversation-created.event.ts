@@ -20,7 +20,7 @@ export class ConversationCreatedEvent extends BaseDomainEvent<ConversationCreate
     this.aggregateId = conversation.id.value.toString();
     this.payload = {
       conversationId: conversation.id.value.toString(),
-      userId,
+      userId: userId.value.toString(),
       title: title.isSome() ? title.unwrap().value : null,
     };
   }

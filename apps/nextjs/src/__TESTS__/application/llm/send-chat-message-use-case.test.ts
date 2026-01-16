@@ -20,6 +20,7 @@ import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { Message } from "@/domain/llm/conversation/entities/message.entity";
 import { MessageContent } from "@/domain/llm/conversation/value-objects/message-content.vo";
 import { MessageRole } from "@/domain/llm/conversation/value-objects/message-role.vo";
+import { UserId } from "@/domain/user/user-id";
 
 describe("SendChatMessageUseCase", () => {
   let useCase: SendChatMessageUseCase;
@@ -115,7 +116,7 @@ describe("SendChatMessageUseCase", () => {
     const conversationId = id ? ConversationId.create(new UUID(id)) : undefined;
     return Conversation.create(
       {
-        userId,
+        userId: UserId.create(new UUID(userId)),
         title: Option.none(),
         metadata: Option.none(),
       },

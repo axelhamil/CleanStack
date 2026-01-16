@@ -1,24 +1,18 @@
 import { BaseDomainEvent } from "@packages/ddd-kit";
 import type { ManagedPrompt } from "../managed-prompt.aggregate";
+import {
+  createManagedPromptStatusPayload,
+  type IManagedPromptStatusEventPayload,
+} from "./_shared/managed-prompt-status-event.helper";
 
-interface IManagedPromptDeactivatedEventPayload {
-  promptId: string;
-  key: string;
-  environment: string;
-}
-
-export class ManagedPromptDeactivatedEvent extends BaseDomainEvent<IManagedPromptDeactivatedEventPayload> {
+export class ManagedPromptDeactivatedEvent extends BaseDomainEvent<IManagedPromptStatusEventPayload> {
   readonly eventType = "managed-prompt.deactivated";
   readonly aggregateId: string;
-  readonly payload: IManagedPromptDeactivatedEventPayload;
+  readonly payload: IManagedPromptStatusEventPayload;
 
   constructor(prompt: ManagedPrompt) {
     super();
     this.aggregateId = prompt.id.value.toString();
-    this.payload = {
-      promptId: prompt.id.value.toString(),
-      key: prompt.get("key").value,
-      environment: prompt.get("environment").value,
-    };
+    this.payload = createManagedPromptStatusPayload(prompt);
   }
 }

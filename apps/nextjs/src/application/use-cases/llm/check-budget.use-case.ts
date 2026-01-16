@@ -16,14 +16,11 @@ export class CheckBudgetUseCase
   async execute(
     input: ICheckBudgetInputDto,
   ): Promise<Result<ICheckBudgetOutputDto>> {
-    if (input.estimatedCost !== undefined && input.estimatedCost < 0) {
+    if (input.estimatedCost !== undefined && input.estimatedCost < 0)
       return Result.fail("Estimated cost cannot be negative");
-    }
 
     const usageResult = await this.fetchUsage(input.userId);
-    if (usageResult.isFailure) {
-      return Result.fail(usageResult.getError());
-    }
+    if (usageResult.isFailure) return Result.fail(usageResult.getError());
 
     const { dailyUsed, monthlyUsed } = usageResult.getValue();
     const estimatedCost = input.estimatedCost ?? 0;
@@ -62,21 +59,19 @@ export class CheckBudgetUseCase
       ? await this._usageRepository.getTotalCostByUser(userId, "day")
       : await this._usageRepository.getTotalCostGlobal("day");
 
-    if (dailyResult.isFailure) {
+    if (dailyResult.isFailure)
       return Result.fail(
         `Failed to fetch daily usage: ${dailyResult.getError()}`,
       );
-    }
 
     const monthlyResult = userId
       ? await this._usageRepository.getTotalCostByUser(userId, "month")
       : await this._usageRepository.getTotalCostGlobal("month");
 
-    if (monthlyResult.isFailure) {
+    if (monthlyResult.isFailure)
       return Result.fail(
         `Failed to fetch monthly usage: ${monthlyResult.getError()}`,
       );
-    }
 
     return Result.ok({
       dailyUsed: dailyResult.getValue(),

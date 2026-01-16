@@ -29,6 +29,7 @@ import {
   type MessageRoleType,
 } from "@/domain/llm/conversation/value-objects/message-role.vo";
 import { TokenUsage } from "@/domain/llm/conversation/value-objects/token-usage.vo";
+import { UserId } from "@/domain/user/user-id";
 import {
   calculateCompletionCost,
   checkUserBudget,
@@ -189,7 +190,7 @@ export class SendChatMessageUseCase
         }>
       >(result.getValue(), {
         Some: ({ conversation, messages }) => {
-          if (conversation.get("userId") !== input.userId) {
+          if (conversation.get("userId").value.toString() !== input.userId) {
             return Result.fail("Conversation access unauthorized");
           }
           return Result.ok({
@@ -203,7 +204,7 @@ export class SendChatMessageUseCase
     }
 
     const conversation = Conversation.create({
-      userId: input.userId,
+      userId: UserId.create(new UUID(input.userId)),
       title: Option.none(),
       metadata: Option.none(),
     });

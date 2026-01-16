@@ -1,12 +1,14 @@
-import { Option, Result } from "@packages/ddd-kit";
+import { Option, Result, UUID } from "@packages/ddd-kit";
 import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { ILLMUsageRepository } from "@/application/ports/llm-usage.repository.port";
 import type { ISelectedModel } from "@/application/ports/model-router.port";
+import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { Cost } from "@/domain/llm/conversation/value-objects/cost.vo";
 import { LLMUsage } from "@/domain/llm/usage/llm-usage.aggregate";
 import { ModelIdentifier } from "@/domain/llm/usage/value-objects/model-identifier.vo";
 import { ProviderIdentifier } from "@/domain/llm/usage/value-objects/provider-identifier.vo";
 import { TokenCount } from "@/domain/llm/usage/value-objects/token-count.vo";
+import { UserId } from "@/domain/user/user-id";
 
 export interface IUsageRecordParams {
   userId?: string;
@@ -46,8 +48,12 @@ export async function recordLLMUsage(
   }
 
   const usage = LLMUsage.create({
-    userId: Option.fromNullable(params.userId),
-    conversationId: Option.fromNullable(params.conversationId),
+    userId: params.userId
+      ? Option.some(UserId.create(new UUID(params.userId)))
+      : Option.none(),
+    conversationId: params.conversationId
+      ? Option.some(ConversationId.create(new UUID(params.conversationId)))
+      : Option.none(),
     provider: providerResult.getValue(),
     model: modelResult.getValue(),
     inputTokens: inputTokensResult.getValue(),

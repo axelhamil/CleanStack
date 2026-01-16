@@ -1,4 +1,4 @@
-import { match, Result, type UseCase, UUID } from "@packages/ddd-kit";
+import { Result, type UseCase, UUID } from "@packages/ddd-kit";
 import type {
   IHandleStripeWebhookInputDto,
   IHandleStripeWebhookOutputDto,
@@ -10,6 +10,7 @@ import { Subscription } from "@/domain/billing/subscription.aggregate";
 import { PlanId } from "@/domain/billing/value-objects/plan-id.vo";
 import { SubscriptionStatus } from "@/domain/billing/value-objects/subscription-status.vo";
 import { UserId } from "@/domain/user/user-id";
+import { handleSubscriptionUpdate } from "./_shared/subscription.helper";
 
 interface CheckoutSessionData {
   customer: string;
@@ -127,111 +128,44 @@ export class HandleStripeWebhookUseCase
   private async handlePaymentFailed(
     data: InvoiceData,
   ): Promise<Result<IHandleStripeWebhookOutputDto>> {
-    const subResult = await this.subscriptionRepo.findByStripeSubscriptionId(
+    return handleSubscriptionUpdate(
       data.subscription,
-    );
-
-    if (subResult.isFailure) {
-      return Result.fail(subResult.getError());
-    }
-
-    return match<Subscription, Promise<Result<IHandleStripeWebhookOutputDto>>>(
-      subResult.getValue(),
-      {
-        Some: async (subscription) => {
-          const markResult = subscription.markPastDue();
-          if (markResult.isFailure) {
-            return Result.ok({ received: true });
-          }
-
-          const updateResult = await this.subscriptionRepo.update(subscription);
-          if (updateResult.isFailure) {
-            return Result.fail(updateResult.getError());
-          }
-
-          await this.eventDispatcher.dispatchAll(subscription.domainEvents);
-          subscription.clearEvents();
-
-          return Result.ok({ received: true });
-        },
-        None: async () => Result.ok({ received: true }),
-      },
+      this.subscriptionRepo,
+      this.eventDispatcher,
+      (subscription) => subscription.markPastDue(),
     );
   }
 
   private async handleSubscriptionDeleted(
     data: StripeSubscriptionData,
   ): Promise<Result<IHandleStripeWebhookOutputDto>> {
-    const subResult = await this.subscriptionRepo.findByStripeSubscriptionId(
+    return handleSubscriptionUpdate(
       data.id,
-    );
-
-    if (subResult.isFailure) {
-      return Result.fail(subResult.getError());
-    }
-
-    return match<Subscription, Promise<Result<IHandleStripeWebhookOutputDto>>>(
-      subResult.getValue(),
-      {
-        Some: async (subscription) => {
-          const cancelResult = subscription.cancel("Subscription deleted");
-          if (cancelResult.isFailure) {
-            return Result.ok({ received: true });
-          }
-
-          const updateResult = await this.subscriptionRepo.update(subscription);
-          if (updateResult.isFailure) {
-            return Result.fail(updateResult.getError());
-          }
-
-          await this.eventDispatcher.dispatchAll(subscription.domainEvents);
-          subscription.clearEvents();
-
-          return Result.ok({ received: true });
-        },
-        None: async () => Result.ok({ received: true }),
-      },
+      this.subscriptionRepo,
+      this.eventDispatcher,
+      (subscription) => subscription.cancel("Subscription deleted"),
     );
   }
 
   private async handleSubscriptionUpdated(
     data: StripeSubscriptionData,
   ): Promise<Result<IHandleStripeWebhookOutputDto>> {
-    const subResult = await this.subscriptionRepo.findByStripeSubscriptionId(
+    return handleSubscriptionUpdate(
       data.id,
-    );
-
-    if (subResult.isFailure) {
-      return Result.fail(subResult.getError());
-    }
-
-    return match<Subscription, Promise<Result<IHandleStripeWebhookOutputDto>>>(
-      subResult.getValue(),
-      {
-        Some: async (subscription) => {
-          const newPriceId = data.items?.data[0]?.price?.id;
-
-          if (newPriceId) {
-            const planIdResult = PlanId.create(newPriceId as string);
-            if (planIdResult.isSuccess) {
-              const currentPlanId = subscription.get("planId").value;
-              if (currentPlanId !== newPriceId) {
-                subscription.changePlan(planIdResult.getValue());
-              }
+      this.subscriptionRepo,
+      this.eventDispatcher,
+      (subscription) => {
+        const newPriceId = data.items?.data[0]?.price?.id;
+        if (newPriceId) {
+          const planIdResult = PlanId.create(newPriceId as string);
+          if (planIdResult.isSuccess) {
+            const currentPlanId = subscription.get("planId").value;
+            if (currentPlanId !== newPriceId) {
+              subscription.changePlan(planIdResult.getValue());
             }
           }
-
-          const updateResult = await this.subscriptionRepo.update(subscription);
-          if (updateResult.isFailure) {
-            return Result.fail(updateResult.getError());
-          }
-
-          await this.eventDispatcher.dispatchAll(subscription.domainEvents);
-          subscription.clearEvents();
-
-          return Result.ok({ received: true });
-        },
-        None: async () => Result.ok({ received: true }),
+        }
+        return Result.ok(undefined);
       },
     );
   }

@@ -318,7 +318,7 @@ export class DrizzleLLMUsageRepository implements ILLMUsageRepository {
         const records = await db
           .select()
           .from(llmUsageTable)
-          .where(eq(llmUsageTable.userId, userId.unwrap()))
+          .where(eq(llmUsageTable.userId, userId.unwrap().value.toString()))
           .limit(pagination.limit)
           .offset(offset);
 
@@ -334,7 +334,7 @@ export class DrizzleLLMUsageRepository implements ILLMUsageRepository {
         const totalResult = await db
           .select()
           .from(llmUsageTable)
-          .where(eq(llmUsageTable.userId, userId.unwrap()));
+          .where(eq(llmUsageTable.userId, userId.unwrap().value.toString()));
 
         return Result.ok(
           createPaginatedResult(usages, pagination, totalResult.length),
@@ -359,7 +359,7 @@ export class DrizzleLLMUsageRepository implements ILLMUsageRepository {
       const result = await db
         .select()
         .from(llmUsageTable)
-        .where(eq(llmUsageTable.userId, userId.unwrap()))
+        .where(eq(llmUsageTable.userId, userId.unwrap().value.toString()))
         .limit(1);
 
       const record = result[0];

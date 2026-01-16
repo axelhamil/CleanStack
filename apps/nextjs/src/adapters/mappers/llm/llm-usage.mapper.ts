@@ -1,4 +1,5 @@
 import { Option, Result, UUID } from "@packages/ddd-kit";
+import { ConversationId } from "@/domain/llm/conversation/conversation-id";
 import { Cost } from "@/domain/llm/conversation/value-objects/cost.vo";
 import { LLMUsage } from "@/domain/llm/usage/llm-usage.aggregate";
 import { Duration } from "@/domain/llm/usage/value-objects/duration.vo";
@@ -8,6 +9,7 @@ import {
   type ProviderType,
 } from "@/domain/llm/usage/value-objects/provider-identifier.vo";
 import { TokenCount } from "@/domain/llm/usage/value-objects/token-count.vo";
+import { UserId } from "@/domain/user/user-id";
 
 export interface LLMUsagePersistence {
   id: string;
@@ -70,12 +72,14 @@ export function llmUsageToDomain(
     durationOption = Option.some(durationResult.getValue());
   }
 
-  const userIdOption: Option<string> =
-    record.userId !== null ? Option.some(record.userId) : Option.none();
+  const userIdOption: Option<UserId> =
+    record.userId !== null
+      ? Option.some(UserId.create(new UUID(record.userId)))
+      : Option.none();
 
-  const conversationIdOption: Option<string> =
+  const conversationIdOption: Option<ConversationId> =
     record.conversationId !== null
-      ? Option.some(record.conversationId)
+      ? Option.some(ConversationId.create(new UUID(record.conversationId)))
       : Option.none();
 
   const promptKeyOption: Option<string> =
@@ -108,8 +112,10 @@ export function llmUsageToPersistence(usage: LLMUsage): LLMUsagePersistence {
 
   return {
     id: String(usage.id.value),
-    userId: userId.isSome() ? userId.unwrap() : null,
-    conversationId: conversationId.isSome() ? conversationId.unwrap() : null,
+    userId: userId.isSome() ? String(userId.unwrap().value) : null,
+    conversationId: conversationId.isSome()
+      ? String(conversationId.unwrap().value)
+      : null,
     provider: usage.get("provider").value,
     model: usage.get("model").value,
     inputTokens: usage.get("inputTokens").value,

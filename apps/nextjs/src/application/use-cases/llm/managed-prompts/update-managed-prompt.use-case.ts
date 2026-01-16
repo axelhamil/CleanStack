@@ -29,33 +29,27 @@ export class UpdateManagedPromptUseCase
     input: IUpdateManagedPromptInputDto,
   ): Promise<Result<IUpdateManagedPromptOutputDto>> {
     const promptIdResult = parsePromptId(input.promptId);
-    if (promptIdResult.isFailure) {
-      return Result.fail(promptIdResult.getError());
-    }
+    if (promptIdResult.isFailure) return Result.fail(promptIdResult.getError());
 
     const findResult = await this.promptRepository.findById(
       promptIdResult.getValue(),
     );
-    if (findResult.isFailure) {
-      return Result.fail(findResult.getError());
-    }
+    if (findResult.isFailure) return Result.fail(findResult.getError());
 
     const promptResult = unwrapPromptOption(
       findResult.getValue(),
       input.promptId,
     );
-    if (promptResult.isFailure) {
-      return Result.fail(promptResult.getError());
-    }
+    if (promptResult.isFailure) return Result.fail(promptResult.getError());
+
     const prompt = promptResult.getValue();
 
     const updateValuesResult = this.validateAndCreateUpdateValues(
       input,
       prompt,
     );
-    if (updateValuesResult.isFailure) {
+    if (updateValuesResult.isFailure)
       return Result.fail(updateValuesResult.getError());
-    }
 
     const { template, variables, name, description } =
       updateValuesResult.getValue();
@@ -63,16 +57,12 @@ export class UpdateManagedPromptUseCase
     prompt.updateContent(template, variables, name, description);
 
     const updateResult = await this.promptRepository.update(prompt);
-    if (updateResult.isFailure) {
-      return Result.fail(updateResult.getError());
-    }
+    if (updateResult.isFailure) return Result.fail(updateResult.getError());
 
     const dispatchResult = await this.eventDispatcher.dispatchAll(
       prompt.domainEvents,
     );
-    if (dispatchResult.isFailure) {
-      return Result.fail(dispatchResult.getError());
-    }
+    if (dispatchResult.isFailure) return Result.fail(dispatchResult.getError());
     prompt.clearEvents();
 
     return Result.ok(this.toDto(prompt));
@@ -94,21 +84,19 @@ export class UpdateManagedPromptUseCase
 
     if (input.template !== undefined) {
       const templateResult = PromptTemplate.create(input.template as string);
-      if (templateResult.isFailure) {
+      if (templateResult.isFailure)
         return Result.fail(templateResult.getError());
-      }
+
       template = templateResult.getValue();
     }
 
-    if (input.variables !== undefined) {
+    if (input.variables !== undefined)
       variables = createVariablesFromInput(input.variables, template);
-    }
 
     if (input.name !== undefined) {
       const nameResult = PromptName.create(input.name as string);
-      if (nameResult.isFailure) {
-        return Result.fail(nameResult.getError());
-      }
+      if (nameResult.isFailure) return Result.fail(nameResult.getError());
+
       name = nameResult.getValue();
     }
 
@@ -119,9 +107,8 @@ export class UpdateManagedPromptUseCase
         const descResult = PromptDescription.create(
           input.description as string,
         );
-        if (descResult.isFailure) {
-          return Result.fail(descResult.getError());
-        }
+        if (descResult.isFailure) return Result.fail(descResult.getError());
+
         description = Option.some(descResult.getValue());
       }
     }
@@ -130,13 +117,12 @@ export class UpdateManagedPromptUseCase
   }
 
   private toDto(prompt: ManagedPrompt): IUpdateManagedPromptOutputDto {
-    const updatedAt = prompt.get("updatedAt");
     return {
       id: prompt.id.value.toString(),
       key: prompt.get("key").value,
       name: prompt.get("name").value,
       version: prompt.get("version"),
-      updatedAt: match<Date, string>(updatedAt, {
+      updatedAt: match<Date, string>(prompt.get("updatedAt"), {
         Some: (date) => date.toISOString(),
         None: () => new Date().toISOString(),
       }),

@@ -1,5 +1,6 @@
-import { Option } from "@packages/ddd-kit";
+import { Option, UUID } from "@packages/ddd-kit";
 import { describe, expect, it } from "vitest";
+import { UserId } from "@/domain/user/user-id";
 import { Conversation } from "../conversation.aggregate";
 import { ConversationCreatedEvent } from "../events/conversation-created.event";
 import type { ConversationMetadata } from "../value-objects/conversation-metadata.vo";
@@ -8,7 +9,7 @@ import { ConversationTitle } from "../value-objects/conversation-title.vo";
 describe("ConversationCreatedEvent", () => {
   const createConversation = (options?: {
     title?: string | null;
-    userId?: string;
+    userId?: UserId;
   }) => {
     const title =
       options?.title === null
@@ -20,7 +21,7 @@ describe("ConversationCreatedEvent", () => {
           );
 
     return Conversation.create({
-      userId: options?.userId ?? "user-123",
+      userId: options?.userId ?? UserId.create(new UUID()),
       title,
       metadata: Option.none<ConversationMetadata>(),
     });
@@ -62,10 +63,11 @@ describe("ConversationCreatedEvent", () => {
     });
 
     it("should include userId in payload", () => {
-      const conversation = createConversation({ userId: "user-456" });
+      const userId = UserId.create(new UUID());
+      const conversation = createConversation({ userId });
       const event = conversation.domainEvents[0] as ConversationCreatedEvent;
 
-      expect(event.payload.userId).toBe("user-456");
+      expect(event.payload.userId).toBe(userId.value.toString());
     });
 
     it("should include title in payload when present", () => {

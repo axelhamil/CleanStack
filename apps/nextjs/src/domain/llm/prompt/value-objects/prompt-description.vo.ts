@@ -1,5 +1,6 @@
-import { Result, ValueObject } from "@packages/ddd-kit";
+import { type Result, ValueObject } from "@packages/ddd-kit";
 import { z } from "zod";
+import { validateWithZod } from "@/domain/_shared/validation.helper";
 
 const schema = z
   .string()
@@ -12,12 +13,6 @@ export class PromptDescription extends ValueObject<string> {
   }
 
   protected validate(value: string): Result<string> {
-    const result = schema.safeParse(value);
-
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      return Result.fail(firstIssue?.message ?? "Invalid prompt description");
-    }
-    return Result.ok(result.data);
+    return validateWithZod(schema, value, "Invalid prompt description");
   }
 }

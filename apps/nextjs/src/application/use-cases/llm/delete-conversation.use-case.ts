@@ -1,5 +1,6 @@
 import type { UseCase } from "@packages/ddd-kit";
-import { Result as R, type Result } from "@packages/ddd-kit";
+import { Result } from "@packages/ddd-kit";
+import type { Transaction } from "@packages/drizzle";
 import type {
   IDeleteConversationInputDto,
   IDeleteConversationOutputDto,
@@ -20,34 +21,34 @@ export class DeleteConversationUseCase
 
   async execute(
     input: IDeleteConversationInputDto,
+    trx?: Transaction,
   ): Promise<Result<IDeleteConversationOutputDto>> {
     const conversationResult = await findConversationWithOwnershipCheck(
       input.conversationId,
       input.userId,
       this.conversationRepository,
     );
-    if (conversationResult.isFailure) {
-      return R.fail(conversationResult.getError());
-    }
+    if (conversationResult.isFailure)
+      return Result.fail(conversationResult.getError());
 
-    return this.deleteConversation(conversationResult.getValue());
+    return this.deleteConversation(conversationResult.getValue(), trx);
   }
 
   private async deleteConversation(
     conversation: Conversation,
+    trx?: Transaction,
   ): Promise<Result<IDeleteConversationOutputDto>> {
     const deleteResult = await this.conversationRepository.delete(
       conversation.id,
+      trx,
     );
-    if (deleteResult.isFailure) {
-      return R.fail(deleteResult.getError());
-    }
+    if (deleteResult.isFailure) return Result.fail(deleteResult.getError());
 
     await this.eventDispatcher.dispatch(
       new ConversationDeletedEvent(conversation),
     );
 
-    return R.ok({
+    return Result.ok({
       success: true,
       deletedAt: new Date().toISOString(),
     });

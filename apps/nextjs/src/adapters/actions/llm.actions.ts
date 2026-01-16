@@ -17,175 +17,95 @@ import { sendChatMessageInputDtoSchema } from "@/application/dto/llm/send-chat-m
 import type { ISendCompletionOutputDto } from "@/application/dto/llm/send-completion.dto";
 import { sendCompletionInputDtoSchema } from "@/application/dto/llm/send-completion.dto";
 import { getInjection } from "@/common/di/container";
-
-type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+import {
+  type ActionResult,
+  isParseError,
+  parseInput,
+  toActionResult,
+} from "./action.utils";
 
 export async function sendCompletionAction(
   input: unknown,
 ): Promise<ActionResult<ISendCompletionOutputDto>> {
-  const parsed = sendCompletionInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(sendCompletionInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("SendCompletionUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function sendChatMessageAction(
   input: unknown,
 ): Promise<ActionResult<ISendChatMessageOutputDto>> {
-  const parsed = sendChatMessageInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(sendChatMessageInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("SendChatMessageUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function getConversationAction(
   input: unknown,
 ): Promise<ActionResult<IGetConversationOutputDto>> {
-  const parsed = getConversationInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(getConversationInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("GetConversationUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function listConversationsAction(
   input: unknown,
 ): Promise<ActionResult<IListConversationsOutputDto>> {
-  const parsed = listConversationsInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(listConversationsInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("ListConversationsUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function listMessagesAction(
   input: unknown,
 ): Promise<ActionResult<IListMessagesOutputDto>> {
-  const parsed = listMessagesInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(listMessagesInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("ListMessagesUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function deleteConversationAction(
   input: unknown,
 ): Promise<ActionResult<IDeleteConversationOutputDto>> {
-  const parsed = deleteConversationInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(deleteConversationInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
+  const transaction = getInjection("ITransactionManagerService");
   const useCase = getInjection("DeleteConversationUseCase");
-  const result = await useCase.execute(parsed.data);
 
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
+  const result = await transaction.startTransaction(async (trx) => {
+    return useCase.execute(parsed.data, trx);
+  });
 
-  return { success: true, data: result.getValue() };
+  return toActionResult(result);
 }
 
 export async function selectOptimalModelAction(
   input: unknown,
 ): Promise<ActionResult<ISelectOptimalModelOutputDto>> {
-  const parsed = selectOptimalModelInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(selectOptimalModelInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("SelectOptimalModelUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }
 
 export async function estimateCostAction(
   input: unknown,
 ): Promise<ActionResult<IEstimateCostOutputDto>> {
-  const parsed = estimateCostInputDtoSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
-    };
-  }
+  const parsed = parseInput(estimateCostInputDtoSchema, input);
+  if (isParseError(parsed)) return parsed;
 
   const useCase = getInjection("EstimateCostUseCase");
-  const result = await useCase.execute(parsed.data);
-
-  if (result.isFailure) {
-    return { success: false, error: result.getError() };
-  }
-
-  return { success: true, data: result.getValue() };
+  return toActionResult(await useCase.execute(parsed.data));
 }

@@ -31,7 +31,7 @@ export function verifyConversationOwnership(
   conversation: Conversation,
   userId: string,
 ): boolean {
-  return conversation.get("userId") === userId;
+  return conversation.get("userId").value.toString() === userId;
 }
 
 export function mapMessageToDto(message: Message): IMessageDto {
@@ -62,17 +62,14 @@ export async function findConversationWithOwnershipCheck(
   conversationRepository: IConversationRepository,
 ): Promise<Result<Conversation>> {
   const conversationIdResult = parseConversationId(conversationIdStr);
-  if (conversationIdResult.isFailure) {
+  if (conversationIdResult.isFailure)
     return Result.fail(conversationIdResult.getError());
-  }
 
-  const conversationId = conversationIdResult.getValue();
-
-  const conversationResult =
-    await conversationRepository.findById(conversationId);
-  if (conversationResult.isFailure) {
+  const conversationResult = await conversationRepository.findById(
+    conversationIdResult.getValue(),
+  );
+  if (conversationResult.isFailure)
     return Result.fail(conversationResult.getError());
-  }
 
   return unwrapConversationOption(conversationResult.getValue(), userId);
 }
