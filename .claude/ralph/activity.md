@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 28/65
-**Current Task:** [TDD] Write CreateManagedPromptUseCase tests FIRST
+**Tasks Completed:** 30/65
+**Current Task:** [TDD] Write UpdateManagedPromptUseCase tests FIRST
 
 ---
 
@@ -861,4 +861,80 @@ const role = message.get("role");
 - No regressions on existing tests
 - Type check passes
 - Ready for Task 29 (CreateManagedPromptUseCase TDD RED)
+
+### 2026-01-15 - Task 29: [TDD] Write CreateManagedPromptUseCase tests FIRST
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, stub implementation)
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/create-managed-prompt-use-case.test.ts` (22 tests)
+  - Happy path (5 tests): creates prompt with version 1, returns id/key/name/createdAt, saves to repository
+  - Variable extraction (2 tests): extracts variables from template, uses provided variables over extracted
+  - Duplicate key validation (2 tests): error when key exists in same environment, allows same key in different environment
+  - Environment validation (3 tests): accepts development/staging/production environments
+  - Event dispatch (2 tests): emits ManagedPromptCreatedEvent, dispatches after successful save
+  - Validation errors (4 tests): fails for empty key, invalid key format, empty name, empty template
+  - Repository errors (2 tests): propagates findByKey error, propagates create error
+  - Optional fields (2 tests): creates without description, creates without variables array
+- Created stub implementation in `src/application/use-cases/llm/managed-prompts/create-managed-prompt.use-case.ts`
+  - Implements UseCase interface
+  - Throws "Not implemented" for RED phase
+
+**Type Fixes Applied:**
+- Changed `mockEventDispatcher.dispatchAll.mockResolvedValue(undefined)` to `mockResolvedValue(Result.ok())`
+- IEventDispatcher.dispatchAll returns `Promise<Result<void>>`, not `Promise<void>`
+- Fixed optional chaining for mock.calls access: `calls[0]?.[0]`
+- Added `expect(dispatchedEvents).toBeDefined()` before array access
+
+**Lint Fixes Applied:**
+- Changed `dispatchedEvents![0]` to `dispatchedEvents?.[0]` (no non-null assertions)
+- Removed unused import `PromptVariableValue`
+- Added biome-ignore comments for unused private class members in stub (will be used in GREEN phase)
+
+**Commands Run:**
+- `pnpm test` - 22 FAILED as expected (RED phase)
+  - All tests fail with "Not implemented" error
+- `pnpm type-check` - PASSED
+- `pnpm check` - PASSED
+
+**Verification:**
+- Tests written first following TDD workflow
+- Stub implementation allows type-check to pass
+- Tests fail because implementation throws "Not implemented"
+- Ready for GREEN phase (Task 30)
+
+### 2026-01-15 - Task 30: [IMPL] Implement CreateManagedPromptUseCase (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Implemented `src/application/use-cases/llm/managed-prompts/create-managed-prompt.use-case.ts`
+  - Constructor with 2 dependencies: promptRepository, eventDispatcher
+  - execute() method implementing prompt creation flow:
+    1. validateAndCreateValueObjects() - creates all VOs from input (key, name, template, environment, description)
+    2. checkDuplicateKey() - uses findByKey to check if key exists in same environment
+    3. createVariables() - uses provided variables or extracts from template
+    4. ManagedPrompt.create() - creates aggregate with version 1
+    5. promptRepository.create() - saves to repository
+    6. eventDispatcher.dispatchAll() - dispatches ManagedPromptCreatedEvent
+    7. toDto() - maps aggregate to output DTO
+
+**Type Fix Applied:**
+- Used `as PromptVariableValue` type assertion for PromptVariable.create() calls
+- Required because ValueObject.create() generic has strict type inference
+- Pattern matches existing codebase (managed-prompt.aggregate.test.ts)
+
+**Commands Run:**
+- `pnpm test` - 750 tests PASSED (all 22 CreateManagedPromptUseCase tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All CreateManagedPromptUseCase tests pass
+- No regressions on existing tests
+- Type check passes
+- Ready for Task 31 (UpdateManagedPromptUseCase TDD RED)
 

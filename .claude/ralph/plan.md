@@ -486,7 +486,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Test emits ManagedPromptCreatedEvent",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application-impl",
@@ -498,7 +498,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Dispatch events",
       "Run pnpm test - ALL TESTS MUST PASS (GREEN)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "application-tdd",
