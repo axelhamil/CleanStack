@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-16
-**Tasks Completed:** 36/65
-**Current Task:** [TDD] Write mapper tests FIRST
+**Tasks Completed:** 37/65
+**Current Task:** [IMPL] Implement mappers (GREEN)
 
 ---
 

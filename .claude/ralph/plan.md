@@ -592,7 +592,7 @@ Module LLM multi-provider avec gestion intelligente des couts, conversations, st
       "Create __tests__/llm-usage.mapper.test.ts",
       "Run pnpm test - tests should FAIL (RED)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "adapters-impl",
