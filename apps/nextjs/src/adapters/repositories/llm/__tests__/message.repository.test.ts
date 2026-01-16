@@ -203,17 +203,23 @@ describe("DrizzleMessageRepository", () => {
         },
       ];
 
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockReturnValue({
-              offset: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue(mockRecords),
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockReturnValue({
+                offset: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue(mockRecords),
+                }),
               }),
             }),
           }),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+        } as unknown as ReturnType<typeof db.select>)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(mockRecords),
+          }),
+        } as unknown as ReturnType<typeof db.select>);
 
       const conversationId = ConversationId.create(
         new UUID(testConversationId),
@@ -231,17 +237,23 @@ describe("DrizzleMessageRepository", () => {
 
     it("should use default pagination when not provided", async () => {
       const { db } = await import("@packages/drizzle");
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockReturnValue({
-              offset: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue([]),
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockReturnValue({
+                offset: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue([]),
+                }),
               }),
             }),
           }),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+        } as unknown as ReturnType<typeof db.select>)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        } as unknown as ReturnType<typeof db.select>);
 
       const conversationId = ConversationId.create(
         new UUID(testConversationId),
@@ -271,7 +283,7 @@ describe("DrizzleMessageRepository", () => {
       const { db } = await import("@packages/drizzle");
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ count: 5 }]),
+          where: vi.fn().mockResolvedValue([{}, {}, {}, {}, {}]),
         }),
       } as unknown as ReturnType<typeof db.select>);
 
@@ -288,7 +300,7 @@ describe("DrizzleMessageRepository", () => {
       const { db } = await import("@packages/drizzle");
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          where: vi.fn().mockResolvedValue([]),
         }),
       } as unknown as ReturnType<typeof db.select>);
 

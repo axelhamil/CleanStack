@@ -1,83 +1,399 @@
-import type { Option, PaginatedResult, Result } from "@packages/ddd-kit";
+import {
+  createPaginatedResult,
+  DEFAULT_PAGINATION,
+  Option,
+  type PaginatedResult,
+  type PaginationParams,
+  Result,
+} from "@packages/ddd-kit";
+import {
+  and,
+  type DbClient,
+  db,
+  desc,
+  eq,
+  type Transaction,
+} from "@packages/drizzle";
+import { managedPrompt as managedPromptTable } from "@packages/drizzle/schema";
+import {
+  type ManagedPromptPersistence,
+  managedPromptToDomain,
+  managedPromptToPersistence,
+  type PromptVariablePersistence,
+} from "@/adapters/mappers/llm/managed-prompt.mapper";
 import type { IManagedPromptRepository } from "@/application/ports/managed-prompt.repository.port";
 import type { ManagedPrompt } from "@/domain/llm/prompt/managed-prompt.aggregate";
 import type { ManagedPromptId } from "@/domain/llm/prompt/managed-prompt-id";
 
-/**
- * Drizzle implementation of IManagedPromptRepository
- * TDD: Stub for RED phase - implement in GREEN phase
- */
+type DrizzleManagedPromptRecord = typeof managedPromptTable.$inferSelect;
+
+function toManagedPromptPersistence(
+  record: DrizzleManagedPromptRecord,
+): ManagedPromptPersistence {
+  return {
+    ...record,
+    variables: record.variables as PromptVariablePersistence[],
+  };
+}
+
 export class DrizzleManagedPromptRepository
   implements IManagedPromptRepository
 {
-  create(_prompt: ManagedPrompt): Promise<Result<ManagedPrompt>> {
-    throw new Error("Not implemented");
+  private getDb(trx?: Transaction): DbClient | Transaction {
+    return trx ?? db;
   }
 
-  update(_prompt: ManagedPrompt): Promise<Result<ManagedPrompt>> {
-    throw new Error("Not implemented");
+  async create(
+    prompt: ManagedPrompt,
+    trx?: Transaction,
+  ): Promise<Result<ManagedPrompt>> {
+    try {
+      const data = managedPromptToPersistence(prompt);
+      await this.getDb(trx)
+        .insert(managedPromptTable)
+        .values({
+          ...data,
+          createdAt: data.createdAt ?? new Date(),
+        });
+      return Result.ok(prompt);
+    } catch (error) {
+      return Result.fail(`Failed to create managed prompt: ${error}`);
+    }
   }
 
-  delete(_id: ManagedPromptId): Promise<Result<ManagedPromptId>> {
-    throw new Error("Not implemented");
+  async update(
+    prompt: ManagedPrompt,
+    trx?: Transaction,
+  ): Promise<Result<ManagedPrompt>> {
+    try {
+      const data = managedPromptToPersistence(prompt);
+      await this.getDb(trx)
+        .update(managedPromptTable)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(managedPromptTable.id, String(prompt.id.value)));
+      return Result.ok(prompt);
+    } catch (error) {
+      return Result.fail(`Failed to update managed prompt: ${error}`);
+    }
   }
 
-  findById(_id: ManagedPromptId): Promise<Result<Option<ManagedPrompt>>> {
-    throw new Error("Not implemented");
+  async delete(
+    id: ManagedPromptId,
+    trx?: Transaction,
+  ): Promise<Result<ManagedPromptId>> {
+    try {
+      await this.getDb(trx)
+        .delete(managedPromptTable)
+        .where(eq(managedPromptTable.id, String(id.value)));
+      return Result.ok(id);
+    } catch (error) {
+      return Result.fail(`Failed to delete managed prompt: ${error}`);
+    }
   }
 
-  findByKey(
-    _key: string,
-    _environment: string,
+  async findById(id: ManagedPromptId): Promise<Result<Option<ManagedPrompt>>> {
+    try {
+      const result = await db
+        .select()
+        .from(managedPromptTable)
+        .where(eq(managedPromptTable.id, String(id.value)))
+        .limit(1);
+
+      const record = result[0];
+      if (!record) {
+        return Result.ok(Option.none());
+      }
+
+      const promptResult = managedPromptToDomain(
+        toManagedPromptPersistence(record),
+      );
+      if (promptResult.isFailure) {
+        return Result.fail(promptResult.getError());
+      }
+
+      return Result.ok(Option.some(promptResult.getValue()));
+    } catch (error) {
+      return Result.fail(`Failed to find managed prompt by id: ${error}`);
+    }
+  }
+
+  async findByKey(
+    key: string,
+    environment: string,
   ): Promise<Result<Option<ManagedPrompt>>> {
-    throw new Error("Not implemented");
+    try {
+      const result = await db
+        .select()
+        .from(managedPromptTable)
+        .where(
+          and(
+            eq(managedPromptTable.key, key),
+            eq(
+              managedPromptTable.environment,
+              environment as "development" | "staging" | "production",
+            ),
+          ),
+        )
+        .limit(1);
+
+      const record = result[0];
+      if (!record) {
+        return Result.ok(Option.none());
+      }
+
+      const promptResult = managedPromptToDomain(
+        toManagedPromptPersistence(record),
+      );
+      if (promptResult.isFailure) {
+        return Result.fail(promptResult.getError());
+      }
+
+      return Result.ok(Option.some(promptResult.getValue()));
+    } catch (error) {
+      return Result.fail(`Failed to find managed prompt by key: ${error}`);
+    }
   }
 
-  findActiveByKey(
-    _key: string,
-    _environment: string,
+  async findActiveByKey(
+    key: string,
+    environment: string,
   ): Promise<Result<Option<ManagedPrompt>>> {
-    throw new Error("Not implemented");
+    try {
+      const result = await db
+        .select()
+        .from(managedPromptTable)
+        .where(
+          and(
+            eq(managedPromptTable.key, key),
+            eq(
+              managedPromptTable.environment,
+              environment as "development" | "staging" | "production",
+            ),
+            eq(managedPromptTable.isActive, true),
+          ),
+        )
+        .limit(1);
+
+      const record = result[0];
+      if (!record) {
+        return Result.ok(Option.none());
+      }
+
+      const promptResult = managedPromptToDomain(
+        toManagedPromptPersistence(record),
+      );
+      if (promptResult.isFailure) {
+        return Result.fail(promptResult.getError());
+      }
+
+      return Result.ok(Option.some(promptResult.getValue()));
+    } catch (error) {
+      return Result.fail(`Failed to find active managed prompt: ${error}`);
+    }
   }
 
-  getVersionHistory(
-    _promptId: ManagedPromptId,
+  async getVersionHistory(
+    promptId: ManagedPromptId,
   ): Promise<Result<ManagedPrompt[]>> {
-    throw new Error("Not implemented");
+    try {
+      const basePromptResult = await this.findById(promptId);
+      if (basePromptResult.isFailure) {
+        return Result.fail(basePromptResult.getError());
+      }
+
+      const basePromptOption = basePromptResult.getValue();
+      if (basePromptOption.isNone()) {
+        return Result.ok([]);
+      }
+
+      const basePrompt = basePromptOption.unwrap();
+      const key = basePrompt.get("key").value;
+      const environment = basePrompt.get("environment").value;
+
+      const records = await db
+        .select()
+        .from(managedPromptTable)
+        .where(
+          and(
+            eq(managedPromptTable.key, key),
+            eq(managedPromptTable.environment, environment),
+          ),
+        )
+        .orderBy(desc(managedPromptTable.version));
+
+      const prompts: ManagedPrompt[] = [];
+      for (const record of records) {
+        const promptResult = managedPromptToDomain(
+          toManagedPromptPersistence(record),
+        );
+        if (promptResult.isFailure) {
+          return Result.fail(promptResult.getError());
+        }
+        prompts.push(promptResult.getValue());
+      }
+
+      return Result.ok(prompts);
+    } catch (error) {
+      return Result.fail(`Failed to get version history: ${error}`);
+    }
   }
 
-  activateVersion(
-    _promptId: ManagedPromptId,
-    _version: number,
+  async activateVersion(
+    promptId: ManagedPromptId,
+    version: number,
+    trx?: Transaction,
   ): Promise<Result<void>> {
-    throw new Error("Not implemented");
+    try {
+      const basePromptResult = await this.findById(promptId);
+      if (basePromptResult.isFailure) {
+        return Result.fail(basePromptResult.getError());
+      }
+
+      const basePromptOption = basePromptResult.getValue();
+      if (basePromptOption.isNone()) {
+        return Result.fail("Prompt not found");
+      }
+
+      const basePrompt = basePromptOption.unwrap();
+      const key = basePrompt.get("key").value;
+      const environment = basePrompt.get("environment").value;
+
+      const database = this.getDb(trx);
+
+      await database
+        .update(managedPromptTable)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(
+          and(
+            eq(managedPromptTable.key, key),
+            eq(managedPromptTable.environment, environment),
+          ),
+        );
+
+      await database
+        .update(managedPromptTable)
+        .set({ isActive: true, updatedAt: new Date() })
+        .where(
+          and(
+            eq(managedPromptTable.key, key),
+            eq(managedPromptTable.environment, environment),
+            eq(managedPromptTable.version, version),
+          ),
+        );
+
+      return Result.ok(undefined);
+    } catch (error) {
+      return Result.fail(`Failed to activate version: ${error}`);
+    }
   }
 
-  findAll(_pagination?: {
-    page: number;
-    limit: number;
-  }): Promise<Result<PaginatedResult<ManagedPrompt>>> {
-    throw new Error("Not implemented");
-  }
-
-  exists(_id: ManagedPromptId): Promise<Result<boolean>> {
-    throw new Error("Not implemented");
-  }
-
-  count(): Promise<Result<number>> {
-    throw new Error("Not implemented");
-  }
-
-  findMany(
-    _props: Partial<ManagedPrompt["_props"]>,
-    _pagination?: { page: number; limit: number },
+  async findAll(
+    pagination: PaginationParams = DEFAULT_PAGINATION,
   ): Promise<Result<PaginatedResult<ManagedPrompt>>> {
-    throw new Error("Not implemented");
+    try {
+      const offset = (pagination.page - 1) * pagination.limit;
+
+      const [records, countResult] = await Promise.all([
+        db
+          .select()
+          .from(managedPromptTable)
+          .limit(pagination.limit)
+          .offset(offset),
+        this.count(),
+      ]);
+
+      if (countResult.isFailure) {
+        return Result.fail(countResult.getError());
+      }
+
+      const prompts: ManagedPrompt[] = [];
+      for (const record of records) {
+        const promptResult = managedPromptToDomain(
+          toManagedPromptPersistence(record),
+        );
+        if (promptResult.isFailure) {
+          return Result.fail(promptResult.getError());
+        }
+        prompts.push(promptResult.getValue());
+      }
+
+      return Result.ok(
+        createPaginatedResult(prompts, pagination, countResult.getValue()),
+      );
+    } catch (error) {
+      return Result.fail(`Failed to find all managed prompts: ${error}`);
+    }
   }
 
-  findBy(
-    _props: Partial<ManagedPrompt["_props"]>,
+  async exists(id: ManagedPromptId): Promise<Result<boolean>> {
+    try {
+      const result = await db
+        .select({ id: managedPromptTable.id })
+        .from(managedPromptTable)
+        .where(eq(managedPromptTable.id, String(id.value)))
+        .limit(1);
+      return Result.ok(result.length > 0);
+    } catch (error) {
+      return Result.fail(`Failed to check managed prompt existence: ${error}`);
+    }
+  }
+
+  async count(): Promise<Result<number>> {
+    try {
+      const result = await db.select().from(managedPromptTable);
+      return Result.ok(result.length);
+    } catch (error) {
+      return Result.fail(`Failed to count managed prompts: ${error}`);
+    }
+  }
+
+  async findMany(
+    props: Partial<ManagedPrompt["_props"]>,
+    pagination: PaginationParams = DEFAULT_PAGINATION,
+  ): Promise<Result<PaginatedResult<ManagedPrompt>>> {
+    try {
+      const key = props.key;
+      const environment = props.environment;
+
+      if (key && environment) {
+        const result = await this.findByKey(key.value, environment.value);
+        if (result.isFailure) {
+          return Result.fail(result.getError());
+        }
+
+        const option = result.getValue();
+        if (option.isNone()) {
+          return Result.ok(createPaginatedResult([], pagination, 0));
+        }
+
+        return Result.ok(
+          createPaginatedResult([option.unwrap()], pagination, 1),
+        );
+      }
+
+      return this.findAll(pagination);
+    } catch (error) {
+      return Result.fail(`Failed to find managed prompts: ${error}`);
+    }
+  }
+
+  async findBy(
+    props: Partial<ManagedPrompt["_props"]>,
   ): Promise<Result<Option<ManagedPrompt>>> {
-    throw new Error("Not implemented");
+    try {
+      const key = props.key;
+      const environment = props.environment;
+
+      if (key && environment) {
+        return this.findByKey(key.value, environment.value);
+      }
+
+      return Result.ok(Option.none());
+    } catch (error) {
+      return Result.fail(`Failed to find managed prompt: ${error}`);
+    }
   }
 }

@@ -162,7 +162,7 @@ describe("DrizzleManagedPromptRepository", () => {
         name: "Welcome Email",
         description: "Welcome email template",
         template: "Hello {{name}}",
-        variables: [{ name: "name", required: true }],
+        variables: [{ name: "name", type: "string", required: true }],
         version: 1,
         environment: testEnvironment as "production",
         isActive: true,
@@ -307,6 +307,19 @@ describe("DrizzleManagedPromptRepository", () => {
   describe("getVersionHistory()", () => {
     it("should return list of prompt versions ordered by version desc", async () => {
       const { db } = await import("@packages/drizzle");
+      const baseRecord = {
+        id: testId,
+        key: testKey,
+        name: "Welcome Email",
+        description: null,
+        template: "Hello {{name}}",
+        variables: [],
+        version: 1,
+        environment: testEnvironment as "production",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: null,
+      };
       const mockRecords = [
         {
           id: "id-v3",
@@ -336,13 +349,21 @@ describe("DrizzleManagedPromptRepository", () => {
         },
       ];
 
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue(mockRecords),
+      vi.mocked(db.select)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([baseRecord]),
+            }),
           }),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+        } as unknown as ReturnType<typeof db.select>)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue(mockRecords),
+            }),
+          }),
+        } as unknown as ReturnType<typeof db.select>);
 
       const promptId = ManagedPromptId.create(new UUID(testId));
       const result = await repository.getVersionHistory(promptId);
@@ -356,7 +377,7 @@ describe("DrizzleManagedPromptRepository", () => {
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([]),
+            limit: vi.fn().mockResolvedValue([]),
           }),
         }),
       } as unknown as ReturnType<typeof db.select>);
@@ -371,6 +392,29 @@ describe("DrizzleManagedPromptRepository", () => {
 
   describe("activateVersion()", () => {
     it("should activate specified version and deactivate others", async () => {
+      const { db } = await import("@packages/drizzle");
+      const baseRecord = {
+        id: testId,
+        key: testKey,
+        name: "Welcome Email",
+        description: null,
+        template: "Hello {{name}}",
+        variables: [],
+        version: 1,
+        environment: testEnvironment as "production",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: null,
+      };
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([baseRecord]),
+          }),
+        }),
+      } as unknown as ReturnType<typeof db.select>);
+
       const result = await repository.activateVersion(
         ManagedPromptId.create(new UUID(testId)),
         2,
@@ -381,6 +425,28 @@ describe("DrizzleManagedPromptRepository", () => {
 
     it("should return Result.fail when activation fails", async () => {
       const { db } = await import("@packages/drizzle");
+      const baseRecord = {
+        id: testId,
+        key: testKey,
+        name: "Welcome Email",
+        description: null,
+        template: "Hello {{name}}",
+        variables: [],
+        version: 1,
+        environment: testEnvironment as "production",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: null,
+      };
+
+      vi.mocked(db.select).mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([baseRecord]),
+          }),
+        }),
+      } as unknown as ReturnType<typeof db.select>);
+
       vi.mocked(db.update).mockImplementationOnce(() => {
         throw new Error("Update error");
       });
