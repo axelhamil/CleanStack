@@ -200,10 +200,10 @@ describe("Conversation Aggregate", () => {
       const afterUpdate = new Date();
       const updatedAt = conversation.get("updatedAt");
       expect(updatedAt).toBeDefined();
-      expect(updatedAt!.getTime()).toBeGreaterThanOrEqual(
+      expect(updatedAt?.getTime()).toBeGreaterThanOrEqual(
         beforeUpdate.getTime(),
       );
-      expect(updatedAt!.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+      expect(updatedAt?.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
     });
 
     it("should allow clearing title with None", () => {
@@ -244,10 +244,10 @@ describe("Conversation Aggregate", () => {
       const afterUpdate = new Date();
       const updatedAt = conversation.get("updatedAt");
       expect(updatedAt).toBeDefined();
-      expect(updatedAt!.getTime()).toBeGreaterThanOrEqual(
+      expect(updatedAt?.getTime()).toBeGreaterThanOrEqual(
         beforeUpdate.getTime(),
       );
-      expect(updatedAt!.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+      expect(updatedAt?.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
     });
 
     it("should allow clearing metadata with None", () => {
@@ -275,8 +275,8 @@ describe("Conversation Aggregate", () => {
       const afterMark = new Date();
       const updatedAt = conversation.get("updatedAt");
       expect(updatedAt).toBeDefined();
-      expect(updatedAt!.getTime()).toBeGreaterThanOrEqual(beforeMark.getTime());
-      expect(updatedAt!.getTime()).toBeLessThanOrEqual(afterMark.getTime());
+      expect(updatedAt?.getTime()).toBeGreaterThanOrEqual(beforeMark.getTime());
+      expect(updatedAt?.getTime()).toBeLessThanOrEqual(afterMark.getTime());
     });
   });
 
