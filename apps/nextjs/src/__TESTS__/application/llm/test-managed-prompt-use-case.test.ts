@@ -92,7 +92,17 @@ describe("TestManagedPromptUseCase", () => {
       generateText: vi.fn(),
       streamText: vi.fn(),
       estimateTokens: vi.fn(),
-      getAvailableModels: vi.fn(),
+      getAvailableModels: vi.fn().mockReturnValue([
+        {
+          provider: "openai",
+          model: "gpt-4",
+          costPer1kIn: 0.03,
+          costPer1kOut: 0.06,
+          capabilities: ["text"],
+          maxTokens: 8192,
+          enabled: true,
+        },
+      ]),
     };
 
     useCase = new TestManagedPromptUseCase(
@@ -340,6 +350,17 @@ describe("TestManagedPromptUseCase", () => {
           model: "gpt-4-turbo",
         }),
       );
+      vi.mocked(mockLLMProvider.getAvailableModels).mockReturnValue([
+        {
+          provider: "openai",
+          model: "gpt-4-turbo",
+          costPer1kIn: 0.01,
+          costPer1kOut: 0.03,
+          capabilities: ["text"],
+          maxTokens: 128000,
+          enabled: true,
+        },
+      ]);
 
       const result = await useCase.execute({
         promptId: testPromptId.value.toString(),
@@ -530,9 +551,6 @@ describe("TestManagedPromptUseCase", () => {
       vi.mocked(mockPromptRepository.findById).mockResolvedValue(
         Result.ok(Option.some(mockPrompt)),
       );
-      vi.mocked(mockLLMProvider.generateText).mockResolvedValue(
-        Result.fail("Provider 'invalid-provider' not available"),
-      );
 
       const result = await useCase.execute({
         promptId: testPromptId.value.toString(),
@@ -541,7 +559,9 @@ describe("TestManagedPromptUseCase", () => {
       });
 
       expect(result.isFailure).toBe(true);
-      expect(result.getError()).toContain("not available");
+      expect(result.getError()).toContain(
+        "No enabled models found for provider",
+      );
     });
   });
 
