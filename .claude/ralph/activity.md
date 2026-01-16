@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-16
-**Tasks Completed:** 37/65
-**Current Task:** [IMPL] Implement mappers (GREEN)
+**Tasks Completed:** 38/65
+**Current Task:** [TDD] Write repository tests FIRST (RED)
 
 ---
 
@@ -1238,4 +1238,89 @@ const role = message.get("role");
 - No regressions
 - Type check passes
 - Ready for Task 37 (mapper tests TDD RED)
+
+### 2026-01-16 - Task 37: [TDD] Write mapper tests FIRST (RED)
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase (tests written, stub implementations)
+
+**Changes:**
+- Created `src/adapters/mappers/llm/__tests__/conversation.mapper.test.ts` (13 tests)
+  - conversationToDomain(): happy path, null title/metadata/updatedAt handling, invalid title error
+  - conversationToPersistence(): domain to persistence format, Option.none() handling
+  - Round-trip: preserve data through domain → persistence → domain
+
+- Created `src/adapters/mappers/llm/__tests__/message.mapper.test.ts` (12 tests)
+  - messageToDomain(): happy path, null model/tokenUsage/cost/metadata handling
+  - messageToPersistence(): domain to persistence format
+  - Round-trip: preserve data through conversions
+
+- Created `src/adapters/mappers/llm/__tests__/managed-prompt.mapper.test.ts` (11 tests)
+  - managedPromptToDomain(): happy path, null description/updatedAt, variables mapping, invalid key error
+  - managedPromptToPersistence(): domain to persistence format
+  - Round-trip: preserve data through conversions
+
+- Created `src/adapters/mappers/llm/__tests__/llm-usage.mapper.test.ts` (6 tests)
+  - llmUsageToDomain(): happy path, null optional fields handling
+  - llmUsageToPersistence(): domain to persistence format
+
+- Created 4 stub mapper files in `src/adapters/mappers/llm/`:
+  - `conversation.mapper.ts` - throws "Not implemented"
+  - `message.mapper.ts` - throws "Not implemented"
+  - `managed-prompt.mapper.ts` - throws "Not implemented"
+  - `llm-usage.mapper.ts` - throws "Not implemented"
+
+**Commands Run:**
+- `pnpm test` - 42 tests FAIL with "Not implemented" (RED phase confirmed)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 42 mapper tests fail with "Not implemented"
+- All 902 existing tests still pass
+- Type check passes
+- Ready for Task 38 (Implement mappers GREEN)
+
+### 2026-01-16 - Task 38: [IMPL] Implement mappers (GREEN)
+
+**Completed:** ✅
+
+**TDD Workflow:** GREEN phase (all tests pass)
+
+**Changes:**
+- Implemented `src/adapters/mappers/llm/conversation.mapper.ts`
+  - conversationToDomain(): converts DB record to Conversation aggregate
+  - conversationToPersistence(): converts Conversation to DB format
+  - Handles Option<ConversationTitle> and Option<ConversationMetadata>
+
+- Implemented `src/adapters/mappers/llm/message.mapper.ts`
+  - messageToDomain(): converts DB record to Message entity
+  - messageToPersistence(): converts Message to DB format
+  - Handles Option<> for model, tokenUsage, cost, metadata
+
+- Implemented `src/adapters/mappers/llm/managed-prompt.mapper.ts`
+  - managedPromptToDomain(): converts DB record to ManagedPrompt aggregate
+  - managedPromptToPersistence(): converts ManagedPrompt to DB format
+  - Maps PromptVariable[] array, handles Option<PromptDescription>
+
+- Implemented `src/adapters/mappers/llm/llm-usage.mapper.ts`
+  - llmUsageToDomain(): converts DB record to LLMUsage aggregate
+  - llmUsageToPersistence(): converts LLMUsage to DB format
+  - Handles Option<> for userId, conversationId, requestDuration, promptKey
+
+**Bug Fix Applied:**
+- Changed `conversation.get("updatedAt")` to `conversation.getProps().updatedAt`
+- Entity.get() throws DomainException when property is undefined
+- `updatedAt` is optional in IConversationProps, so must use `.getProps()` accessor
+- Same pattern applied to test: `conversation.getProps().updatedAt` instead of `conversation.get("updatedAt")`
+
+**Commands Run:**
+- `pnpm test` - 944 tests PASSED (all 42 mapper tests pass)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 944 tests pass (42 new + 902 existing)
+- No regressions
+- Type check passes
+- Ready for Task 39 (Repository tests TDD RED)
 

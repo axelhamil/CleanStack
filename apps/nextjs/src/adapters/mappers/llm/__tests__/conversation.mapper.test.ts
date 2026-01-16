@@ -88,7 +88,7 @@ describe("ConversationMapper", () => {
 
         expect(result.isSuccess).toBe(true);
         const conversation = result.getValue();
-        expect(conversation.get("updatedAt")).toBeUndefined();
+        expect(conversation.getProps().updatedAt).toBeUndefined();
       });
     });
 
