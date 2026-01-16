@@ -5,8 +5,8 @@
 **Project:** Module LLM Plug & Play
 **Started:** 2026-01-15
 **Last Updated:** 2026-01-15
-**Tasks Completed:** 30/65
-**Current Task:** [TDD] Write UpdateManagedPromptUseCase tests FIRST
+**Tasks Completed:** 31/65
+**Current Task:** [IMPL] Implement UpdateManagedPromptUseCase (GREEN)
 
 ---
 
@@ -937,4 +937,40 @@ const role = message.get("role");
 - No regressions on existing tests
 - Type check passes
 - Ready for Task 31 (UpdateManagedPromptUseCase TDD RED)
+
+### 2026-01-16 - Task 31: [TDD] Write UpdateManagedPromptUseCase tests FIRST (RED)
+
+**Completed:** ✅
+
+**TDD Workflow:** RED phase
+
+**Changes:**
+- Created `src/__TESTS__/application/llm/update-managed-prompt-use-case.test.ts` (23 tests)
+  - **Happy path tests:** update prompt, version increment, return correct DTO fields
+  - **Partial update tests:** name only, template only, description only, variables only
+  - **Event dispatch tests:** emits ManagedPromptUpdatedEvent with previous/new version
+  - **Not found errors:** prompt not found, invalid prompt ID
+  - **Validation errors:** empty name, empty template
+  - **Repository error propagation:** findById, update, event dispatch errors
+  - **Edge case:** no changes still increments version
+
+- Created stub `src/application/use-cases/llm/managed-prompts/update-managed-prompt.use-case.ts`
+  - Implements UseCase interface
+  - Throws "Not implemented" (RED phase)
+
+**Type Fix Applied:**
+- Used `as string` type assertions for ValueObject.create() calls
+- Used `as PromptEnvironmentType` for PromptEnvironment.create()
+- Used `as PromptVariableValue` for PromptVariable.create()
+- Pattern matches existing domain tests (managed-prompt.aggregate.test.ts)
+
+**Commands Run:**
+- `pnpm test` - 23 tests FAIL with "Not implemented" (RED phase confirmed)
+- `pnpm type-check` - PASSED
+
+**Verification:**
+- All 23 UpdateManagedPromptUseCase tests fail with "Not implemented"
+- All 750 existing tests still pass
+- Type check passes
+- Ready for Task 32 (Implement UpdateManagedPromptUseCase GREEN)
 

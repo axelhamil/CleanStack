@@ -1,10 +1,20 @@
-import type { Result, UseCase } from "@packages/ddd-kit";
+import { match, Option, Result, type UseCase, UUID } from "@packages/ddd-kit";
 import type {
   IUpdateManagedPromptInputDto,
   IUpdateManagedPromptOutputDto,
 } from "@/application/dto/llm/update-managed-prompt.dto";
 import type { IEventDispatcher } from "@/application/ports/event-dispatcher.port";
 import type { IManagedPromptRepository } from "@/application/ports/managed-prompt.repository.port";
+import type { ManagedPrompt } from "@/domain/llm/prompt/managed-prompt.aggregate";
+import { ManagedPromptId } from "@/domain/llm/prompt/managed-prompt-id";
+import { PromptDescription } from "@/domain/llm/prompt/value-objects/prompt-description.vo";
+import { PromptName } from "@/domain/llm/prompt/value-objects/prompt-name.vo";
+import { PromptTemplate } from "@/domain/llm/prompt/value-objects/prompt-template.vo";
+import {
+  PromptVariable,
+  type PromptVariableType,
+  type PromptVariableValue,
+} from "@/domain/llm/prompt/value-objects/prompt-variable.vo";
 
 export class UpdateManagedPromptUseCase
   implements
@@ -16,8 +26,142 @@ export class UpdateManagedPromptUseCase
   ) {}
 
   async execute(
-    _input: IUpdateManagedPromptInputDto,
+    input: IUpdateManagedPromptInputDto,
   ): Promise<Result<IUpdateManagedPromptOutputDto>> {
-    throw new Error("Not implemented");
+    const uuidResult = this.parsePromptId(input.promptId);
+    if (uuidResult.isFailure) {
+      return Result.fail(uuidResult.getError());
+    }
+
+    const findResult = await this.promptRepository.findById(
+      uuidResult.getValue(),
+    );
+    if (findResult.isFailure) {
+      return Result.fail(findResult.getError());
+    }
+
+    const promptResult = match<ManagedPrompt, Result<ManagedPrompt>>(
+      findResult.getValue(),
+      {
+        Some: (prompt) => Result.ok(prompt),
+        None: () => Result.fail(`Prompt with id '${input.promptId}' not found`),
+      },
+    );
+    if (promptResult.isFailure) {
+      return Result.fail(promptResult.getError());
+    }
+
+    const prompt = promptResult.getValue();
+
+    const updateValuesResult = this.validateAndCreateUpdateValues(
+      input,
+      prompt,
+    );
+    if (updateValuesResult.isFailure) {
+      return Result.fail(updateValuesResult.getError());
+    }
+
+    const { template, variables, name, description } =
+      updateValuesResult.getValue();
+
+    prompt.updateContent(template, variables, name, description);
+
+    const updateResult = await this.promptRepository.update(prompt);
+    if (updateResult.isFailure) {
+      return Result.fail(updateResult.getError());
+    }
+
+    const dispatchResult = await this.eventDispatcher.dispatchAll(
+      prompt.domainEvents,
+    );
+    if (dispatchResult.isFailure) {
+      return Result.fail(dispatchResult.getError());
+    }
+    prompt.clearEvents();
+
+    return Result.ok(this.toDto(prompt));
+  }
+
+  private parsePromptId(promptId: string): Result<ManagedPromptId> {
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(promptId)) {
+      return Result.fail(`Invalid prompt id: '${promptId}'`);
+    }
+    const uuid = new UUID<string>(promptId);
+    return Result.ok(ManagedPromptId.create(uuid));
+  }
+
+  private validateAndCreateUpdateValues(
+    input: IUpdateManagedPromptInputDto,
+    existingPrompt: ManagedPrompt,
+  ): Result<{
+    template: PromptTemplate;
+    variables: PromptVariable[];
+    name?: PromptName;
+    description?: Option<PromptDescription>;
+  }> {
+    let template = existingPrompt.get("template");
+    let variables = existingPrompt.get("variables");
+    let name: PromptName | undefined;
+    let description: Option<PromptDescription> | undefined;
+
+    if (input.template !== undefined) {
+      const templateResult = PromptTemplate.create(input.template as string);
+      if (templateResult.isFailure) {
+        return Result.fail(templateResult.getError());
+      }
+      template = templateResult.getValue();
+    }
+
+    if (input.variables !== undefined) {
+      variables = input.variables.map((v) => {
+        const result = PromptVariable.create({
+          name: v.name,
+          type: v.type as PromptVariableType,
+          required: v.required,
+          defaultValue: v.defaultValue,
+        } as PromptVariableValue);
+        return result.getValue();
+      });
+    }
+
+    if (input.name !== undefined) {
+      const nameResult = PromptName.create(input.name as string);
+      if (nameResult.isFailure) {
+        return Result.fail(nameResult.getError());
+      }
+      name = nameResult.getValue();
+    }
+
+    if (input.description !== undefined) {
+      if (input.description === "") {
+        description = Option.none();
+      } else {
+        const descResult = PromptDescription.create(
+          input.description as string,
+        );
+        if (descResult.isFailure) {
+          return Result.fail(descResult.getError());
+        }
+        description = Option.some(descResult.getValue());
+      }
+    }
+
+    return Result.ok({ template, variables, name, description });
+  }
+
+  private toDto(prompt: ManagedPrompt): IUpdateManagedPromptOutputDto {
+    const updatedAt = prompt.get("updatedAt");
+    return {
+      id: prompt.id.value.toString(),
+      key: prompt.get("key").value,
+      name: prompt.get("name").value,
+      version: prompt.get("version"),
+      updatedAt: match<Date, string>(updatedAt, {
+        Some: (date) => date.toISOString(),
+        None: () => new Date().toISOString(),
+      }),
+    };
   }
 }
