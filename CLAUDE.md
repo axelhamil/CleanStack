@@ -12,33 +12,48 @@ pnpm db:push      # Push schema
 pnpm dev          # Start dev server
 ```
 
-### 2. Generate PRD (Interactive)
+### 2. Build a Feature (All-in-One)
 ```
-/feature-prd
+/feature "Users can bookmark articles"
 ```
-Conversational domain discovery with EventStorming + structured PRD generation.
+Complete feature generation: discovery → domain → application → infrastructure → adapters → UI → validation.
 
-### 3. Generate Code
+### 3. Or Use Granular Skills
 ```
-/gen-domain [aggregate spec]
-/gen-usecase [use case spec]
-/gen-tests [use case name]
+/feature-prd           # Conversational PRD with EventStorming
+/gen-domain            # Domain layer (aggregate, VOs, events)
+/gen-usecase           # Application layer (use case, DTOs, ports)
+/gen-tests             # BDD tests
+/gen-action            # Server actions
+/gen-route             # API routes + controllers
+/gen-handler           # Event handlers
+/gen-page              # Next.js pages
+/gen-form              # Forms with validation
+/gen-query             # CQRS queries
 ```
 
-### 4. Implement & Test
-Claude writes the implementation. Run:
+### 4. Validate & Deploy
 ```bash
-pnpm test
-pnpm check:all
+pnpm test              # All tests pass
+pnpm check:all         # Lint, types, tests, duplication, unused
 ```
 
 ### Example: Add "Bookmark" Feature
 
-1. `/feature-prd` → "Users can bookmark articles" (interactive discovery)
+**Option A: All-in-One**
+```
+/feature "Users can bookmark articles"
+```
+Claude handles everything: discovery, TDD, implementation, UI.
+
+**Option B: Step-by-Step**
+1. `/feature-prd` → "Users can bookmark articles"
 2. `/gen-domain Bookmark with userId, articleId, createdAt`
 3. `/gen-usecase CreateBookmark`
 4. `/gen-tests CreateBookmarkUseCase`
-5. `pnpm test` → All green
+5. `/gen-action Bookmark`
+6. `/gen-page Bookmarks list`
+7. `pnpm check:all` → All green
 
 ---
 
@@ -786,6 +801,113 @@ Quality checks:
 ```
 
 **Output:** Comprehensive test file
+
+---
+
+### /feature
+**Purpose:** Generate complete feature from discovery to validation (Lovable-like experience)
+
+**Usage:**
+```
+/feature "Users can bookmark articles"
+```
+
+**Process:**
+1. Discovery (EventStorming, business rules)
+2. Domain Layer (TDD - tests first)
+3. Application Layer (TDD - tests first)
+4. Infrastructure (schema, DI)
+5. Adapters (repository, actions, handlers)
+6. UI (pages, components, forms)
+7. Validation (tests, types, lint)
+
+**Output:** Complete working feature with all layers
+
+---
+
+### /gen-query
+**Purpose:** Generate CQRS read model queries
+
+**Usage:**
+```
+/gen-query GetUserDashboard for User domain
+```
+
+**Output:** Query class with direct ORM access, DTOs
+
+**When to use:** Dashboard stats, list views, reports (read-only, no domain logic)
+
+---
+
+### /gen-action
+**Purpose:** Generate Next.js server actions
+
+**Usage:**
+```
+/gen-action Bookmark feature
+```
+
+**Output:** Server actions with input validation, DI injection, ActionResult wrapper
+
+---
+
+### /gen-route
+**Purpose:** Generate API routes and controllers
+
+**Usage:**
+```
+/gen-route Bookmark resource
+```
+
+**Output:** Route handlers + controllers with auth guards, validation, error mapping
+
+---
+
+### /gen-handler
+**Purpose:** Generate domain event handlers
+
+**Usage:**
+```
+/gen-handler SendWelcomeEmail for UserCreatedEvent
+```
+
+**Output:** Event handler implementing IEventHandler interface, DI registration
+
+---
+
+### /gen-page
+**Purpose:** Generate Next.js pages and components
+
+**Usage:**
+```
+/gen-page Bookmarks list (protected)
+```
+
+**Output:** Page + _components with server/client split, auth guards
+
+---
+
+### /gen-form
+**Purpose:** Generate React Hook Form with Zod validation
+
+**Usage:**
+```
+/gen-form CreateBookmark with title, url, description
+```
+
+**Output:** Form component with shadcn/ui, server action integration
+
+---
+
+### /resume
+**Purpose:** Resume interrupted workflow from checkpoint
+
+**Usage:**
+```
+/resume
+```
+
+**Process:** Reads activity.md and plan.md, diagnoses failure, continues from checkpoint
 
 ## Agents Reference
 
